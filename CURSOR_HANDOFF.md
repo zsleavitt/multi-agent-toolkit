@@ -5,9 +5,15 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 ## Quick summary
 
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
-- **Codex** = implementation worker (scoped code, tests, refactors).
+- **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14** are **Done** — schemas (including optional **`timeout_ms`** on MAT-1 / MAT-2 requests, MAT-12 **`git.add` / `git.commit` / `git.diff`** on MAT-1, and MAT-13 **`codex.diagnose` / `codex.review`** on MAT-2 with **`schema_version`** **1.2.0**), ADR, CLAUDE.md, portable repo profile, orchestrator state document (including orchestrator session + fluency metadata), and Asana HITL trigger/callback contracts merged.
+- **All 14 schema-track tickets are Done** on `main` — MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14 merged (ADR, CLAUDE.md, profiles, state, HITL, timeouts, git staging scope, Codex diagnose/review). **Remaining backlog (P2):** MAT-5 (Gumloop prototype), MAT-7 (architecture audit checklist).
+- **Wire formats in this repo (complete):**
+  - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
+  - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
+  - **MAT-4** — Orchestrator state: queue, artifacts, checkpoints; optional orchestrator session + **fluency** (MAT-10) on `schema_version` **1.1.0** documents.
+  - **MAT-6** — HITL: Asana approval **trigger** and **callback** JSON.
+  - **MAT-9** — Portable **`ai-team.repo`** profile + work-item adapters (Linear, Jira, GitHub Issues, file, none).
 - **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
@@ -40,7 +46,7 @@ multi-agent-toolkit/
 │   ├── manifest.json
 │   ├── repo-profile.schema.json
 │   └── examples/
-├── schemas/orchestrator-state/v1/      # MAT-4: queue, artifacts, checkpoints
+├── schemas/orchestrator-state/v1/      # MAT-4 (+ MAT-10 fluency / session fields)
 │   ├── manifest.json
 │   ├── orchestrator-state.schema.json
 │   └── examples/
@@ -58,9 +64,9 @@ multi-agent-toolkit/
 └── requirements-dev.txt
 ```
 
-## MAT-1 status (merged)
+## Schema status (merged on `main`)
 
-**PR #1** landed on `main`: JSON Schemas for Claude → executor git/CLI requests/responses, deny-by-default `manifest.json` allowlist, `config/schema-registry.json`, validation script, and example payloads.
+MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` allowlists (where applicable), `examples/`, and `scripts/validate_*.py`. Historical bootstrap: **PR #1** (MAT-1 git contracts + registry + validators).
 
 ## Ticket board (Notion)
 
@@ -83,7 +89,7 @@ multi-agent-toolkit/
 
 ## Key design decisions
 
-1. **Git surface split (MAT-12)**: MAT-1 covers **branch / worktree / fetch / pull / push** and **`git add` / `git commit` / `git diff`** (allowlisted argv, no shell). **MAT-2** does not define those git wire ops — Codex stays scoped to implement/test/refactor; orchestrators route staging, commits, and repo diffs through MAT-1.
+1. **Git surface split (MAT-12)**: MAT-1 covers **branch / worktree / fetch / pull / push** and **`git add` / `git commit` / `git diff`** (allowlisted argv, no shell). **MAT-2** does not define those git wire ops — Codex stays scoped to **implement / test / refactor / diagnose / review**; orchestrators route staging, commits, and repo diffs through MAT-1.
 
 2. **Fluency (MAT-10)**: `claude-introspection` reads `~/.claude/`; high-signal planning/review should happen in the **main Claude Code** session when you care about scores. Optional MAT-4 fields **`orchestrator_session`** and checkpoint **`fluency`** (`schemas/orchestrator-state/v1/`, document `schema_version` **1.1.0**) record that linkage for tooling.
 
@@ -100,8 +106,9 @@ multi-agent-toolkit/
 
 ## Suggested next steps (in order)
 
-1. **Stay on `main`**, pull latest (see above).
-2. **MAT-5 / MAT-7** — Prototype and architecture audit when prioritized.
+1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
+2. **Run all five validation scripts** (see **Validation** below) and confirm green.
+3. When prioritized, pick up **MAT-5** (Gumloop workflow prototype) or **MAT-7** (audit repo vs architecture checklist).
 
 ## Validation
 
