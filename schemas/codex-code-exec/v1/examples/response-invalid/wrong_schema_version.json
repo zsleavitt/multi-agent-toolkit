@@ -1,0 +1,8 @@
+{
+  "schema_version": "2.0.0",
+  "correlation_id": "abcdef12-3456-4789-8abc-def012345678",
+  "idempotency_key": "mat2-invalid-response-version",
+  "ok": true,
+  "replay": false,
+  "result": {}
+}
