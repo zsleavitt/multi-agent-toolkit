@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Gemini Git/CLI — response envelope (MAT-1; MAT-11 TIMEOUT)",
+  "title": "Gemini Git/CLI — response envelope (MAT-1; MAT-11 TIMEOUT; MAT-12 add/commit/diff results)",
   "oneOf": [
     {
       "title": "Success",
@@ -58,7 +58,7 @@
     "schema_version": {
       "type": "string",
       "enum": ["1.0.0", "1.1.0"],
-      "description": "Wire format version; align with request `schema_version`. 1.1.0 pairs with optional request `timeout_ms` and `TIMEOUT` error code (MAT-11)."
+      "description": "Wire format version; align with request `schema_version`. 1.1.0 pairs with optional request `timeout_ms` and `TIMEOUT` (MAT-11). MAT-12 documents optional `result_add`, `result_commit`, and `result_diff` shapes for staging/diff ops."
     },
     "correlation_id": {
       "type": "string",
@@ -215,6 +215,45 @@
         "ref": { "type": "string" },
         "before_sha": { "type": "string" },
         "after_sha": { "type": "string" }
+      }
+    },
+    "result_add": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pathspecs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Echo of pathspecs mode when used."
+        },
+        "all": {
+          "type": "boolean",
+          "description": "Echo true when `git add -A` (or executor-equivalent) ran."
+        }
+      }
+    },
+    "result_commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit_sha"],
+      "properties": {
+        "commit_sha": { "type": "string", "minLength": 7 },
+        "branch": { "type": "string" }
+      }
+    },
+    "result_diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unified_diff"],
+      "properties": {
+        "unified_diff": {
+          "type": "string",
+          "description": "Unified diff text; may be empty when there is no delta."
+        },
+        "cached": {
+          "type": "boolean",
+          "description": "Echo of staged vs unstaged mode."
+        }
       }
     }
   }

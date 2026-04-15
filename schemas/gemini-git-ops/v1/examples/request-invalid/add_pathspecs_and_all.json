@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "77777777-7777-4777-8777-777777777777",
+  "idempotency_key": "mat1-invalid-add-conflict-001",
+  "repo_root": "/tmp/example-repo",
+  "op": "git.add",
+  "params": {
+    "pathspecs": ["src/"],
+    "all": true
+  }
+}

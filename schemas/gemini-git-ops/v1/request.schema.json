@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Gemini Git/CLI — request envelope (MAT-1; MAT-11 optional timeout_ms)",
+  "title": "Gemini Git/CLI — request envelope (MAT-1; MAT-11 optional timeout_ms; MAT-12 git.add/commit/diff)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "correlation_id", "idempotency_key", "repo_root", "op", "params"],
@@ -22,7 +22,10 @@
         "git.worktree_add",
         "git.worktree_remove",
         "git.worktree_list",
-        "git.push"
+        "git.push",
+        "git.add",
+        "git.commit",
+        "git.diff"
       ]
     },
     "params": { "type": "object" }
@@ -58,13 +61,22 @@
       "then": { "properties": { "params": { "$ref": "#/$defs/params_worktree_list" } } } },
     {
       "if": { "properties": { "op": { "const": "git.push" } }, "required": ["op"] },
-      "then": { "properties": { "params": { "$ref": "#/$defs/params_push" } } } }
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_push" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.add" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_add" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.commit" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_commit" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.diff" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_diff" } } } }
   ],
   "$defs": {
     "schema_version": {
       "type": "string",
       "enum": ["1.0.0", "1.1.0"],
-      "description": "Wire format version. 1.1.0 adds optional `timeout_ms` (MAT-11); omit both when staying on 1.0.0. Executor must reject unknown versions."
+      "description": "Wire format version. Use 1.1.0 when sending optional `timeout_ms` (MAT-11). MAT-12 ops (`git.add`, `git.commit`, `git.diff`) are defined in this bundle for both 1.0.0 and 1.1.0 documents. Executor must reject unknown versions."
     },
     "timeout_ms": {
       "type": "integer",
@@ -172,6 +184,68 @@
         "remote": { "type": "string", "minLength": 1 },
         "refspec": { "type": "string" },
         "force_with_lease": { "type": "boolean" }
+      }
+    },
+    "params_add": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pathspecs"],
+          "properties": {
+            "pathspecs": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Paths passed after `git add --` (repo-relative or absolute under repo_root)."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["all"],
+          "properties": {
+            "all": {
+              "type": "boolean",
+              "const": true,
+              "description": "Stage all changes under repo_root (`git add -A`). Mutually exclusive with pathspecs mode."
+            }
+          }
+        }
+      ],
+      "description": "MAT-12: stage changes via allowlisted argv only (no shell)."
+    },
+    "params_commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message"],
+      "properties": {
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536,
+          "description": "Commit message body; executor maps to `git commit -m` (or equivalent) without invoking a shell."
+        },
+        "amend": {
+          "type": "boolean",
+          "description": "When true, `git commit --amend` (executor policy may disallow)."
+        }
+      }
+    },
+    "params_diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cached": {
+          "type": "boolean",
+          "description": "When true, diff index vs HEAD (`git diff --cached`). When false or omitted, diff working tree vs index."
+        },
+        "pathspecs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional path limiters after `--`; omit or empty = whole repo for the chosen mode."
+        }
       }
     }
   }
