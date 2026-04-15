@@ -1,6 +1,10 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "repo_profile": { "identity_id": "acme-api" },
+  "orchestrator_session": {
+    "session_id": "cc-main-orch-20260415",
+    "updated_at": "2026-04-15T12:05:00Z"
+  },
   "queue": {
     "items": [
       {
@@ -43,7 +47,12 @@
         "path": ".mat/agent-state/sessions/codex-42/checkpoint-3.json",
         "created_at": "2026-04-15T12:03:00Z",
         "label": "After MAT-2 codex.test turn 3",
-        "session": { "session_id": "codex-42", "turn": 3 }
+        "session": { "session_id": "codex-42", "turn": 3 },
+        "fluency": {
+          "capture_phase": "review",
+          "insights_surface": "/ai-fluency-insights",
+          "correlation_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        }
       }
     ]
   },

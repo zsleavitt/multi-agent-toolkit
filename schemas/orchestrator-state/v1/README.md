@@ -1,6 +1,8 @@
-# MAT-4 — Orchestrator persisted state (`v1`)
+# MAT-4 / MAT-10 — Orchestrator persisted state (`v1`)
 
 JSON Schema for a **single durable state document** (`orchestrator.state.json` or `ai-team.state.json`): **work queue**, **artifact index**, and **session checkpoints**. Paths are **repo-relative from repo root** (same rules as MAT-9); pair with **`repo.path_overrides.artifacts_dir`** and **`agent_state_dir`** in the portable repo profile for conventional layout.
+
+**MAT-10** adds optional **orchestrator session** and **fluency** metadata on checkpoints so the primary orchestrator session (main Claude Code) can record planning/review phases for correlation with fluency tooling (for example **`/ai-fluency-insights`** via `claude-introspection`). Use document **`schema_version`** `1.1.0` when emitting these fields; documents without them may remain **`1.0.0`**.
 
 ## Schema identity
 
@@ -35,6 +37,11 @@ python scripts/validate_orchestrator_state.py
 ## Checkpoints and MAT-2
 
 - **`checkpoints.items[].session`** (optional) mirrors MAT-2 request **`session`**: `session_id` + monotonic **`turn`**, so tooling can relate a checkpoint file to a Codex-style session.
+
+## Orchestrator session and fluency (MAT-10)
+
+- **`orchestrator_session`** (optional, top-level) identifies the **primary orchestrator** run (e.g. main Claude Code). It is **not** the same object as **`checkpoints.items[].session`**, which links a checkpoint to a **MAT-2** worker session.
+- **`checkpoints.items[].fluency`** (optional) records **`capture_phase`** (`planning`, `review`, `routing`, `synthesis`, `other`) and optional **`insights_surface`** (string label such as `/ai-fluency-insights`, not a URL) plus an optional **`correlation_id`** for introspection exports. Prefer **planning** and **review** in the main orchestrator session when fluency scores should reflect high-signal work.
 
 ## Validate locally
 

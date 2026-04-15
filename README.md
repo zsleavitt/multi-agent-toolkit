@@ -10,7 +10,7 @@ Portable contracts and tooling for a **Claude Code–orchestrated** dev loop: pl
 | `schemas/gemini-git-ops/v1/` | **MAT-1** — request/response JSON Schemas for git operations (`manifest.json`, `request.schema.json`, `response.schema.json`, `examples/`). |
 | `schemas/codex-code-exec/v1/` | **MAT-2** — request/response JSON Schemas for Codex-style code execution (implement / test / refactor), optional session semantics. |
 | `schemas/ai-team-repo-profile/v1/` | **MAT-9** — portable repo profile (`ai-team.repo.json` / YAML) + work-item adapter (Linear, Jira, GitHub Issues, file, none). |
-| `schemas/orchestrator-state/v1/` | **MAT-4** — orchestrator persisted state (`orchestrator.state.json`): queue, artifact index, checkpoints; repo-relative paths. |
+| `schemas/orchestrator-state/v1/` | **MAT-4** / **MAT-10** — orchestrator persisted state (`orchestrator.state.json`): queue, artifact index, checkpoints; optional orchestrator session + fluency metadata; repo-relative paths. |
 | `schemas/hitl-asana-approval/v1/` | **MAT-6** — Asana HITL trigger and callback JSON for `blocked_hitl` queue gates. |
 | `scripts/validate_gemini_git_ops.py` | Validates examples against MAT-1 schemas (see below). |
 | `scripts/validate_codex_code_exec.py` | Validates examples against MAT-2 schemas. |
@@ -73,7 +73,7 @@ python scripts/validate_hitl_asana_approval.py
 - **MAT-1** (Gemini git/CLI contracts): schemas and examples in tree; see `schemas/gemini-git-ops/v1/README.md`.
 - **MAT-2** (Codex code execution contracts): `schemas/codex-code-exec/v1/README.md`.
 - **MAT-9** (portable repo profile + work-item adapter): `schemas/ai-team-repo-profile/v1/README.md`.
-- **MAT-4** (orchestrator state: queue, artifacts, checkpoints): `schemas/orchestrator-state/v1/README.md`.
+- **MAT-4** / **MAT-10** (orchestrator state; sessions + fluency): `schemas/orchestrator-state/v1/README.md`.
 - **MAT-6** (Asana HITL triggers and callbacks): `schemas/hitl-asana-approval/v1/README.md`.
 - **MAT-3** / **MAT-8**: root `CLAUDE.md` and `docs/adr/0001-primary-orchestrator-claude-code-vs-cursor.md`.
 - Further tickets (Gumloop, fluency) are tracked in your Notion **Multi-Agent Toolkit** board.

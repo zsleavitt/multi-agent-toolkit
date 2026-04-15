@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = implementation worker (scoped code, tests, refactors).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9** are **Done** — schemas, ADR, CLAUDE.md, portable repo profile, orchestrator state document, and Asana HITL trigger/callback contracts merged.
+- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10** are **Done** — schemas, ADR, CLAUDE.md, portable repo profile, orchestrator state document (including orchestrator session + fluency metadata), and Asana HITL trigger/callback contracts merged.
 - **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
@@ -75,7 +75,7 @@ multi-agent-toolkit/
 | MAT-7 | Audit repo vs architecture checklist | Backlog (P2) |
 | MAT-8 | ADR: Claude Code vs Cursor orchestrator | **Done** |
 | MAT-9 | Portable repo profile + work-item adapter | **Done** |
-| MAT-10 | Orchestrator sessions + fluency signals | Backlog (P1) |
+| MAT-10 | Orchestrator sessions + fluency signals | **Done** |
 | MAT-11 | Add timeout_ms to git-ops schema | Backlog (P2) |
 | MAT-12 | Clarify git staging/commit scope | Backlog (P2) |
 | MAT-13 | Add codex.diagnose/review ops (v1.1) | Backlog (P2) |
@@ -85,7 +85,7 @@ multi-agent-toolkit/
 
 1. **Git surface split**: MAT-1 covers **branch / worktree / fetch / pull / push** style ops. Whether **`git add` / `git commit` / `git diff`** live under MAT-1 (executor), MAT-2 (Codex in a sandbox), or both is **explicitly deferred** — track in **MAT-12** so MAT-2 stays “code execution” scoped.
 
-2. **Fluency (MAT-10)**: `claude-introspection` reads `~/.claude/`; high-signal planning/review should happen in the **main Claude Code** session when you care about scores.
+2. **Fluency (MAT-10)**: `claude-introspection` reads `~/.claude/`; high-signal planning/review should happen in the **main Claude Code** session when you care about scores. Optional MAT-4 fields **`orchestrator_session`** and checkpoint **`fluency`** (`schemas/orchestrator-state/v1/`, document `schema_version` **1.1.0**) record that linkage for tooling.
 
 3. **Security**: Deny-by-default ops; **no shell** — fixed `git` argv only for the git bridge.
 
@@ -99,8 +99,8 @@ multi-agent-toolkit/
 ## Suggested next steps (in order)
 
 1. **Stay on `main`**, pull latest (see above).
-2. **MAT-10** — Orchestrator sessions + fluency signals (next P1 on the board).
-3. **MAT-11 / MAT-12 / MAT-13 / MAT-14** — Schema follow-ups (`timeout_ms`, git staging/commit scope vs MAT-2, Codex ops, and related).
+2. **MAT-11 / MAT-12 / MAT-13 / MAT-14** — Schema follow-ups (`timeout_ms`, git staging/commit scope vs MAT-2, Codex ops, and related).
+3. **MAT-5 / MAT-7** — Prototype and architecture audit when prioritized.
 
 ## Validation
 

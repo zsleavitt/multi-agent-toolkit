@@ -1,12 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Orchestrator persisted state — queue, artifacts, checkpoints (MAT-4)",
+  "title": "Orchestrator persisted state — queue, artifacts, checkpoints (MAT-4); sessions + fluency (MAT-10)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "queue", "artifacts", "checkpoints"],
   "properties": {
     "schema_version": { "$ref": "#/$defs/schema_version" },
     "repo_profile": { "$ref": "#/$defs/repo_profile_link" },
+    "orchestrator_session": { "$ref": "#/$defs/orchestrator_session" },
     "queue": { "$ref": "#/$defs/queue" },
     "artifacts": { "$ref": "#/$defs/artifacts" },
     "checkpoints": { "$ref": "#/$defs/checkpoints" },
@@ -15,8 +16,23 @@
   "$defs": {
     "schema_version": {
       "type": "string",
-      "const": "1.0.0",
-      "description": "Bump only when this persisted-state document shape changes."
+      "enum": ["1.0.0", "1.1.0"],
+      "description": "Document format version. 1.1.0 adds optional MAT-10 `orchestrator_session` and checkpoint `fluency`; writers omitting those fields may stay on 1.0.0."
+    },
+    "orchestrator_session": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MAT-10: optional handle for the primary orchestrator session (e.g. main Claude Code) that owns planning, routing, and review. Distinct from MAT-2 worker `checkpoints.items[].session`.",
+      "required": ["session_id"],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Opaque orchestrator session id (tool-defined; not an absolute path)."
+        },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
     },
     "repo_profile_link": {
       "type": "object",
@@ -181,6 +197,30 @@
             "session_id": { "type": "string", "minLength": 1 },
             "turn": { "type": "integer", "minimum": 0 }
           }
+        },
+        "fluency": { "$ref": "#/$defs/checkpoint_fluency" }
+      }
+    },
+    "checkpoint_fluency": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MAT-10: optional metadata tying this checkpoint to fluency / introspection tooling. High-signal planning and review should run in the main orchestrator session when scores matter.",
+      "required": ["capture_phase"],
+      "properties": {
+        "capture_phase": {
+          "type": "string",
+          "enum": ["planning", "review", "routing", "synthesis", "other"],
+          "description": "Orchestrator phase associated with this checkpoint for fluency correlation."
+        },
+        "insights_surface": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Optional entrypoint label (e.g. /ai-fluency-insights) for documentation alignment; not a URL."
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/uuid",
+          "description": "Optional second trace id for correlating with introspection exports; use `queue.items[].correlation_id` for work-item tracing."
         }
       }
     },
