@@ -17,7 +17,10 @@ Portable contracts and tooling for a **Claude Code–orchestrated** dev loop: pl
 | `scripts/validate_ai_team_repo_profile.py` | Validates examples against MAT-9 `repo-profile.schema.json`. |
 | `scripts/validate_orchestrator_state.py` | Validates examples against MAT-4 `orchestrator-state.schema.json`. |
 | `scripts/validate_hitl_asana_approval.py` | Validates examples against MAT-6 trigger and callback schemas. |
+| `scripts/gumloop_start_pipeline.py` | MAT-5: optional stdlib helper to call Gumloop `start_pipeline` (requires API env vars). |
 | `docs/adr/` | Architecture decision records (e.g. primary orchestrator). |
+| `docs/prototypes/` | Exploratory integrations (e.g. **MAT-5** Gumloop runner handoff). |
+| `examples/gumloop/` | MAT-5: Gumloop `start_pipeline` example + Input node naming conventions. |
 | `CLAUDE.md` | Orchestrator-only context for Claude Code sessions using this toolkit. |
 | `research/multi-agent-research.md` | Design notes and citations for orchestration patterns, cost, and verification. |
 
@@ -76,7 +79,8 @@ python scripts/validate_hitl_asana_approval.py
 - **MAT-4** / **MAT-10** (orchestrator state; sessions + fluency): `schemas/orchestrator-state/v1/README.md`.
 - **MAT-6** (Asana HITL triggers and callbacks): `schemas/hitl-asana-approval/v1/README.md`.
 - **MAT-3** / **MAT-8**: root `CLAUDE.md` and `docs/adr/0001-primary-orchestrator-claude-code-vs-cursor.md`.
-- Further tickets (Gumloop, fluency) are tracked in your Notion **Multi-Agent Toolkit** board.
+- **MAT-5** (Gumloop prototype): `docs/prototypes/mat-5-gumloop.md`, `examples/gumloop/`, `scripts/gumloop_start_pipeline.py`.
+- Further tickets are tracked in your Notion **Multi-Agent Toolkit** board (remaining P2: **MAT-7**).
 
 ## Principles
 

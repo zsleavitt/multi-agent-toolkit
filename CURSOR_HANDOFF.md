@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **All 14 schema-track tickets are Done** on `main` — MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14 merged (ADR, CLAUDE.md, profiles, state, HITL, timeouts, git staging scope, Codex diagnose/review). **Remaining backlog (P2):** MAT-5 (Gumloop prototype), MAT-7 (architecture audit checklist).
+- **All 14 schema-track tickets are Done** on `main` — MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14 merged (ADR, CLAUDE.md, profiles, state, HITL, timeouts, git staging scope, Codex diagnose/review). **MAT-5 (Gumloop prototype)** lives under `docs/prototypes/mat-5-gumloop.md` and `examples/gumloop/`. **Remaining backlog (P2):** MAT-7 (architecture audit checklist).
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -60,6 +60,8 @@ multi-agent-toolkit/
 ├── scripts/validate_ai_team_repo_profile.py
 ├── scripts/validate_orchestrator_state.py
 ├── scripts/validate_hitl_asana_approval.py
+├── docs/prototypes/                  # MAT-5: Gumloop handoff (non-schema)
+├── examples/gumloop/                 # MAT-5: Gumloop API / input conventions
 ├── research/multi-agent-research.md  # Architecture research
 └── requirements-dev.txt
 ```
@@ -76,7 +78,7 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 | MAT-2 | Claude → Codex code execution contracts | **Done** |
 | MAT-3 | CLAUDE.md / repo context package | **Done** |
 | MAT-4 | State: queue, artifacts, checkpoints | **Done** |
-| MAT-5 | Gumloop workflow prototype | Backlog (P2) |
+| MAT-5 | Gumloop workflow prototype | **Done** |
 | MAT-6 | HITL: Asana approval triggers | **Done** |
 | MAT-7 | Audit repo vs architecture checklist | Backlog (P2) |
 | MAT-8 | ADR: Claude Code vs Cursor orchestrator | **Done** |
@@ -99,6 +101,8 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 
 5. **Diagnose / review (MAT-13)**: **`codex.diagnose`** and **`codex.review`** are MAT-2 ops with structured response `$defs` (`result_diagnose`, `result_review`, `review_finding`). Use wire **`schema_version`** **1.2.0** for those requests/responses; they are analysis/review workflows, not MAT-1 git ops.
 
+6. **Gumloop runner (MAT-5)**: Gumloop’s **`start_pipeline`** API can kick off flows whose **HTTP** nodes forward bodies validated against MAT-1/MAT-2 schemas; use shared **`correlation_id`** across steps. See **`docs/prototypes/mat-5-gumloop.md`** and **`examples/gumloop/`**.
+
 ## Related codebases
 
 - **Minions**: `~/Guideline/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
@@ -108,7 +112,7 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
 2. **Run all five validation scripts** (see **Validation** below) and confirm green.
-3. When prioritized, pick up **MAT-5** (Gumloop workflow prototype) or **MAT-7** (audit repo vs architecture checklist).
+3. When prioritized, pick up **MAT-7** (audit repo vs architecture checklist).
 
 ## Validation
 
