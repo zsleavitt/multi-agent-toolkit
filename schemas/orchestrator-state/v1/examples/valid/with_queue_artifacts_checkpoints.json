@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "repo_profile": { "identity_id": "acme-api" },
+  "queue": {
+    "items": [
+      {
+        "id": "q-001",
+        "status": "running",
+        "title": "Implement MAT-4 state schema",
+        "work_item": { "external_id": "MAT-4", "adapter": "linear" },
+        "correlation_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "created_at": "2026-04-15T12:00:00Z",
+        "updated_at": "2026-04-15T12:05:00Z"
+      },
+      {
+        "id": "q-002",
+        "status": "pending",
+        "title": "Wire validator into CI"
+      }
+    ]
+  },
+  "artifacts": {
+    "items": [
+      {
+        "id": "art-7f3c",
+        "kind": "plan",
+        "path": ".mat/artifacts/plans/mat4-plan.json",
+        "correlation_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "created_at": "2026-04-15T12:01:00Z"
+      },
+      {
+        "id": "art-8d21",
+        "kind": "test_report",
+        "path": ".mat/artifacts/reports/pytest.xml",
+        "created_at": "2026-04-15T12:04:00Z"
+      }
+    ]
+  },
+  "checkpoints": {
+    "items": [
+      {
+        "checkpoint_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        "path": ".mat/agent-state/sessions/codex-42/checkpoint-3.json",
+        "created_at": "2026-04-15T12:03:00Z",
+        "label": "After MAT-2 codex.test turn 3",
+        "session": { "session_id": "codex-42", "turn": 3 }
+      }
+    ]
+  },
+  "meta": {
+    "updated_at": "2026-04-15T12:05:00Z",
+    "run_correlation_id": "6ba7b811-9dad-11d1-80b4-00c04fd430c8"
+  }
+}

@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = implementation worker (scoped code, tests, refactors).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1, MAT-2, MAT-3, MAT-8, MAT-9** are **Done** — schemas, ADR, CLAUDE.md, and portable repo profile merged.
+- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-8, MAT-9** are **Done** — schemas, ADR, CLAUDE.md, portable repo profile, and orchestrator state document merged.
 - **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
@@ -40,9 +40,14 @@ multi-agent-toolkit/
 │   ├── manifest.json
 │   ├── repo-profile.schema.json
 │   └── examples/
+├── schemas/orchestrator-state/v1/      # MAT-4: queue, artifacts, checkpoints
+│   ├── manifest.json
+│   ├── orchestrator-state.schema.json
+│   └── examples/
 ├── scripts/validate_gemini_git_ops.py
 ├── scripts/validate_codex_code_exec.py
 ├── scripts/validate_ai_team_repo_profile.py
+├── scripts/validate_orchestrator_state.py
 ├── research/multi-agent-research.md  # Architecture research
 └── requirements-dev.txt
 ```
@@ -58,7 +63,7 @@ multi-agent-toolkit/
 | MAT-1 | Claude → Gemini git/CLI contracts | **Done** |
 | MAT-2 | Claude → Codex code execution contracts | **Done** |
 | MAT-3 | CLAUDE.md / repo context package | **Done** |
-| MAT-4 | State: queue, artifacts, checkpoints | Backlog (P1) |
+| MAT-4 | State: queue, artifacts, checkpoints | **Done** |
 | MAT-5 | Gumloop workflow prototype | Backlog (P2) |
 | MAT-6 | HITL: Asana approval triggers | Backlog (P1) |
 | MAT-7 | Audit repo vs architecture checklist | Backlog (P2) |
@@ -88,8 +93,8 @@ multi-agent-toolkit/
 ## Suggested next steps (in order)
 
 1. **Stay on `main`**, pull latest (see above).
-2. **MAT-4** — State: queue, artifacts, checkpoints (next P1 on the board).
-3. **MAT-6** — HITL: Asana approval triggers.
+2. **MAT-6** — HITL: Asana approval triggers (next P1 on the board).
+3. **MAT-10** — Orchestrator sessions + fluency signals.
 4. **MAT-11 / MAT-12** — Schema follow-ups (`timeout_ms`; git staging/commit scope vs MAT-2).
 
 ## Validation
@@ -101,9 +106,10 @@ pip install -r requirements-dev.txt
 python scripts/validate_gemini_git_ops.py
 python scripts/validate_codex_code_exec.py
 python scripts/validate_ai_team_repo_profile.py
+python scripts/validate_orchestrator_state.py
 ```
 
-Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, or `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1` if a bundle is not at the default `root_relative` path.
+Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1`, or `export MAT_ORCHESTRATOR_STATE_V1=/path/to/schemas/orchestrator-state/v1` if a bundle is not at the default `root_relative` path.
 
 ## References
 
