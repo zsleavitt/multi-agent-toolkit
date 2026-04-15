@@ -7,8 +7,8 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = implementation worker (scoped code, tests, refactors).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1** JSON Schemas for git ops are **merged to `main`** ([PR #1](https://github.com/zsleavitt/multi-agent-toolkit/pull/1)).
-- **12 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
+- **MAT-1, MAT-2, MAT-3, MAT-8** are **Done** — schemas, ADR, and CLAUDE.md merged.
+- **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
 
@@ -48,20 +48,22 @@ multi-agent-toolkit/
 
 ## Ticket board (Notion)
 
-| Ticket | Name | Typical next |
-|--------|------|----------------|
-| MAT-1 | Claude → Gemini git/CLI contracts | **Done** (merged); follow-ups → MAT-11 / MAT-12 |
-| MAT-2 | Claude → Codex **code execution** contracts | **In repo** — `schemas/codex-code-exec/v1/` + `scripts/validate_codex_code_exec.py` (not repo-wide git; see MAT-12) |
-| MAT-3 | CLAUDE.md / repo context package | **In repo** — root `CLAUDE.md` (extend per app repo as needed) |
-| MAT-4 | State: queue, artifacts, checkpoints | P1 |
-| MAT-5 | Gumloop workflow prototype | P2 |
-| MAT-6 | HITL: Asana approval triggers | P1 |
-| MAT-7 | Audit repo vs architecture checklist | P2 |
-| MAT-8 | ADR: Claude Code vs Cursor orchestrator | **In repo** — `docs/adr/0001-primary-orchestrator-claude-code-vs-cursor.md` |
-| MAT-9 | Portable repo profile + work-item adapter | P0 |
-| MAT-10 | Orchestrator sessions + fluency signals | P1 |
-| MAT-11 | Add `timeout_ms` (and similar) to git-ops schema | P2 |
-| MAT-12 | Clarify git staging/commit scope vs MAT-2 | P2 |
+| Ticket | Name | Status |
+|--------|------|--------|
+| MAT-1 | Claude → Gemini git/CLI contracts | **Done** |
+| MAT-2 | Claude → Codex code execution contracts | **Done** |
+| MAT-3 | CLAUDE.md / repo context package | **Done** |
+| MAT-4 | State: queue, artifacts, checkpoints | Backlog (P1) |
+| MAT-5 | Gumloop workflow prototype | Backlog (P2) |
+| MAT-6 | HITL: Asana approval triggers | Backlog (P1) |
+| MAT-7 | Audit repo vs architecture checklist | Backlog (P2) |
+| MAT-8 | ADR: Claude Code vs Cursor orchestrator | **Done** |
+| MAT-9 | Portable repo profile + work-item adapter | Backlog (P0) |
+| MAT-10 | Orchestrator sessions + fluency signals | Backlog (P1) |
+| MAT-11 | Add timeout_ms to git-ops schema | Backlog (P2) |
+| MAT-12 | Clarify git staging/commit scope | Backlog (P2) |
+| MAT-13 | Add codex.diagnose/review ops (v1.1) | Backlog (P2) |
+| MAT-14 | Add timeout_ms to MAT-2 schemas | Backlog (P2) |
 
 ## Key design decisions
 
@@ -101,5 +103,5 @@ Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1` or `
 
 - Notion tickets: https://www.notion.so/c54de570f4ec433587b7cac957b950c1  
 - Notion parent hub: https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630  
-- Merged PR: https://github.com/zsleavitt/multi-agent-toolkit/pull/1  
+- Merged PRs: [#1](https://github.com/zsleavitt/multi-agent-toolkit/pull/1), [#2](https://github.com/zsleavitt/multi-agent-toolkit/pull/2)  
 - Research: `research/multi-agent-research.md`
