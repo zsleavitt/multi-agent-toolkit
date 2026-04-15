@@ -41,6 +41,7 @@ In both cases the **executor** must:
 - Reject `op` not in `manifest.json → allowed_operations`.
 - Run **no shell** — spawn `git` with explicit argv only.
 - Honor `idempotency_key` (return `replay: true` + prior `result` when safe).
+- Honor optional **`timeout_ms`** on the request (MAT-11): integer milliseconds **1**–**86400000** (24h cap in schema); executor may clamp. Use request/response **`schema_version`** **1.1.0** when emitting `timeout_ms`; stay on **1.0.0** when omitting it. On budget exhaustion return **`error.code`** **`TIMEOUT`**.
 
 ## Result shapes per `op`
 

@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+  "idempotency_key": "mat2-invalid-timeout-zero",
+  "repo_root": "/tmp/example-repo",
+  "timeout_ms": 0,
+  "op": "codex.test",
+  "params": { "test_profile": "pytest" }
+}

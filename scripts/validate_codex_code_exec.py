@@ -95,6 +95,15 @@ def main() -> None:
         resp_validator.validate(instance)
         print(f"OK response {path.relative_to(ROOT)}")
 
+    resp_invalid_dir = V1 / "examples" / "response-invalid"
+    if resp_invalid_dir.is_dir():
+        for path in sorted(resp_invalid_dir.glob("*.json")):
+            instance = _load_json(path)
+            errs = sorted(resp_validator.iter_errors(instance), key=lambda e: e.path)
+            if not errs:
+                raise SystemExit(f"Expected validation failure for {path}")
+            print(f"OK invalid  {path.relative_to(ROOT)} ({errs[0].message})")
+
     print(f"All MAT-2 schema checks passed (bundle: {V1}).")
 
 
