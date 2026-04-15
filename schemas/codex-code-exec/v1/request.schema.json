@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Codex code execution — request envelope (MAT-2; MAT-14 optional timeout_ms)",
+  "title": "Codex code execution — request envelope (MAT-2; MAT-14 timeout_ms; MAT-13 diagnose/review)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "correlation_id", "idempotency_key", "repo_root", "op", "params"],
@@ -13,7 +13,13 @@
     "session": { "$ref": "#/$defs/session" },
     "op": {
       "type": "string",
-      "enum": ["codex.implement", "codex.test", "codex.refactor"]
+      "enum": [
+        "codex.implement",
+        "codex.test",
+        "codex.refactor",
+        "codex.diagnose",
+        "codex.review"
+      ]
     },
     "params": { "type": "object" }
   },
@@ -28,13 +34,19 @@
     },
     {
       "if": { "properties": { "op": { "const": "codex.refactor" } }, "required": ["op"] },
-      "then": { "properties": { "params": { "$ref": "#/$defs/params_refactor" } } } }
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_refactor" } } } },
+    {
+      "if": { "properties": { "op": { "const": "codex.diagnose" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_diagnose" } } } },
+    {
+      "if": { "properties": { "op": { "const": "codex.review" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_review" } } } }
   ],
   "$defs": {
     "schema_version": {
       "type": "string",
-      "enum": ["1.0.0", "1.1.0"],
-      "description": "Wire format version. 1.1.0 adds optional `timeout_ms` (MAT-14); omit both when staying on 1.0.0. Executor must reject unknown versions."
+      "enum": ["1.0.0", "1.1.0", "1.2.0"],
+      "description": "Wire format version. 1.1.0 adds optional `timeout_ms` (MAT-14). 1.2.0 adds `codex.diagnose` and `codex.review` (MAT-13); use 1.2.0 when emitting those ops. Executor must reject unknown versions."
     },
     "timeout_ms": {
       "type": "integer",
@@ -123,6 +135,60 @@
           "items": { "type": "string", "minLength": 1 }
         },
         "acceptance_criteria": { "type": "string" }
+      }
+    },
+    "params_diagnose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instruction"],
+      "properties": {
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Symptoms, failing behavior, or hypothesis to investigate; executor maps to a read-oriented RCA prompt."
+        },
+        "scope_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional focus paths; omit or empty = executor default search scope."
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Observed errors, log lines, stack excerpts, or repro notes."
+        },
+        "readonly_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Paths or prefixes the worker must not modify (diagnose is read-only by policy; paths still constrain tooling)."
+        }
+      }
+    },
+    "params_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instruction", "scope_paths"],
+      "properties": {
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Review goals (security, API stability, readability, etc.)."
+        },
+        "scope_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Files or directories to review."
+        },
+        "acceptance_criteria": {
+          "type": "string",
+          "description": "Optional checklist reviewers should verify."
+        },
+        "minimum_severity": {
+          "type": "string",
+          "enum": ["info", "suggestion", "issue", "blocker"],
+          "description": "Optional floor: worker should only emit findings at or above this severity."
+        }
       }
     }
   }

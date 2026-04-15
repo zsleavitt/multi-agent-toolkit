@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "idempotency_key": "mat2-demo-diagnose-001",
+  "ok": true,
+  "replay": false,
+  "result": {
+    "summary": "CI PYTHONPATH omits `src/`, so `foo.bar` resolves to a different package than locally.",
+    "hypothesis": "Stale or conflicting package layout between local editable install and CI checkout.",
+    "likely_causes": [
+      {
+        "title": "PYTHONPATH / install mode mismatch",
+        "confidence": "high",
+        "rationale": "ImportError path points at repo file while local runs use editable install on sys.path."
+      },
+      {
+        "title": "Circular import in foo.bar",
+        "confidence": "low",
+        "rationale": "Possible but does not explain CI-only failure without accompanying traceback cycle."
+      }
+    ],
+    "recommended_next_steps": [
+      "Align CI to use `pip install -e .` or set PYTHONPATH=src.",
+      "Add a CI job that imports `foo.bar` before tests run."
+    ]
+  }
+}

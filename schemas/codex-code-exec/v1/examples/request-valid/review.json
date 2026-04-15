@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "idempotency_key": "mat2-demo-review-001",
+  "repo_root": "/tmp/example-repo",
+  "op": "codex.review",
+  "params": {
+    "instruction": "Review for correctness and obvious security issues before merge.",
+    "scope_paths": ["src/auth/", "src/api/handlers/widgets.py"],
+    "acceptance_criteria": "No blocker findings; document any issue-severity items.",
+    "minimum_severity": "suggestion"
+  }
+}

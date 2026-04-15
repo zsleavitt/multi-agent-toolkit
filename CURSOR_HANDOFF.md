@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = implementation worker (scoped code, tests, refactors).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-14** are **Done** — schemas (including optional **`timeout_ms`** on MAT-1 / MAT-2 requests and MAT-12 **`git.add` / `git.commit` / `git.diff`** on MAT-1), ADR, CLAUDE.md, portable repo profile, orchestrator state document (including orchestrator session + fluency metadata), and Asana HITL trigger/callback contracts merged.
+- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14** are **Done** — schemas (including optional **`timeout_ms`** on MAT-1 / MAT-2 requests, MAT-12 **`git.add` / `git.commit` / `git.diff`** on MAT-1, and MAT-13 **`codex.diagnose` / `codex.review`** on MAT-2 with **`schema_version`** **1.2.0**), ADR, CLAUDE.md, portable repo profile, orchestrator state document (including orchestrator session + fluency metadata), and Asana HITL trigger/callback contracts merged.
 - **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
@@ -31,7 +31,7 @@ multi-agent-toolkit/
 │   ├── request.schema.json
 │   ├── response.schema.json
 │   └── examples/
-├── schemas/codex-code-exec/v1/       # MAT-2: Codex code-exec schemas
+├── schemas/codex-code-exec/v1/       # MAT-2 (+ MAT-13 diagnose/review, MAT-14 timeout_ms)
 │   ├── manifest.json
 │   ├── request.schema.json
 │   ├── response.schema.json
@@ -78,7 +78,7 @@ multi-agent-toolkit/
 | MAT-10 | Orchestrator sessions + fluency signals | **Done** |
 | MAT-11 | Add timeout_ms to git-ops schema | **Done** |
 | MAT-12 | Clarify git staging/commit scope | **Done** |
-| MAT-13 | Add codex.diagnose/review ops (v1.1) | Backlog (P2) |
+| MAT-13 | Add codex.diagnose/review ops (v1.1) | **Done** |
 | MAT-14 | Add timeout_ms to MAT-2 schemas | **Done** |
 
 ## Key design decisions
@@ -91,6 +91,8 @@ multi-agent-toolkit/
 
 4. **Portability (MAT-9)**: `schemas/ai-team-repo-profile/v1/` — `ai-team.repo.json` / YAML profile decouples paths and ticket providers from hardcoded org defaults.
 
+5. **Diagnose / review (MAT-13)**: **`codex.diagnose`** and **`codex.review`** are MAT-2 ops with structured response `$defs` (`result_diagnose`, `result_review`, `review_finding`). Use wire **`schema_version`** **1.2.0** for those requests/responses; they are analysis/review workflows, not MAT-1 git ops.
+
 ## Related codebases
 
 - **Minions**: `~/Guideline/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
@@ -99,8 +101,7 @@ multi-agent-toolkit/
 ## Suggested next steps (in order)
 
 1. **Stay on `main`**, pull latest (see above).
-2. **MAT-13** — Codex `codex.diagnose` / `codex.review` ops (v1.1 extension).
-3. **MAT-5 / MAT-7** — Prototype and architecture audit when prioritized.
+2. **MAT-5 / MAT-7** — Prototype and architecture audit when prioritized.
 
 ## Validation
 

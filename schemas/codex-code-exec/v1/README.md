@@ -1,6 +1,6 @@
 # MAT-2 — Claude → Codex code execution contracts (`v1`)
 
-Versioned JSON Schemas for requests and responses between the **orchestrator (Claude Code)** and a **code-execution worker** (e.g. OpenAI Codex in a sandbox). This bundle covers **scoped implementation, tests, and refactors** — not repo-wide git (see **MAT-1** / **MAT-12**).
+Versioned JSON Schemas for requests and responses between the **orchestrator (Claude Code)** and a **code-execution worker** (e.g. OpenAI Codex in a sandbox). This bundle covers **scoped implementation, tests, refactors, diagnosis, and review** — not repo-wide git (see **MAT-1** / **MAT-12**).
 
 ## Schema identity (vendor-neutral)
 
@@ -34,6 +34,12 @@ Versioned JSON Schemas for requests and responses between the **orchestrator (Cl
 - Use **`schema_version`** **1.1.0** when emitting **`timeout_ms`**; documents without it may remain **1.0.0**.
 - **`TIMEOUT`** in `response.schema.json` → `error.code` covers budget exhaustion (already defined for MAT-2).
 
+## Diagnose and review (MAT-13)
+
+- **`codex.diagnose`** — read-oriented root-cause analysis. Params: required **`instruction`**; optional **`scope_paths`**, **`evidence`** (strings), **`readonly_paths`**. Recommended success shape: **`result_diagnose`** (`summary`, optional **`hypothesis`**, **`likely_causes`**, **`recommended_next_steps`**, **`session`**).
+- **`codex.review`** — structured code review. Params: required **`instruction`** and **`scope_paths`** (≥1 path); optional **`acceptance_criteria`**, **`minimum_severity`** (`info`, `suggestion`, `issue`, or `blocker`). Recommended success shape: **`result_review`** (`summary`, **`findings`** array of **`review_finding`**: required **`severity`**, **`path`**, **`message`**; optional **`line`**, **`end_line`**, **`category`**, **`code_snippet`**).
+- Use request/response **`schema_version`** **1.2.0** when emitting **`codex.diagnose`** or **`codex.review`** so executors can rely on MAT-13 shapes (older **1.0.0** / **1.1.0** documents remain valid for other ops).
+
 ## Validate locally
 
 ```bash
@@ -49,12 +55,4 @@ Same as MAT-1: requests carry **`repo_root`** (absolute path). Combined with fut
 
 ## Scope boundaries
 
-This bundle covers **code execution** only: implement, test, refactor. **MAT-12 (done):** `git add`, `git commit`, and `git diff` are **MAT-1** wire ops only (allowlisted `git` argv on the executor). MAT-2 does not carry git staging, commits, or diff requests — orchestrators emit MAT-1 JSON for those after Codex (or other workers) finish editing.
-
-## Future operations
-
-v1.1 may add:
-- `codex.diagnose` — debug/root-cause analysis workflows
-- `codex.review` — code review with structured feedback
-
-These are tracked separately; the v1 ops (`implement`, `test`, `refactor`) are stable.
+This bundle covers **code execution and analysis** ops: implement, test, refactor, diagnose, review. **MAT-12 (done):** `git add`, `git commit`, and `git diff` are **MAT-1** wire ops only (allowlisted `git` argv on the executor). MAT-2 does not carry git staging, commits, or diff requests — orchestrators emit MAT-1 JSON for those after Codex (or other workers) finish editing.

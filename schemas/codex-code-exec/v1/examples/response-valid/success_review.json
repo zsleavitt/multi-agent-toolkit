@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "idempotency_key": "mat2-demo-review-001",
+  "ok": true,
+  "replay": false,
+  "result": {
+    "summary": "Auth flow is sound; one medium issue on error handling in widgets handler.",
+    "findings": [
+      {
+        "severity": "suggestion",
+        "path": "src/api/handlers/widgets.py",
+        "line": 42,
+        "message": "Consider narrowing the caught exception type instead of bare `except`.",
+        "category": "correctness",
+        "code_snippet": "try:\n    load_widget(id)\nexcept:\n    pass"
+      },
+      {
+        "severity": "issue",
+        "path": "src/auth/tokens.py",
+        "line": 18,
+        "end_line": 22,
+        "message": "Refresh token TTL matches access token; users may be logged out unexpectedly.",
+        "category": "correctness"
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "idempotency_key": "mat2-demo-diagnose-001",
+  "repo_root": "/tmp/example-repo",
+  "op": "codex.diagnose",
+  "params": {
+    "instruction": "Pytest fails with ImportError for module `foo.bar` only in CI, passes locally.",
+    "scope_paths": ["src/foo/", "tests/"],
+    "evidence": [
+      "ImportError: cannot import name 'Bar' from 'foo.bar' (/home/ci/project/src/foo/bar.py)"
+    ],
+    "readonly_paths": ["vendor/", "dist/"]
+  }
+}

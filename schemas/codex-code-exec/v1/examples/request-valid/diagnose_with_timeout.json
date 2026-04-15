@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "idempotency_key": "mat2-demo-diagnose-timeout-001",
+  "repo_root": "/tmp/example-repo",
+  "timeout_ms": 120000,
+  "op": "codex.diagnose",
+  "params": {
+    "instruction": "Intermittent 500s from /api/v1/widgets after deploy; correlate with logs in evidence.",
+    "evidence": ["trace_id=abc123 http_status=500 endpoint=/api/v1/widgets"]
+  }
+}

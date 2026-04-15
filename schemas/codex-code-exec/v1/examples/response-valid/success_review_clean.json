@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+  "idempotency_key": "mat2-demo-review-clean-001",
+  "ok": true,
+  "replay": false,
+  "result": {
+    "summary": "No issues found in scope for the stated criteria.",
+    "findings": []
+  }
+}
