@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "mobile-app",
+    "title": "Mobile application"
+  },
+  "repo": {
+    "default_branch": "develop"
+  },
+  "work_item_source": {
+    "adapter": "linear",
+    "linear": {
+      "team_id": "b6f3c2a1-4e8d-4c1b-9f0a-1234567890ab"
+    }
+  }
+}

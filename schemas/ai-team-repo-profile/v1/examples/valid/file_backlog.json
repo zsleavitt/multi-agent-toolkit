@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "experiment",
+    "title": "Local experiment"
+  },
+  "repo": {
+    "default_branch": "main"
+  },
+  "work_item_source": {
+    "adapter": "file",
+    "file": {
+      "path": "docs/BACKLOG.md"
+    }
+  }
+}

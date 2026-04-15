@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "data-pipeline",
+    "title": "Data pipeline"
+  },
+  "repo": {
+    "default_branch": "main",
+    "path_overrides": {
+      "docs_dir": "docs"
+    }
+  },
+  "work_item_source": {
+    "adapter": "jira",
+    "jira": {
+      "site_host": "acme.atlassian.net",
+      "project_key": "DATA"
+    }
+  }
+}

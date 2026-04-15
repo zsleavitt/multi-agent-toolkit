@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "payments-api",
+    "title": "Payments API"
+  },
+  "repo": {
+    "default_branch": "main",
+    "path_overrides": {
+      "artifacts_dir": ".agent/artifacts",
+      "agent_state_dir": ".agent/state"
+    }
+  },
+  "work_item_source": {
+    "adapter": "github_issues",
+    "github_issues": {
+      "owner": "acme-corp",
+      "repo": "payments-api"
+    }
+  },
+  "orchestration": {
+    "repo_root_env": "PAYMENTS_API_ROOT",
+    "branch_template": "agent/{{id}}"
+  }
+}

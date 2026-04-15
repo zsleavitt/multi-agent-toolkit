@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "sample-service",
+    "title": "Sample service"
+  },
+  "repo": {
+    "default_branch": "main"
+  },
+  "work_item_source": {
+    "adapter": "none"
+  }
+}

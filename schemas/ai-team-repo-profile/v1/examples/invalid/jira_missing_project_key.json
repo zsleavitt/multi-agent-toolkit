@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "missing-jira-field"
+  },
+  "repo": {
+    "default_branch": "main"
+  },
+  "work_item_source": {
+    "adapter": "jira",
+    "jira": {
+      "site_host": "acme.atlassian.net"
+    }
+  }
+}
