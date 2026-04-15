@@ -30,6 +30,7 @@ python scripts/validate_orchestrator_state.py
 
 - **`queue.items[].work_item`** is optional; when present, **`adapter`** uses the same discriminant names as MAT-9 **`work_item_source.adapter`** (`none`, `linear`, `jira`, `github_issues`, `file`).
 - **`queue.items[].status`** is a fixed lifecycle enum for orchestration (`pending` … `cancelled`).
+- Use **`blocked_hitl`** when a human gate is required; pair outbound payloads with **MAT-6** `schemas/hitl-asana-approval/v1/trigger.schema.json` and resume via **`callback.schema.json`** (same **`correlation_id`** / **`queue_item_id`**).
 
 ## Checkpoints and MAT-2
 

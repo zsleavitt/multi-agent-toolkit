@@ -11,10 +11,12 @@ Portable contracts and tooling for a **Claude Code–orchestrated** dev loop: pl
 | `schemas/codex-code-exec/v1/` | **MAT-2** — request/response JSON Schemas for Codex-style code execution (implement / test / refactor), optional session semantics. |
 | `schemas/ai-team-repo-profile/v1/` | **MAT-9** — portable repo profile (`ai-team.repo.json` / YAML) + work-item adapter (Linear, Jira, GitHub Issues, file, none). |
 | `schemas/orchestrator-state/v1/` | **MAT-4** — orchestrator persisted state (`orchestrator.state.json`): queue, artifact index, checkpoints; repo-relative paths. |
+| `schemas/hitl-asana-approval/v1/` | **MAT-6** — Asana HITL trigger and callback JSON for `blocked_hitl` queue gates. |
 | `scripts/validate_gemini_git_ops.py` | Validates examples against MAT-1 schemas (see below). |
 | `scripts/validate_codex_code_exec.py` | Validates examples against MAT-2 schemas. |
 | `scripts/validate_ai_team_repo_profile.py` | Validates examples against MAT-9 `repo-profile.schema.json`. |
 | `scripts/validate_orchestrator_state.py` | Validates examples against MAT-4 `orchestrator-state.schema.json`. |
+| `scripts/validate_hitl_asana_approval.py` | Validates examples against MAT-6 trigger and callback schemas. |
 | `docs/adr/` | Architecture decision records (e.g. primary orchestrator). |
 | `CLAUDE.md` | Orchestrator-only context for Claude Code sessions using this toolkit. |
 | `research/multi-agent-research.md` | Design notes and citations for orchestration patterns, cost, and verification. |
@@ -28,6 +30,7 @@ python scripts/validate_gemini_git_ops.py
 python scripts/validate_codex_code_exec.py
 python scripts/validate_ai_team_repo_profile.py
 python scripts/validate_orchestrator_state.py
+python scripts/validate_hitl_asana_approval.py
 ```
 
 Override the MAT-1 bundle directory:
@@ -58,14 +61,22 @@ export MAT_ORCHESTRATOR_STATE_V1=/absolute/path/to/schemas/orchestrator-state/v1
 python scripts/validate_orchestrator_state.py
 ```
 
+Override the MAT-6 bundle directory:
+
+```bash
+export MAT_HITL_ASANA_APPROVAL_V1=/absolute/path/to/schemas/hitl-asana-approval/v1
+python scripts/validate_hitl_asana_approval.py
+```
+
 ## Status
 
 - **MAT-1** (Gemini git/CLI contracts): schemas and examples in tree; see `schemas/gemini-git-ops/v1/README.md`.
 - **MAT-2** (Codex code execution contracts): `schemas/codex-code-exec/v1/README.md`.
 - **MAT-9** (portable repo profile + work-item adapter): `schemas/ai-team-repo-profile/v1/README.md`.
 - **MAT-4** (orchestrator state: queue, artifacts, checkpoints): `schemas/orchestrator-state/v1/README.md`.
+- **MAT-6** (Asana HITL triggers and callbacks): `schemas/hitl-asana-approval/v1/README.md`.
 - **MAT-3** / **MAT-8**: root `CLAUDE.md` and `docs/adr/0001-primary-orchestrator-claude-code-vs-cursor.md`.
-- Further tickets (Gumloop, HITL, fluency) are tracked in your Notion **Multi-Agent Toolkit** board.
+- Further tickets (Gumloop, fluency) are tracked in your Notion **Multi-Agent Toolkit** board.
 
 ## Principles
 

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+  "queue_item_id": "hitl-schema-change",
+  "decision": "rejected",
+  "decided_at": "2026-04-15T15:00:00Z",
+  "comment": "Hold until security review completes.",
+  "actor": {
+    "name": "Jordan Lee",
+    "email": "jordan.lee@example.com"
+  },
+  "asana": {
+    "task_gid": "1200000000000100"
+  },
+  "delivery": {
+    "bridge_request_id": "req-7f3c2a"
+  }
+}

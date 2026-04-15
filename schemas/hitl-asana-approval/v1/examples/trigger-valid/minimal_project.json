@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "queue_item_id": "q-approve-001",
+  "title": "Approve merge of feature/auth to main",
+  "asana": {
+    "workspace_gid": "1200000000000001",
+    "project_gid": "1200000000000002"
+  }
+}

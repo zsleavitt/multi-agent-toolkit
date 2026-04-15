@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "queue_item_id": "q-approve-001",
+  "decision": "approved",
+  "decided_at": "2026-04-15T14:22:00Z",
+  "asana": {
+    "task_gid": "1200000000000099",
+    "webhook_delivery_id": "wh-abc123"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HITL Asana — trigger envelope (MAT-6)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "correlation_id", "queue_item_id", "title", "asana"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "correlation_id": { "$ref": "#/$defs/uuid" },
+    "queue_item_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Matches MAT-4 queue.items[].id for the blocked_hitl item."
+    },
+    "repo_profile_identity_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Optional; when set, matches MAT-9 identity.id / MAT-4 repo_profile.identity_id."
+    },
+    "orchestrator_state_path": {
+      "$ref": "#/$defs/repo_relative_path",
+      "description": "Optional repo-relative path to the orchestrator state file (e.g. orchestrator.state.json) for multi-worktree routing."
+    },
+    "expected_queue_status": {
+      "type": "string",
+      "const": "blocked_hitl",
+      "description": "Documented gate: orchestrator SHOULD set MAT-4 queue item status to blocked_hitl before emitting this trigger."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Asana task title and human-facing summary line."
+    },
+    "body": {
+      "type": "string",
+      "maxLength": 32000,
+      "description": "Longer rationale, links to artifacts, or review notes for the approver."
+    },
+    "asana": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workspace_gid"],
+      "properties": {
+        "workspace_gid": { "$ref": "#/$defs/asana_gid" },
+        "project_gid": {
+          "$ref": "#/$defs/asana_gid",
+          "description": "Create a top-level task in this project when parent_task_gid is absent."
+        },
+        "parent_task_gid": {
+          "$ref": "#/$defs/asana_gid",
+          "description": "Create a subtask under this parent when automation prefers hierarchy over project_gid."
+        },
+        "assignee_gid": { "$ref": "#/$defs/asana_gid" },
+        "approval_section_gid": {
+          "$ref": "#/$defs/asana_gid",
+          "description": "Optional board column or section gid to place the task after creation."
+        }
+      },
+      "anyOf": [
+        { "required": ["project_gid"] },
+        { "required": ["parent_task_gid"] }
+      ]
+    },
+    "sla_due_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional due time for the approval task or automation reminder."
+    }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when this trigger wire format changes."
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "RFC 4122 UUID; SHOULD match MAT-4 queue.items[].correlation_id when that field is set."
+    },
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!https?:)(?!\\.\\./)[^\\0]+$",
+      "description": "Path relative to repo root; aligned with MAT-9 / MAT-4 path rules."
+    },
+    "asana_gid": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[0-9]+$",
+      "description": "Opaque Asana API gid (numeric string)."
+    }
+  }
+}

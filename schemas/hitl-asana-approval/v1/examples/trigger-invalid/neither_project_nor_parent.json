@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+  "queue_item_id": "bad-target",
+  "title": "Missing placement",
+  "asana": {
+    "workspace_gid": "1200000000000001"
+  }
+}

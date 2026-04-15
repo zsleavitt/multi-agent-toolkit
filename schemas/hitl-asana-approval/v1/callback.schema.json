@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HITL Asana — callback envelope (MAT-6)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "correlation_id", "queue_item_id", "decision", "decided_at", "asana"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "correlation_id": { "$ref": "#/$defs/uuid" },
+    "queue_item_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Matches the MAT-4 queue item and the originating MAT-6 trigger."
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "rejected", "cancelled", "expired"],
+      "description": "Human or policy outcome; orchestrator maps approved → pending or running, rejected/failed/cancelled per local policy."
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the decision was recorded (Asana completed_at or bridge receipt time)."
+    },
+    "comment": {
+      "type": "string",
+      "maxLength": 8000,
+      "description": "Optional free-text from the approver or automation."
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional who approved; omit when unknown.",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 320, "format": "email" }
+      }
+    },
+    "asana": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_gid"],
+      "properties": {
+        "task_gid": { "$ref": "#/$defs/asana_gid" },
+        "webhook_delivery_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Optional Asana webhook delivery id for idempotent processing."
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional bridge metadata for tracing replays.",
+      "properties": {
+        "bridge_request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when this callback wire format changes."
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "asana_gid": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[0-9]+$",
+      "description": "Opaque Asana API gid (numeric string)."
+    }
+  }
+}

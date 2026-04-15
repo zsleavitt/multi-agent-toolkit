@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+  "queue_item_id": "hitl-schema-change",
+  "repo_profile_identity_id": "multi-agent-toolkit",
+  "orchestrator_state_path": ".ai-team/orchestrator.state.json",
+  "expected_queue_status": "blocked_hitl",
+  "title": "HITL: allow new git op git.tag",
+  "body": "Codex proposed MAT-1 manifest change. Review diff in artifacts/plan-2026-04-15.json",
+  "asana": {
+    "workspace_gid": "1200000000000001",
+    "parent_task_gid": "1200000000000003",
+    "assignee_gid": "1200000000000004",
+    "approval_section_gid": "1200000000000005"
+  },
+  "sla_due_at": "2026-04-16T17:00:00Z"
+}
