@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Orchestrator persisted state — queue, artifacts, checkpoints (MAT-4)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "queue", "artifacts", "checkpoints"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "repo_profile": { "$ref": "#/$defs/repo_profile_link" },
+    "queue": { "$ref": "#/$defs/queue" },
+    "artifacts": { "$ref": "#/$defs/artifacts" },
+    "checkpoints": { "$ref": "#/$defs/checkpoints" },
+    "meta": { "$ref": "#/$defs/meta" }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when this persisted-state document shape changes."
+    },
+    "repo_profile_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional link to MAT-9 `identity.id` for the same repo; paths in this document are repo-relative from repo root (same rules as MAT-9). Prefer storing artifacts and checkpoints under `repo.path_overrides.artifacts_dir` / `agent_state_dir` when those overrides exist.",
+      "required": ["identity_id"],
+      "properties": {
+        "identity_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Matches MAT-9 `identity.id` for the portable repo profile."
+        }
+      }
+    },
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!https?:)(?!\\.\\./)[^\\0]+$",
+      "description": "Path relative to repo root; no leading slash, no URL scheme, no parent traversal at start (aligned with MAT-9 `repo_relative_path`)."
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "RFC 4122 UUID string."
+    },
+    "queue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Ordered work queue; orchestrator defines ordering policy.",
+          "items": { "$ref": "#/$defs/queue_item" }
+        }
+      }
+    },
+    "queue_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Stable id for this queue entry (opaque to executors)."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "claimed",
+            "running",
+            "blocked_hitl",
+            "succeeded",
+            "failed",
+            "cancelled"
+          ],
+          "description": "Lifecycle status for orchestration and dashboards."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Human-readable label for prompts and UI."
+        },
+        "work_item": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional binding to an external work item (opaque ids; adapter aligns with MAT-9 `work_item_source.adapter`).",
+          "required": ["external_id", "adapter"],
+          "properties": {
+            "external_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "Opaque id in the external system (issue key, Linear id, etc.)."
+            },
+            "adapter": {
+              "type": "string",
+              "enum": ["none", "linear", "jira", "github_issues", "file"]
+            }
+          }
+        },
+        "correlation_id": { "$ref": "#/$defs/uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact_item" }
+        }
+      }
+    },
+    "artifact_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Unique id for this artifact row (uuid recommended)."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["log", "diff", "patch", "test_report", "bundle", "plan", "other"],
+          "description": "Coarse classifier for routing and retention policy."
+        },
+        "path": {
+          "$ref": "#/$defs/repo_relative_path",
+          "description": "Repo-relative path to the artifact bytes on disk. Typically under MAT-9 `repo.path_overrides.artifacts_dir` when set."
+        },
+        "correlation_id": { "$ref": "#/$defs/uuid" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "checkpoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/checkpoint_item" }
+        }
+      }
+    },
+    "checkpoint_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkpoint_id", "path", "created_at"],
+      "properties": {
+        "checkpoint_id": { "$ref": "#/$defs/uuid" },
+        "path": {
+          "$ref": "#/$defs/repo_relative_path",
+          "description": "Repo-relative path to checkpoint payload (graph snapshot, JSON blob, etc.). Typically under MAT-9 `repo.path_overrides.agent_state_dir` when set."
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Optional human label (e.g. after successful tool batch)."
+        },
+        "session": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional link to MAT-2 code-exec session when this checkpoint ties to a worker session.",
+          "required": ["session_id", "turn"],
+          "properties": {
+            "session_id": { "type": "string", "minLength": 1 },
+            "turn": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "updated_at": { "type": "string", "format": "date-time" },
+        "run_correlation_id": { "$ref": "#/$defs/uuid" }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "queue": {
+    "items": [
+      {
+        "id": "x",
+        "status": "done"
+      }
+    ]
+  },
+  "artifacts": { "items": [] },
+  "checkpoints": { "items": [] }
+}

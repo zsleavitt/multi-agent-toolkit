@@ -1,0 +1,13 @@
+{
+  "bundle_id": "orchestrator-state@v1",
+  "title": "MAT-4 — orchestrator persisted state (queue, artifacts, checkpoints)",
+  "description": "Single JSON document shape for durable orchestrator state: ordered work queue, artifact index with repo-relative paths, and session checkpoints. Paths follow MAT-9 repo-relative rules; prefer prefixes from `repo.path_overrides.artifacts_dir` and `agent_state_dir` when present in the repo profile.",
+  "schema_version": "1.0.0",
+  "document_schema": "./orchestrator-state.schema.json",
+  "canonical_filenames": ["orchestrator.state.json", "ai-team.state.json"],
+  "notes": [
+    "Absolute `repo_root` is never embedded; consumers join paths with the same absolute root used for MAT-1 / MAT-2 requests.",
+    "Queue `work_item.adapter` values align with MAT-9 `work_item_source.adapter` discriminants.",
+    "Checkpoint `session` mirrors optional MAT-2 request `session` (session_id + turn) for cross-wiring."
+  ]
+}

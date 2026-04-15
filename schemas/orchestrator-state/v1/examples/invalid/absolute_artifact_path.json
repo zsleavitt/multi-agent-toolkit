@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "queue": { "items": [] },
+  "artifacts": {
+    "items": [
+      {
+        "id": "bad",
+        "kind": "log",
+        "path": "/tmp/orchestrator.log"
+      }
+    ]
+  },
+  "checkpoints": { "items": [] }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "queue": {
+    "items": [
+      {
+        "id": "q-bad",
+        "status": "pending",
+        "work_item": {
+          "external_id": "PROJ-123"
+        }
+      }
+    ]
+  },
+  "artifacts": { "items": [] },
+  "checkpoints": { "items": [] }
+}

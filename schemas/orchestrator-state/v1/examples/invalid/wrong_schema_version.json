@@ -1,0 +1,6 @@
+{
+  "schema_version": "0.9.0",
+  "queue": { "items": [] },
+  "artifacts": { "items": [] },
+  "checkpoints": { "items": [] }
+}
