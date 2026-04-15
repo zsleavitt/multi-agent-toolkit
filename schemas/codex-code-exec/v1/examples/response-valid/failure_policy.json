@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "66666666-6666-4666-8666-666666666666",
+  "idempotency_key": "mat2-demo-policy-block",
+  "ok": false,
+  "replay": false,
+  "error": {
+    "code": "POLICY_BLOCKED",
+    "message": "Requested scope_globs extend outside executor allowlist for this repo profile.",
+    "details": {}
+  }
+}

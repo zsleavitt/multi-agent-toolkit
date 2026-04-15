@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex code execution — request envelope (MAT-2)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "correlation_id", "idempotency_key", "repo_root", "op", "params"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "correlation_id": { "$ref": "#/$defs/correlation_id" },
+    "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+    "repo_root": { "$ref": "#/$defs/repo_root" },
+    "session": { "$ref": "#/$defs/session" },
+    "op": {
+      "type": "string",
+      "enum": ["codex.implement", "codex.test", "codex.refactor"]
+    },
+    "params": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "op": { "const": "codex.implement" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_implement" } } }
+    },
+    {
+      "if": { "properties": { "op": { "const": "codex.test" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_test" } } }
+    },
+    {
+      "if": { "properties": { "op": { "const": "codex.refactor" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_refactor" } } } }
+  ],
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when wire format changes; executor must reject unknown versions."
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "End-to-end trace id; echoed on response."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "description": "Stable key for safe retries. Executor may return replay=true with prior result when safe."
+    },
+    "repo_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to repository root for workspace resolution (portable)."
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional multi-turn session handle; omit for one-shot runs.",
+      "required": ["session_id", "turn"],
+      "properties": {
+        "session_id": { "type": "string", "minLength": 1 },
+        "turn": { "type": "integer", "minimum": 0, "description": "Monotonic client-assigned turn counter for this session_id." }
+      }
+    },
+    "params_implement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instruction"],
+      "properties": {
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Implementation brief; executor translates to model prompt."
+        },
+        "scope_globs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional path/glob allowlist for edits; empty = executor default policy."
+        },
+        "acceptance_criteria": {
+          "type": "string",
+          "description": "Optional checklist the worker should satisfy before returning."
+        },
+        "readonly_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Paths or prefixes that must not be modified."
+        }
+      }
+    },
+    "params_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["test_profile"],
+      "properties": {
+        "test_profile": {
+          "type": "string",
+          "enum": ["pytest", "npm_test", "go_test", "maven_test"],
+          "description": "Executor maps profile to a fixed command template (no free-form shell)."
+        },
+        "scope_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional directories or files to pass as scoped args to the mapped command."
+        }
+      }
+    },
+    "params_refactor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instruction", "scope_paths"],
+      "properties": {
+        "instruction": { "type": "string", "minLength": 1 },
+        "scope_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "acceptance_criteria": { "type": "string" }
+      }
+    }
+  }
+}

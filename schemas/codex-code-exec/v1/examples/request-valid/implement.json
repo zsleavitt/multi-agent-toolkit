@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "22222222-2222-4222-8222-222222222222",
+  "idempotency_key": "mat2-demo-implement-001",
+  "repo_root": "/tmp/example-repo",
+  "session": {
+    "session_id": "sess_mat2_01",
+    "turn": 0
+  },
+  "op": "codex.implement",
+  "params": {
+    "instruction": "Add a unit test for parse_bundle_dir when env override is set.",
+    "scope_globs": ["scripts/*.py", "tests/**"],
+    "acceptance_criteria": "New test passes under pytest; no edits outside scope_globs."
+  }
+}
