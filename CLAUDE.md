@@ -12,8 +12,8 @@ Use this file in the **Claude Code** session that **orchestrates** work across w
 
 ## Contracts (schemas)
 
-- **MAT-1** — `schemas/gemini-git-ops/v1/` — git/CLI executor requests/responses; `manifest.json` allowlist.
-- **MAT-2** — `schemas/codex-code-exec/v1/` — code worker requests/responses; optional **session** + **turn** for multi-turn runs.
+- **MAT-1** — `schemas/gemini-git-ops/v1/` — git/CLI executor requests/responses; `manifest.json` allowlist; optional **`timeout_ms`** (MAT-11, **`schema_version`** 1.1.0).
+- **MAT-2** — `schemas/codex-code-exec/v1/` — code worker requests/responses; optional **session** + **turn** for multi-turn runs; optional **`timeout_ms`** (MAT-14, **`schema_version`** 1.1.0).
 - **MAT-9** — `schemas/ai-team-repo-profile/v1/` — portable **`ai-team.repo.json`** (or YAML → same shape): identity, repo-relative paths, **work_item_source** adapter (`none` | `linear` | `jira` | `github_issues` | `file`).
 - **MAT-4** — `schemas/orchestrator-state/v1/` — durable **`orchestrator.state.json`**: **queue**, **artifacts**, **checkpoints**; repo-relative paths (align with MAT-9 `path_overrides.artifacts_dir` / `agent_state_dir`).
 - **MAT-10** — same bundle — optional **`orchestrator_session`** (primary Claude Code session) and checkpoint **`fluency`** (`planning` / `review` / …) for **`/ai-fluency-insights`**-style tooling; keep high-signal planning and review in this orchestrator session when fluency scores matter.

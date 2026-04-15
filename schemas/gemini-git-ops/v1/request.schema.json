@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Gemini Git/CLI — request envelope (MAT-1)",
+  "title": "Gemini Git/CLI — request envelope (MAT-1; MAT-11 optional timeout_ms)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "correlation_id", "idempotency_key", "repo_root", "op", "params"],
@@ -9,6 +9,7 @@
     "correlation_id": { "$ref": "#/$defs/correlation_id" },
     "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
     "repo_root": { "$ref": "#/$defs/repo_root" },
+    "timeout_ms": { "$ref": "#/$defs/timeout_ms" },
     "op": {
       "type": "string",
       "enum": [
@@ -62,8 +63,14 @@
   "$defs": {
     "schema_version": {
       "type": "string",
-      "const": "1.0.0",
-      "description": "Bump only when wire format changes; executor must reject unknown versions."
+      "enum": ["1.0.0", "1.1.0"],
+      "description": "Wire format version. 1.1.0 adds optional `timeout_ms` (MAT-11); omit both when staying on 1.0.0. Executor must reject unknown versions."
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400000,
+      "description": "Optional wall-clock budget in milliseconds for this invocation; executor may clamp. Omitted = executor default (MAT-11)."
     },
     "correlation_id": {
       "type": "string",

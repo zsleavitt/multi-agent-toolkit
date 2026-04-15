@@ -1,0 +1,8 @@
+{
+  "schema_version": "2.0.0",
+  "correlation_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "idempotency_key": "mat1-invalid-schema-version",
+  "repo_root": "/tmp/example-repo",
+  "op": "git.status",
+  "params": {}
+}

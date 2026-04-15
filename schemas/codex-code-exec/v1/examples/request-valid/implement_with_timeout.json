@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  "idempotency_key": "mat2-demo-implement-timeout-001",
+  "repo_root": "/tmp/example-repo",
+  "timeout_ms": 900000,
+  "op": "codex.implement",
+  "params": {
+    "instruction": "Short fix; executor should respect timeout_ms."
+  }
+}

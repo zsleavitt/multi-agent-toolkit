@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+  "idempotency_key": "mat1-demo-timeout-001",
+  "ok": false,
+  "replay": false,
+  "error": {
+    "code": "TIMEOUT",
+    "message": "git invocation exceeded request timeout_ms budget",
+    "details": {
+      "git_command_argv": ["git", "-C", "/tmp/example-repo", "fetch", "origin"],
+      "stderr_excerpt": ""
+    }
+  }
+}

@@ -7,8 +7,8 @@ Portable contracts and tooling for a **Claude Code–orchestrated** dev loop: pl
 | Path | Purpose |
 |------|---------|
 | `config/schema-registry.json` | Where schema bundles live on disk (`root_relative`); optional `published_document_base` for future publish/mirror tooling only. |
-| `schemas/gemini-git-ops/v1/` | **MAT-1** — request/response JSON Schemas for git operations (`manifest.json`, `request.schema.json`, `response.schema.json`, `examples/`). |
-| `schemas/codex-code-exec/v1/` | **MAT-2** — request/response JSON Schemas for Codex-style code execution (implement / test / refactor), optional session semantics. |
+| `schemas/gemini-git-ops/v1/` | **MAT-1** — git operations request/response schemas; optional **`timeout_ms`** (MAT-11); `manifest.json` + `examples/`. |
+| `schemas/codex-code-exec/v1/` | **MAT-2** — code execution request/response schemas; optional session + **`timeout_ms`** (MAT-14); `manifest.json` + `examples/`. |
 | `schemas/ai-team-repo-profile/v1/` | **MAT-9** — portable repo profile (`ai-team.repo.json` / YAML) + work-item adapter (Linear, Jira, GitHub Issues, file, none). |
 | `schemas/orchestrator-state/v1/` | **MAT-4** / **MAT-10** — orchestrator persisted state (`orchestrator.state.json`): queue, artifact index, checkpoints; optional orchestrator session + fluency metadata; repo-relative paths. |
 | `schemas/hitl-asana-approval/v1/` | **MAT-6** — Asana HITL trigger and callback JSON for `blocked_hitl` queue gates. |

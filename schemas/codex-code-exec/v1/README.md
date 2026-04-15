@@ -28,6 +28,12 @@ Versioned JSON Schemas for requests and responses between the **orchestrator (Cl
 - **`session`** on the request is optional. When present, **`session_id`** and **`turn`** are required; clients should use monotonic **`turn`** per `session_id` for idempotent resume (executor may return `SESSION_TURN_MISMATCH`).
 - On success, workers may return a **`result.session`** object (`session_id`, **`next_turn`**, **`terminal`**) so the orchestrator knows how to continue. Shapes are documented under `response.schema.json` → `$defs/result_session`.
 
+## Timeout (MAT-14)
+
+- Optional **`timeout_ms`** on the request: integer milliseconds **1**–**86400000**; executor may clamp. Omitted means executor default.
+- Use **`schema_version`** **1.1.0** when emitting **`timeout_ms`**; documents without it may remain **1.0.0**.
+- **`TIMEOUT`** in `response.schema.json` → `error.code` covers budget exhaustion (already defined for MAT-2).
+
 ## Validate locally
 
 ```bash

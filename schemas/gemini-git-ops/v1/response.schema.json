@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Gemini Git/CLI — response envelope (MAT-1)",
+  "title": "Gemini Git/CLI — response envelope (MAT-1; MAT-11 TIMEOUT)",
   "oneOf": [
     {
       "title": "Success",
@@ -57,8 +57,8 @@
   "$defs": {
     "schema_version": {
       "type": "string",
-      "const": "1.0.0",
-      "description": "Bump only when wire format changes; executor must reject unknown versions."
+      "enum": ["1.0.0", "1.1.0"],
+      "description": "Wire format version; align with request `schema_version`. 1.1.0 pairs with optional request `timeout_ms` and `TIMEOUT` error code (MAT-11)."
     },
     "correlation_id": {
       "type": "string",
@@ -88,6 +88,7 @@
         "PERMISSION_DENIED",
         "POLICY_BLOCKED",
         "GIT_ERROR",
+        "TIMEOUT",
         "IDEMPOTENCY_REPLAY",
         "INTERNAL_ERROR"
       ]

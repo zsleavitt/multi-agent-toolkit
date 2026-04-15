@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "idempotency_key": "mat1-invalid-timeout-zero",
+  "repo_root": "/tmp/example-repo",
+  "timeout_ms": 0,
+  "op": "git.status",
+  "params": {}
+}
