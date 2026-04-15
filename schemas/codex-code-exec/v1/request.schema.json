@@ -94,7 +94,7 @@
       "properties": {
         "test_profile": {
           "type": "string",
-          "enum": ["pytest", "npm_test", "go_test", "maven_test"],
+          "enum": ["pytest", "rspec", "jest", "vitest", "npm_test", "go_test", "cargo_test", "maven_test"],
           "description": "Executor maps profile to a fixed command template (no free-form shell)."
         },
         "scope_paths": {

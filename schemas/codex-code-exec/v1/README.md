@@ -40,3 +40,15 @@ python scripts/validate_codex_code_exec.py
 ## Portable `repo_root`
 
 Same as MAT-1: requests carry **`repo_root`** (absolute path). Combined with future **MAT-9** repo profiles, paths stay explicit rather than implicit cwd.
+
+## Scope boundaries
+
+This bundle covers **code execution** only: implement, test, refactor. Whether `git add` / `git commit` / `git diff` live on the git executor (MAT-1), the code worker (MAT-2), or both is **explicitly deferred** to **MAT-12**. Until then, code workers should not assume they own git staging/commit.
+
+## Future operations
+
+v1.1 may add:
+- `codex.diagnose` — debug/root-cause analysis workflows
+- `codex.review` — code review with structured feedback
+
+These are tracked separately; the v1 ops (`implement`, `test`, `refactor`) are stable.
