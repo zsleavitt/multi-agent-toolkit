@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Codex code execution — response envelope (MAT-2)",
+  "title": "Codex code execution — response envelope (MAT-2; MAT-13 diagnose/review results)",
   "oneOf": [
     {
       "title": "Success",
@@ -57,8 +57,8 @@
   "$defs": {
     "schema_version": {
       "type": "string",
-      "enum": ["1.0.0", "1.1.0"],
-      "description": "Wire format version; align with request `schema_version`. 1.1.0 pairs with optional request `timeout_ms` (MAT-14); `TIMEOUT` error already covers budget exhaustion."
+      "enum": ["1.0.0", "1.1.0", "1.2.0"],
+      "description": "Wire format version; align with request `schema_version`. 1.1.0 pairs with optional request `timeout_ms` (MAT-14). 1.2.0 pairs with MAT-13 `result_diagnose` / `result_review` shapes."
     },
     "correlation_id": {
       "type": "string",
@@ -161,6 +161,112 @@
         "next_turn": { "type": "integer", "minimum": 0, "description": "Turn value the client should send on the following request.session.turn." },
         "terminal": { "type": "boolean", "description": "True when the worker will not accept further turns for this session_id." },
         "resume_token": { "type": "string", "description": "Optional opaque token for executor-specific resume." }
+      }
+    },
+    "review_finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "path", "message"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["info", "suggestion", "issue", "blocker"],
+          "description": "Finding importance; orchestrators may gate merges on `issue` / `blocker`."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repo-relative file path."
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based start line when applicable."
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based end line for multi-line spans."
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable finding text."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "style",
+            "correctness",
+            "security",
+            "performance",
+            "testing",
+            "documentation",
+            "maintainability",
+            "other"
+          ]
+        },
+        "code_snippet": {
+          "type": "string",
+          "maxLength": 4000,
+          "description": "Optional excerpt illustrating the finding."
+        }
+      }
+    },
+    "result_diagnose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Primary narrative: likely root cause and reasoning."
+        },
+        "hypothesis": {
+          "type": "string",
+          "description": "Short headline hypothesis when distinct from summary."
+        },
+        "likely_causes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "confidence", "rationale"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1 },
+              "confidence": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "rationale": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "recommended_next_steps": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Concrete verification or fix steps."
+        },
+        "session": { "$ref": "#/$defs/result_session" }
+      }
+    },
+    "result_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "findings"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Overall assessment of the scoped change."
+        },
+        "findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/review_finding" },
+          "description": "Structured findings; may be empty when there are no issues in scope."
+        },
+        "session": { "$ref": "#/$defs/result_session" }
       }
     }
   }

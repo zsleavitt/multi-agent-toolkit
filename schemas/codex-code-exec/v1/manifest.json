@@ -2,19 +2,22 @@
   "bundle_id": "codex-code-exec@v1",
   "title": "MAT Codex Code Exec — bundle manifest",
   "description": "Machine-readable index for MAT-2. Executors MUST reject any op not listed here (deny-by-default).",
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "request_schema": "./request.schema.json",
   "response_schema": "./response.schema.json",
   "allowed_operations": [
     "codex.implement",
     "codex.test",
-    "codex.refactor"
+    "codex.refactor",
+    "codex.diagnose",
+    "codex.review"
   ],
   "high_risk_operations": ["codex.implement", "codex.refactor"],
   "notes": [
     "Orchestrator (Claude Code) emits JSON only; it does not run implementation sandboxes directly unless a product-specific profile says otherwise.",
     "Executor maps each op to a sandboxed Codex (or equivalent) invocation — no repo-wide shell; git staging/commit/diff are MAT-1 only (MAT-12), not this bundle.",
     "Session fields are optional; when present, executor must honor session_id + monotonic turn for resume semantics.",
-    "MAT-14: optional request `timeout_ms` (1–86400000 ms); executor may return existing `TIMEOUT` error when budget is exceeded."
+    "MAT-14: optional request `timeout_ms` (1–86400000 ms); executor may return existing `TIMEOUT` error when budget is exceeded.",
+    "MAT-13: `codex.diagnose` (read-oriented RCA) and `codex.review` (structured findings); request/response `schema_version` **1.2.0** when using these ops; see `response.schema.json` → `result_diagnose`, `result_review`, `review_finding`."
   ]
 }
