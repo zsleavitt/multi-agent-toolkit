@@ -49,7 +49,7 @@ Same as MAT-1: requests carry **`repo_root`** (absolute path). Combined with fut
 
 ## Scope boundaries
 
-This bundle covers **code execution** only: implement, test, refactor. Whether `git add` / `git commit` / `git diff` live on the git executor (MAT-1), the code worker (MAT-2), or both is **explicitly deferred** to **MAT-12**. Until then, code workers should not assume they own git staging/commit.
+This bundle covers **code execution** only: implement, test, refactor. **MAT-12 (done):** `git add`, `git commit`, and `git diff` are **MAT-1** wire ops only (allowlisted `git` argv on the executor). MAT-2 does not carry git staging, commits, or diff requests — orchestrators emit MAT-1 JSON for those after Codex (or other workers) finish editing.
 
 ## Future operations
 

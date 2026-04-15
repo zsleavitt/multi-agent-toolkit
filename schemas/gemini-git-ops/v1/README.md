@@ -39,13 +39,23 @@ python scripts/validate_gemini_git_ops.py
 In both cases the **executor** must:
 
 - Reject `op` not in `manifest.json → allowed_operations`.
-- Run **no shell** — spawn `git` with explicit argv only.
+- Run **no shell** — spawn `git` with explicit argv only (including MAT-12 `git.add` / `git.commit` / `git.diff` mappings).
 - Honor `idempotency_key` (return `replay: true` + prior `result` when safe).
 - Honor optional **`timeout_ms`** on the request (MAT-11): integer milliseconds **1**–**86400000** (24h cap in schema); executor may clamp. Use request/response **`schema_version`** **1.1.0** when emitting `timeout_ms`; stay on **1.0.0** when omitting it. On budget exhaustion return **`error.code`** **`TIMEOUT`**.
 
 ## Result shapes per `op`
 
 Executors should populate `result` consistently; recommended shapes live under `response.schema.json` → `$defs` (`result_status`, `result_worktree_add`, …). The top-level `result` property stays a JSON object for forward compatibility.
+
+**MAT-12 (staging / commit / diff)** — also documented in `$defs`:
+
+| `op` | Suggested `result` shape (`$defs/...`) |
+|------|----------------------------------------|
+| `git.add` | `result_add` — optional echo of `pathspecs` or `all: true`. |
+| `git.commit` | `result_commit` — `commit_sha` required; optional `branch`. |
+| `git.diff` | `result_diff` — `unified_diff` text (may be empty); optional `cached` echo. |
+
+Orchestrators use MAT-1 for these; **MAT-2** does not define parallel git wire ops (see `schemas/codex-code-exec/v1/README.md`).
 
 ## Validate locally
 

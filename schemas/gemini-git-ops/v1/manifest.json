@@ -15,12 +15,16 @@
     "git.worktree_add",
     "git.worktree_remove",
     "git.worktree_list",
-    "git.push"
+    "git.push",
+    "git.add",
+    "git.commit",
+    "git.diff"
   ],
-  "high_risk_operations": ["git.push", "git.worktree_remove"],
+  "high_risk_operations": ["git.push", "git.worktree_remove", "git.commit"],
   "notes": [
     "Orchestrator (Claude Code) never runs git; it only emits requests validated against request.schema.json.",
     "Executor (e.g. Gemini CLI bridge) maps each op to an allowlisted argv template — no arbitrary shell.",
-    "MAT-11: optional request `timeout_ms` (1–86400000 ms); response may use `TIMEOUT` when the budget is exceeded."
+    "MAT-11: optional request `timeout_ms` (1–86400000 ms); response may use `TIMEOUT` when the budget is exceeded.",
+    "MAT-12: `git.add`, `git.commit`, and `git.diff` are MAT-1 only (allowlisted argv). Codex/MAT-2 does not define git staging, commits, or diff wire ops — route those through this bundle."
   ]
 }

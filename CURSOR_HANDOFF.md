@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = implementation worker (scoped code, tests, refactors).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-14** are **Done** — schemas (including optional **`timeout_ms`** on MAT-1 / MAT-2 requests), ADR, CLAUDE.md, portable repo profile, orchestrator state document (including orchestrator session + fluency metadata), and Asana HITL trigger/callback contracts merged.
+- **MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-14** are **Done** — schemas (including optional **`timeout_ms`** on MAT-1 / MAT-2 requests and MAT-12 **`git.add` / `git.commit` / `git.diff`** on MAT-1), ADR, CLAUDE.md, portable repo profile, orchestrator state document (including orchestrator session + fluency metadata), and Asana HITL trigger/callback contracts merged.
 - **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
@@ -26,7 +26,7 @@ multi-agent-toolkit/
 ├── CURSOR_HANDOFF.md                 # This file
 ├── docs/adr/                         # MAT-8 and later ADRs
 ├── config/schema-registry.json       # Bundle paths; optional published_document_base
-├── schemas/gemini-git-ops/v1/        # MAT-1: git ops schemas (merged)
+├── schemas/gemini-git-ops/v1/        # MAT-1 (+ MAT-11 timeout_ms, MAT-12 add/commit/diff ops)
 │   ├── manifest.json
 │   ├── request.schema.json
 │   ├── response.schema.json
@@ -77,13 +77,13 @@ multi-agent-toolkit/
 | MAT-9 | Portable repo profile + work-item adapter | **Done** |
 | MAT-10 | Orchestrator sessions + fluency signals | **Done** |
 | MAT-11 | Add timeout_ms to git-ops schema | **Done** |
-| MAT-12 | Clarify git staging/commit scope | Backlog (P2) |
+| MAT-12 | Clarify git staging/commit scope | **Done** |
 | MAT-13 | Add codex.diagnose/review ops (v1.1) | Backlog (P2) |
 | MAT-14 | Add timeout_ms to MAT-2 schemas | **Done** |
 
 ## Key design decisions
 
-1. **Git surface split**: MAT-1 covers **branch / worktree / fetch / pull / push** style ops. Whether **`git add` / `git commit` / `git diff`** live under MAT-1 (executor), MAT-2 (Codex in a sandbox), or both is **explicitly deferred** — track in **MAT-12** so MAT-2 stays “code execution” scoped.
+1. **Git surface split (MAT-12)**: MAT-1 covers **branch / worktree / fetch / pull / push** and **`git add` / `git commit` / `git diff`** (allowlisted argv, no shell). **MAT-2** does not define those git wire ops — Codex stays scoped to implement/test/refactor; orchestrators route staging, commits, and repo diffs through MAT-1.
 
 2. **Fluency (MAT-10)**: `claude-introspection` reads `~/.claude/`; high-signal planning/review should happen in the **main Claude Code** session when you care about scores. Optional MAT-4 fields **`orchestrator_session`** and checkpoint **`fluency`** (`schemas/orchestrator-state/v1/`, document `schema_version` **1.1.0**) record that linkage for tooling.
 
@@ -99,7 +99,7 @@ multi-agent-toolkit/
 ## Suggested next steps (in order)
 
 1. **Stay on `main`**, pull latest (see above).
-2. **MAT-12 / MAT-13** — Git staging/commit scope (MAT-12) and Codex diagnose/review ops (MAT-13).
+2. **MAT-13** — Codex `codex.diagnose` / `codex.review` ops (v1.1 extension).
 3. **MAT-5 / MAT-7** — Prototype and architecture audit when prioritized.
 
 ## Validation

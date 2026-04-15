@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "55555555-5555-4555-8555-555555555555",
+  "idempotency_key": "mat1-demo-diff-cached-001",
+  "ok": true,
+  "replay": false,
+  "result": {
+    "unified_diff": "diff --git a/src/foo.ts b/src/foo.ts\nindex 1111111..2222222 100644\n--- a/src/foo.ts\n+++ b/src/foo.ts\n@@ -1 +1 @@\n-old\n+new\n",
+    "cached": true
+  }
+}

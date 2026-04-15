@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "idempotency_key": "mat1-demo-diff-worktree-001",
+  "repo_root": "/tmp/example-repo",
+  "op": "git.diff",
+  "params": {}
+}

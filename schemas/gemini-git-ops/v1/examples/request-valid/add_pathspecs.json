@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.1.0",
+  "correlation_id": "22222222-2222-4222-8222-222222222222",
+  "idempotency_key": "mat1-demo-add-pathspecs-001",
+  "repo_root": "/tmp/example-repo",
+  "op": "git.add",
+  "params": {
+    "pathspecs": ["src/foo.ts", "README.md"]
+  }
+}
