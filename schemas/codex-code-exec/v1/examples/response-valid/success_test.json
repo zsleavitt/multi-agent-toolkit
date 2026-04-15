@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "33333333-3333-4333-8333-333333333333",
+  "idempotency_key": "mat2-demo-pytest-001",
+  "ok": true,
+  "replay": false,
+  "result": {
+    "test_profile": "pytest",
+    "exit_code": 0,
+    "stdout_excerpt": "3 passed in 0.42s",
+    "stderr_excerpt": ""
+  }
+}

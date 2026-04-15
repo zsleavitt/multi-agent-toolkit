@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "77777777-7777-4777-8777-777777777777",
+  "idempotency_key": "mat2-demo-test-fail-001",
+  "ok": false,
+  "replay": false,
+  "error": {
+    "code": "TEST_FAILED",
+    "message": "Test suite exited with failures.",
+    "details": {
+      "exit_code": 1,
+      "stdout_excerpt": "FAILED tests/test_validate.py::test_env_override - AssertionError",
+      "stderr_excerpt": ""
+    }
+  }
+}

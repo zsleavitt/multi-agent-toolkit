@@ -22,14 +22,22 @@ git pull origin main
 
 ```
 multi-agent-toolkit/
+├── CLAUDE.md                         # MAT-3: orchestrator context for Claude Code
 ├── CURSOR_HANDOFF.md                 # This file
+├── docs/adr/                         # MAT-8 and later ADRs
 ├── config/schema-registry.json       # Bundle paths; optional published_document_base
 ├── schemas/gemini-git-ops/v1/        # MAT-1: git ops schemas (merged)
 │   ├── manifest.json
 │   ├── request.schema.json
 │   ├── response.schema.json
 │   └── examples/
+├── schemas/codex-code-exec/v1/       # MAT-2: Codex code-exec schemas
+│   ├── manifest.json
+│   ├── request.schema.json
+│   ├── response.schema.json
+│   └── examples/
 ├── scripts/validate_gemini_git_ops.py
+├── scripts/validate_codex_code_exec.py
 ├── research/multi-agent-research.md  # Architecture research
 └── requirements-dev.txt
 ```
@@ -43,13 +51,13 @@ multi-agent-toolkit/
 | Ticket | Name | Typical next |
 |--------|------|----------------|
 | MAT-1 | Claude → Gemini git/CLI contracts | **Done** (merged); follow-ups → MAT-11 / MAT-12 |
-| MAT-2 | Claude → Codex **code execution** contracts | **P0** — patches, tests, task packages (not repo-wide git; see MAT-12) |
-| MAT-3 | CLAUDE.md / repo context package | P1 |
+| MAT-2 | Claude → Codex **code execution** contracts | **In repo** — `schemas/codex-code-exec/v1/` + `scripts/validate_codex_code_exec.py` (not repo-wide git; see MAT-12) |
+| MAT-3 | CLAUDE.md / repo context package | **In repo** — root `CLAUDE.md` (extend per app repo as needed) |
 | MAT-4 | State: queue, artifacts, checkpoints | P1 |
 | MAT-5 | Gumloop workflow prototype | P2 |
 | MAT-6 | HITL: Asana approval triggers | P1 |
 | MAT-7 | Audit repo vs architecture checklist | P2 |
-| MAT-8 | ADR: Claude Code vs Cursor orchestrator | **Ready** — good immediate doc task |
+| MAT-8 | ADR: Claude Code vs Cursor orchestrator | **In repo** — `docs/adr/0001-primary-orchestrator-claude-code-vs-cursor.md` |
 | MAT-9 | Portable repo profile + work-item adapter | P0 |
 | MAT-10 | Orchestrator sessions + fluency signals | P1 |
 | MAT-11 | Add `timeout_ms` (and similar) to git-ops schema | P2 |
@@ -73,9 +81,9 @@ multi-agent-toolkit/
 ## Suggested next steps (in order)
 
 1. **Stay on `main`**, pull latest (see above).
-2. **MAT-8** — Finalize ADR: Claude Code as primary orchestrator (Notion row already has a sibling page; align repo + ticket).
-3. **MAT-2** — JSON Schemas for **Codex** task execution (request/response, session semantics), mirroring the MAT-1 layout under e.g. `schemas/codex-code-exec/v1/`.
-4. **MAT-3** — `CLAUDE.md` template for orchestration-only Claude.
+2. **MAT-9** — Portable repo profile + work-item adapter (P0 on the board).
+3. **MAT-4** — State: queue, artifacts, checkpoints.
+4. **MAT-11 / MAT-12** — Schema follow-ups (`timeout_ms`; git staging/commit scope vs MAT-2).
 
 ## Validation
 
@@ -84,9 +92,10 @@ cd /Users/zach.leavitt/.claude/multi-agent-toolkit
 python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 python scripts/validate_gemini_git_ops.py
+python scripts/validate_codex_code_exec.py
 ```
 
-Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1` if the bundle is not at the default `root_relative` path.
+Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1` or `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1` if a bundle is not at the default `root_relative` path.
 
 ## References
 

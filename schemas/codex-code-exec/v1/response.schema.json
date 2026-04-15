@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex code execution — response envelope (MAT-2)",
+  "oneOf": [
+    {
+      "title": "Success",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "correlation_id",
+        "idempotency_key",
+        "ok",
+        "replay",
+        "result"
+      ],
+      "properties": {
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "correlation_id": { "$ref": "#/$defs/correlation_id" },
+        "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+        "ok": { "const": true },
+        "replay": { "type": "boolean" },
+        "result": { "type": "object", "additionalProperties": true }
+      }
+    },
+    {
+      "title": "Failure",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "correlation_id",
+        "idempotency_key",
+        "ok",
+        "replay",
+        "error"
+      ],
+      "properties": {
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "correlation_id": { "$ref": "#/$defs/correlation_id" },
+        "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+        "ok": { "const": false },
+        "replay": { "type": "boolean" },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "$ref": "#/$defs/error_code" },
+            "message": { "type": "string", "minLength": 1 },
+            "details": { "$ref": "#/$defs/exec_error_details" }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when wire format changes; orchestrator must reject unknown versions."
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "End-to-end trace id; echoed from request."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "description": "Echoed from request; replay semantics match MAT-1."
+    },
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "VALIDATION_ERROR",
+        "UNKNOWN_OP",
+        "SESSION_NOT_FOUND",
+        "SESSION_TURN_MISMATCH",
+        "SESSION_EXPIRED",
+        "POLICY_BLOCKED",
+        "SANDBOX_ERROR",
+        "TIMEOUT",
+        "WORKER_REFUSED",
+        "TEST_FAILED",
+        "IDEMPOTENCY_REPLAY",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "exec_error_details": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exit_code": { "type": "integer", "description": "Process exit code when applicable." },
+        "stdout_excerpt": { "type": "string", "maxLength": 8000 },
+        "stderr_excerpt": { "type": "string", "maxLength": 8000 },
+        "worker_request_id": { "type": "string", "description": "Opaque id from underlying Codex/API for support correlation." }
+      }
+    },
+    "result_implement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": { "type": "string" },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "operation"],
+            "properties": {
+              "path": { "type": "string" },
+              "operation": { "type": "string", "enum": ["add", "edit", "delete"] }
+            }
+          }
+        },
+        "session": { "$ref": "#/$defs/result_session" }
+      }
+    },
+    "result_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exit_code", "test_profile"],
+      "properties": {
+        "test_profile": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "stdout_excerpt": { "type": "string" },
+        "stderr_excerpt": { "type": "string" },
+        "session": { "$ref": "#/$defs/result_session" }
+      }
+    },
+    "result_refactor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": { "type": "string" },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "operation"],
+            "properties": {
+              "path": { "type": "string" },
+              "operation": { "type": "string", "enum": ["add", "edit", "delete"] }
+            }
+          }
+        },
+        "session": { "$ref": "#/$defs/result_session" }
+      }
+    },
+    "result_session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "next_turn", "terminal"],
+      "properties": {
+        "session_id": { "type": "string", "minLength": 1 },
+        "next_turn": { "type": "integer", "minimum": 0, "description": "Turn value the client should send on the following request.session.turn." },
+        "terminal": { "type": "boolean", "description": "True when the worker will not accept further turns for this session_id." },
+        "resume_token": { "type": "string", "description": "Optional opaque token for executor-specific resume." }
+      }
+    }
+  }
+}

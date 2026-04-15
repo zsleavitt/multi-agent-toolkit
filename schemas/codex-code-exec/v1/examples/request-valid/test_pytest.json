@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "33333333-3333-4333-8333-333333333333",
+  "idempotency_key": "mat2-demo-pytest-001",
+  "repo_root": "/tmp/example-repo",
+  "op": "codex.test",
+  "params": {
+    "test_profile": "pytest",
+    "scope_paths": ["tests/test_validate.py"]
+  }
+}
