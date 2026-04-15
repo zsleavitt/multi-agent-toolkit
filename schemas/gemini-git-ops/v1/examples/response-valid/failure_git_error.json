@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "44444444-4444-4444-8444-444444444444",
+  "idempotency_key": "mat1-demo-fail-001",
+  "ok": false,
+  "replay": false,
+  "error": {
+    "code": "GIT_ERROR",
+    "message": "git exited non-zero",
+    "details": {
+      "git_exit_code": 1,
+      "git_command_argv": ["git", "-C", "/tmp/example-repo", "pull", "--ff-only"],
+      "stderr_excerpt": "fatal: Not possible to fast-forward, aborting."
+    }
+  }
+}

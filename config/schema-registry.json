@@ -1,0 +1,9 @@
+{
+  "documentation": "schema_bundles.*.root_relative: where this repo keeps MAT-1 JSON Schemas on disk. published_document_base: optional URL prefix for a separate publish/mirror pipeline (not read by schemas in git — they use only fragment $ref). MAT_GEMINI_GIT_OPS_V1 env overrides root_relative for validators and CI.",
+  "schema_bundles": {
+    "gemini-git-ops@v1": {
+      "root_relative": "schemas/gemini-git-ops/v1",
+      "published_document_base": null
+    }
+  }
+}

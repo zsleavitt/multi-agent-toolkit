@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gemini Git/CLI — response envelope (MAT-1)",
+  "oneOf": [
+    {
+      "title": "Success",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "correlation_id",
+        "idempotency_key",
+        "ok",
+        "replay",
+        "result"
+      ],
+      "properties": {
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "correlation_id": { "$ref": "#/$defs/correlation_id" },
+        "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+        "ok": { "const": true },
+        "replay": { "type": "boolean" },
+        "result": { "type": "object", "additionalProperties": true }
+      }
+    },
+    {
+      "title": "Failure",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "correlation_id",
+        "idempotency_key",
+        "ok",
+        "replay",
+        "error"
+      ],
+      "properties": {
+        "schema_version": { "$ref": "#/$defs/schema_version" },
+        "correlation_id": { "$ref": "#/$defs/correlation_id" },
+        "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+        "ok": { "const": false },
+        "replay": { "type": "boolean" },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "$ref": "#/$defs/error_code" },
+            "message": { "type": "string", "minLength": 1 },
+            "details": { "$ref": "#/$defs/git_error_details" }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when wire format changes; executor must reject unknown versions."
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "End-to-end trace id; echoed on response."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "description": "Stable key for safe retries (e.g. hash of op+repo_root+params). Executor may return replay=true with prior result."
+    },
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "VALIDATION_ERROR",
+        "UNKNOWN_OP",
+        "REPO_NOT_FOUND",
+        "NOT_A_GIT_REPO",
+        "DIRTY_INDEX",
+        "BRANCH_EXISTS",
+        "BRANCH_NOT_FOUND",
+        "WORKTREE_PATH_EXISTS",
+        "WORKTREE_NOT_FOUND",
+        "MERGE_CONFLICT",
+        "NON_FAST_FORWARD",
+        "PERMISSION_DENIED",
+        "POLICY_BLOCKED",
+        "GIT_ERROR",
+        "IDEMPOTENCY_REPLAY",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "git_error_details": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "git_exit_code": { "type": "integer" },
+        "git_command_argv": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Argv actually executed (no shell); for audit logs."
+        },
+        "stderr_excerpt": {
+          "type": "string",
+          "maxLength": 8000,
+          "description": "Tail-capped stderr for debugging."
+        }
+      }
+    },
+    "result_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_branch", "is_clean", "porcelain"],
+      "properties": {
+        "current_branch": { "type": "string" },
+        "is_clean": { "type": "boolean" },
+        "porcelain": { "type": "string" }
+      }
+    },
+    "result_fetch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fetched_refs"],
+      "properties": {
+        "fetched_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "result_pull": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fast_forward": { "type": "boolean" },
+        "merge_commit_sha": { "type": ["string", "null"] },
+        "head_sha": { "type": "string" }
+      }
+    },
+    "result_checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "head_sha"],
+      "properties": {
+        "branch": { "type": "string" },
+        "head_sha": { "type": "string" }
+      }
+    },
+    "result_branch_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branches"],
+      "properties": {
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "kind"],
+            "properties": {
+              "name": { "type": "string" },
+              "kind": { "type": "string", "enum": ["local", "remote"] },
+              "commit_sha": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "result_worktree_add": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worktree_path", "branch", "head_sha"],
+      "properties": {
+        "worktree_path": { "type": "string" },
+        "branch": { "type": "string" },
+        "head_sha": { "type": "string" }
+      }
+    },
+    "result_worktree_remove": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["removed_path"],
+      "properties": {
+        "removed_path": { "type": "string" }
+      }
+    },
+    "result_worktree_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worktrees"],
+      "properties": {
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "branch", "head_sha", "bare", "locked"],
+            "properties": {
+              "path": { "type": "string" },
+              "branch": { "type": "string" },
+              "head_sha": { "type": "string" },
+              "bare": { "type": "boolean" },
+              "locked": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "result_push": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remote", "ref", "before_sha", "after_sha"],
+      "properties": {
+        "remote": { "type": "string" },
+        "ref": { "type": "string" },
+        "before_sha": { "type": "string" },
+        "after_sha": { "type": "string" }
+      }
+    }
+  }
+}

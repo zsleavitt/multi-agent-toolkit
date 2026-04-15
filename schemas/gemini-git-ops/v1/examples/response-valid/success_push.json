@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "55555555-5555-4555-8555-555555555555",
+  "idempotency_key": "mat1-demo-push-001",
+  "ok": true,
+  "replay": false,
+  "result": {
+    "remote": "origin",
+    "ref": "refs/heads/feature-mat-1",
+    "before_sha": "0000000000000000000000000000000000000000",
+    "after_sha": "abc1234def5678901234567890abcdef12345678"
+  }
+}

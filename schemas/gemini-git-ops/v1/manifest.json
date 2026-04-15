@@ -1,0 +1,25 @@
+{
+  "bundle_id": "gemini-git-ops@v1",
+  "title": "MAT Gemini Git Ops — bundle manifest",
+  "description": "Machine-readable index for MAT-1. Executors MUST reject any op not listed here (deny-by-default).",
+  "schema_version": "1.0.0",
+  "request_schema": "./request.schema.json",
+  "response_schema": "./response.schema.json",
+  "allowed_operations": [
+    "git.status",
+    "git.fetch",
+    "git.pull",
+    "git.checkout_new_branch",
+    "git.checkout_existing",
+    "git.branch_list",
+    "git.worktree_add",
+    "git.worktree_remove",
+    "git.worktree_list",
+    "git.push"
+  ],
+  "high_risk_operations": ["git.push", "git.worktree_remove"],
+  "notes": [
+    "Orchestrator (Claude Code) never runs git; it only emits requests validated against request.schema.json.",
+    "Executor (e.g. Gemini CLI bridge) maps each op to an allowlisted argv template — no arbitrary shell."
+  ]
+}

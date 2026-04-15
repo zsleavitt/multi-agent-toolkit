@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gemini Git/CLI — request envelope (MAT-1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "correlation_id", "idempotency_key", "repo_root", "op", "params"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "correlation_id": { "$ref": "#/$defs/correlation_id" },
+    "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+    "repo_root": { "$ref": "#/$defs/repo_root" },
+    "op": {
+      "type": "string",
+      "enum": [
+        "git.status",
+        "git.fetch",
+        "git.pull",
+        "git.checkout_new_branch",
+        "git.checkout_existing",
+        "git.branch_list",
+        "git.worktree_add",
+        "git.worktree_remove",
+        "git.worktree_list",
+        "git.push"
+      ]
+    },
+    "params": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "op": { "const": "git.status" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_status" } } }
+    },
+    {
+      "if": { "properties": { "op": { "const": "git.fetch" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_fetch" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.pull" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_pull" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.checkout_new_branch" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_checkout_new_branch" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.checkout_existing" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_checkout_existing" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.branch_list" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_branch_list" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.worktree_add" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_worktree_add" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.worktree_remove" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_worktree_remove" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.worktree_list" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_worktree_list" } } } },
+    {
+      "if": { "properties": { "op": { "const": "git.push" } }, "required": ["op"] },
+      "then": { "properties": { "params": { "$ref": "#/$defs/params_push" } } } }
+  ],
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when wire format changes; executor must reject unknown versions."
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "End-to-end trace id; echoed on response."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "description": "Stable key for safe retries (e.g. hash of op+repo_root+params). Executor may return replay=true with prior result."
+    },
+    "repo_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute path to repository root (portable; never implicit cwd from orchestrator)."
+    },
+    "params_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pathspecs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional paths for status scope; empty = whole repo."
+        }
+      }
+    },
+    "params_fetch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "remote": { "type": "string", "minLength": 1 },
+        "prune": { "type": "boolean" }
+      }
+    },
+    "params_pull": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "remote": { "type": "string", "minLength": 1 },
+        "refspec": { "type": "string" },
+        "rebase": { "type": "boolean" },
+        "ff_only": { "type": "boolean" }
+      }
+    },
+    "params_checkout_new_branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1, "pattern": "^[^\\s]+$" },
+        "start_point": { "type": "string" }
+      }
+    },
+    "params_checkout_existing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "params_branch_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "include_remotes": { "type": "boolean" }
+      }
+    },
+    "params_worktree_add": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "branch"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "branch": { "type": "string", "minLength": 1 },
+        "base_ref": { "type": "string" }
+      }
+    },
+    "params_worktree_remove": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "force": { "type": "boolean" }
+      }
+    },
+    "params_worktree_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "params_push": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "remote": { "type": "string", "minLength": 1 },
+        "refspec": { "type": "string" },
+        "force_with_lease": { "type": "boolean" }
+      }
+    }
+  }
+}
