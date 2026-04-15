@@ -1,0 +1,12 @@
+{
+  "bundle_id": "ai-team-repo-profile@v1",
+  "title": "MAT-9 — portable repo profile + work-item adapter",
+  "description": "Human- and machine-readable profile for a single repo: identity, repo-relative paths, and a discriminated work-item source. No org-specific URLs are required; optional base URLs exist only for self-hosted providers.",
+  "schema_version": "1.0.0",
+  "document_schema": "./repo-profile.schema.json",
+  "canonical_filenames": ["ai-team.repo.json", "ai-team.repo.yaml"],
+  "notes": [
+    "YAML documents MUST parse to the same JSON object shape validated by repo-profile.schema.json.",
+    "Orchestrators resolve repo_root out-of-band (absolute path); this profile never embeds another machine's filesystem paths."
+  ]
+}

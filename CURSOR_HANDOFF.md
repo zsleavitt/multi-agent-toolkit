@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = implementation worker (scoped code, tests, refactors).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **MAT-1, MAT-2, MAT-3, MAT-8** are **Done** — schemas, ADR, and CLAUDE.md merged.
+- **MAT-1, MAT-2, MAT-3, MAT-8, MAT-9** are **Done** — schemas, ADR, CLAUDE.md, and portable repo profile merged.
 - **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
 
 ## Sync the repo (do this first)
@@ -36,8 +36,13 @@ multi-agent-toolkit/
 │   ├── request.schema.json
 │   ├── response.schema.json
 │   └── examples/
+├── schemas/ai-team-repo-profile/v1/  # MAT-9: ai-team.repo profile + work-item adapter
+│   ├── manifest.json
+│   ├── repo-profile.schema.json
+│   └── examples/
 ├── scripts/validate_gemini_git_ops.py
 ├── scripts/validate_codex_code_exec.py
+├── scripts/validate_ai_team_repo_profile.py
 ├── research/multi-agent-research.md  # Architecture research
 └── requirements-dev.txt
 ```
@@ -58,7 +63,7 @@ multi-agent-toolkit/
 | MAT-6 | HITL: Asana approval triggers | Backlog (P1) |
 | MAT-7 | Audit repo vs architecture checklist | Backlog (P2) |
 | MAT-8 | ADR: Claude Code vs Cursor orchestrator | **Done** |
-| MAT-9 | Portable repo profile + work-item adapter | Backlog (P0) |
+| MAT-9 | Portable repo profile + work-item adapter | **Done** |
 | MAT-10 | Orchestrator sessions + fluency signals | Backlog (P1) |
 | MAT-11 | Add timeout_ms to git-ops schema | Backlog (P2) |
 | MAT-12 | Clarify git staging/commit scope | Backlog (P2) |
@@ -73,7 +78,7 @@ multi-agent-toolkit/
 
 3. **Security**: Deny-by-default ops; **no shell** — fixed `git` argv only for the git bridge.
 
-4. **Portability (MAT-9)**: Repo profile schema decouples paths and ticket providers from hardcoded org defaults.
+4. **Portability (MAT-9)**: `schemas/ai-team-repo-profile/v1/` — `ai-team.repo.json` / YAML profile decouples paths and ticket providers from hardcoded org defaults.
 
 ## Related codebases
 
@@ -83,8 +88,8 @@ multi-agent-toolkit/
 ## Suggested next steps (in order)
 
 1. **Stay on `main`**, pull latest (see above).
-2. **MAT-9** — Portable repo profile + work-item adapter (P0 on the board).
-3. **MAT-4** — State: queue, artifacts, checkpoints.
+2. **MAT-4** — State: queue, artifacts, checkpoints (next P1 on the board).
+3. **MAT-6** — HITL: Asana approval triggers.
 4. **MAT-11 / MAT-12** — Schema follow-ups (`timeout_ms`; git staging/commit scope vs MAT-2).
 
 ## Validation
@@ -95,9 +100,10 @@ python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\ac
 pip install -r requirements-dev.txt
 python scripts/validate_gemini_git_ops.py
 python scripts/validate_codex_code_exec.py
+python scripts/validate_ai_team_repo_profile.py
 ```
 
-Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1` or `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1` if a bundle is not at the default `root_relative` path.
+Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, or `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1` if a bundle is not at the default `root_relative` path.
 
 ## References
 

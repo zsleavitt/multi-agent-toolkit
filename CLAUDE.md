@@ -14,6 +14,7 @@ Use this file in the **Claude Code** session that **orchestrates** work across w
 
 - **MAT-1** — `schemas/gemini-git-ops/v1/` — git/CLI executor requests/responses; `manifest.json` allowlist.
 - **MAT-2** — `schemas/codex-code-exec/v1/` — code worker requests/responses; optional **session** + **turn** for multi-turn runs.
+- **MAT-9** — `schemas/ai-team-repo-profile/v1/` — portable **`ai-team.repo.json`** (or YAML → same shape): identity, repo-relative paths, **work_item_source** adapter (`none` | `linear` | `jira` | `github_issues` | `file`).
 - **Registry** — `config/schema-registry.json` — on-disk bundle paths; env overrides documented in each bundle’s README.
 
 Validation:
@@ -22,13 +23,14 @@ Validation:
 source .venv/bin/activate
 python scripts/validate_gemini_git_ops.py
 python scripts/validate_codex_code_exec.py
+python scripts/validate_ai_team_repo_profile.py
 ```
 
 ## Design defaults
 
 1. **Git vs code scope** — Branch/worktree/fetch/pull/push style ops are MAT-1. Whether `git add` / `commit` / `diff` live on the executor, the code worker, or both is **explicitly deferred** — track under **MAT-12** so MAT-2 stays code-execution scoped.
 2. **Primary orchestrator** — See `docs/adr/0001-primary-orchestrator-claude-code-vs-cursor.md` (Claude Code is normative for toolkit semantics; other editors remain supported).
-3. **Portability** — Requests carry **`repo_root`** (absolute). Avoid implicit cwd in orchestration; future **MAT-9** repo profiles extend this.
+3. **Portability** — Requests carry **`repo_root`** (absolute). Avoid implicit cwd in orchestration; **MAT-9** repo profiles supply identity, repo-relative path hints, and a **work-item adapter** — not another machine’s absolute paths or baked-in org URLs.
 
 ## Handoff
 

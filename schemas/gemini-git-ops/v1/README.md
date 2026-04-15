@@ -57,4 +57,4 @@ python scripts/validate_gemini_git_ops.py
 
 ## Portable `repo_root`
 
-Requests always carry **`repo_root`** (absolute path). Orchestration code must not assume cwd; profile-driven paths land in MAT-9.
+Requests always carry **`repo_root`** (absolute path). Orchestration code must not assume cwd; profile-driven paths and work-item adapters are **MAT-9** (`schemas/ai-team-repo-profile/v1/`).

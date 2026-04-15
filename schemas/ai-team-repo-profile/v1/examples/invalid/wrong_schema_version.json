@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.9.0",
+  "identity": {
+    "id": "old-version"
+  },
+  "repo": {
+    "default_branch": "main"
+  },
+  "work_item_source": {
+    "adapter": "none"
+  }
+}

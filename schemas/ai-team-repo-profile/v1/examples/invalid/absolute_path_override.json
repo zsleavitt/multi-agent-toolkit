@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "bad-paths"
+  },
+  "repo": {
+    "default_branch": "main",
+    "path_overrides": {
+      "artifacts_dir": "/tmp/artifacts"
+    }
+  },
+  "work_item_source": {
+    "adapter": "none"
+  }
+}

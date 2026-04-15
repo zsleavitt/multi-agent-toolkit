@@ -1,5 +1,5 @@
 {
-  "documentation": "schema_bundles.*.root_relative: where this repo keeps MAT JSON Schema bundles on disk. published_document_base: optional URL prefix for a separate publish/mirror pipeline (not read by schemas in git — they use only fragment $ref). MAT_GEMINI_GIT_OPS_V1 and MAT_CODEX_CODE_EXEC_V1 env vars override root_relative for validators and CI.",
+  "documentation": "schema_bundles.*.root_relative: where this repo keeps MAT JSON Schema bundles on disk. published_document_base: optional URL prefix for a separate publish/mirror pipeline (not read by schemas in git — they use only fragment $ref). MAT_GEMINI_GIT_OPS_V1, MAT_CODEX_CODE_EXEC_V1, and MAT_AI_TEAM_REPO_PROFILE_V1 env vars override root_relative for validators and CI.",
   "schema_bundles": {
     "gemini-git-ops@v1": {
       "root_relative": "schemas/gemini-git-ops/v1",
@@ -7,6 +7,10 @@
     },
     "codex-code-exec@v1": {
       "root_relative": "schemas/codex-code-exec/v1",
+      "published_document_base": null
+    },
+    "ai-team-repo-profile@v1": {
+      "root_relative": "schemas/ai-team-repo-profile/v1",
       "published_document_base": null
     }
   }

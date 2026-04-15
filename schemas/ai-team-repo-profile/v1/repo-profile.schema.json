@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI team — portable repo profile (MAT-9)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "identity", "repo", "work_item_source"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "identity": { "$ref": "#/$defs/identity" },
+    "repo": { "$ref": "#/$defs/repo" },
+    "work_item_source": { "$ref": "#/$defs/work_item_source" },
+    "orchestration": { "$ref": "#/$defs/orchestration" }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when the profile document shape changes."
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Stable slug for this repo profile (no URLs)."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Human label for dashboards and prompts."
+        }
+      }
+    },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_branch"],
+      "properties": {
+        "default_branch": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\s]+$",
+          "description": "Primary integration branch name."
+        },
+        "path_overrides": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional repo-relative paths; values are segments from repo root, not absolute paths.",
+          "properties": {
+            "artifacts_dir": { "$ref": "#/$defs/repo_relative_path" },
+            "agent_state_dir": { "$ref": "#/$defs/repo_relative_path" },
+            "docs_dir": { "$ref": "#/$defs/repo_relative_path" }
+          }
+        }
+      }
+    },
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!https?:)(?!\\.\\./)[^\\0]+$",
+      "description": "Path relative to repo root; no leading slash, no scheme, no parent traversal at start."
+    },
+    "work_item_source": {
+      "description": "Exactly one adapter; identifiers are opaque to the toolkit — no baked-in org defaults.",
+      "oneOf": [
+        {
+          "title": "No external tracker",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapter"],
+          "properties": {
+            "adapter": { "const": "none" }
+          }
+        },
+        {
+          "title": "Linear",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapter", "linear"],
+          "properties": {
+            "adapter": { "const": "linear" },
+            "linear": { "$ref": "#/$defs/linear_adapter" }
+          }
+        },
+        {
+          "title": "Jira (Cloud / self-managed API host)",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapter", "jira"],
+          "properties": {
+            "adapter": { "const": "jira" },
+            "jira": { "$ref": "#/$defs/jira_adapter" }
+          }
+        },
+        {
+          "title": "GitHub Issues",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapter", "github_issues"],
+          "properties": {
+            "adapter": { "const": "github_issues" },
+            "github_issues": { "$ref": "#/$defs/github_issues_adapter" }
+          }
+        },
+        {
+          "title": "File backlog",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapter", "file"],
+          "properties": {
+            "adapter": { "const": "file" },
+            "file": { "$ref": "#/$defs/file_adapter" }
+          }
+        }
+      ]
+    },
+    "linear_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["team_id"],
+      "properties": {
+        "team_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Linear team id (UUID or opaque id from Linear API)."
+        },
+        "api_base_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "description": "Optional; default is Linear cloud. Use for self-hosted / enterprise API base only."
+        }
+      }
+    },
+    "jira_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["site_host", "project_key"],
+      "properties": {
+        "site_host": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 253,
+          "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$",
+          "description": "API host only (e.g. company.atlassian.net) — no https:// prefix, no path."
+        },
+        "project_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Jira project key (uppercase)."
+        }
+      }
+    },
+    "github_issues_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "repo"],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$",
+          "description": "GitHub org or user login (not a URL)."
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9._-]+$",
+          "description": "Repository name (not a URL)."
+        }
+      }
+    },
+    "file_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repo_relative_path",
+          "description": "Repo-relative path to backlog/tasks file (format is consumer-defined)."
+        }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional hints; executors ignore unknown future keys if added in later schema versions.",
+      "properties": {
+        "repo_root_env": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Env var name the orchestrator reads for absolute repo_root (default left to tooling)."
+        },
+        "branch_template": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Optional template for local branch names from work item id (e.g. agent/{{id}})."
+        }
+      }
+    }
+  }
+}

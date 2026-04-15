@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "bad-adapter"
+  },
+  "repo": {
+    "default_branch": "main"
+  },
+  "work_item_source": {
+    "adapter": "asana"
+  }
+}
