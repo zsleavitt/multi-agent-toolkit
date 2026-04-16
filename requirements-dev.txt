@@ -5,12 +5,16 @@
 # Last audited: 2026-04-16
 # jsonschema 4.26.0 - no known CVEs as of audit date
 # referencing 0.37.0 - no known CVEs as of audit date
+# pytest 8.3.5 - no known CVEs as of audit date
 
 jsonschema==4.26.0 \
     --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
 
 referencing==0.37.0 \
     --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
+
+pytest==8.3.5 \
+    --hash=sha256:c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820
 
 # Transitive dependencies (installed automatically, audit periodically):
 # - attrs

@@ -73,10 +73,12 @@ Requests always carry **`repo_root`** (absolute path). Orchestration code must n
 ### Path validation (MAT-23)
 
 The schema enforces that `repo_root` starts with:
-- `/` (Unix/macOS/Linux)
+- `/` (Unix/macOS/Linux absolute)
+- `~` or `~user` (Unix home-relative, e.g. `~/guideline/app` or `~zach/projects`)
 - A drive letter followed by `:\` or `:/` (Windows, e.g. `C:\Projects` or `D:/repos`)
 
 **Executors MUST additionally:**
-1. Verify the path exists on the filesystem
-2. Reject paths containing `/../` traversal sequences
-3. Ensure the resolved path is within allowed boundaries (e.g., not `/etc/passwd`)
+1. Expand `~` paths to the appropriate home directory
+2. Verify the path exists on the filesystem
+3. Reject paths containing `/../` traversal sequences
+4. Ensure the resolved path is within allowed boundaries (e.g., not `/etc/passwd`)

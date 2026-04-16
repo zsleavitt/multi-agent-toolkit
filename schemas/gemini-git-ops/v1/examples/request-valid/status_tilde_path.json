@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "55555555-5555-4555-8555-555555555555",
+  "idempotency_key": "mat1-demo-status-tilde-001",
+  "repo_root": "~/guideline/app",
+  "op": "git.status",
+  "params": {
+    "pathspecs": ["src/"]
+  }
+}

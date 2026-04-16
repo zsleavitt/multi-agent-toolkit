@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "66666666-6666-4666-8666-666666666666",
+  "idempotency_key": "mat1-demo-fetch-tilde-user-001",
+  "repo_root": "~zach.leavitt/projects/multi-agent-toolkit",
+  "op": "git.fetch",
+  "params": {
+    "remote": "origin",
+    "prune": true
+  }
+}

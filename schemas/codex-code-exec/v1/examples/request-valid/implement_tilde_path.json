@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "correlation_id": "77777777-7777-4777-8777-777777777777",
+  "idempotency_key": "mat2-demo-implement-tilde-001",
+  "repo_root": "~/guideline/app",
+  "op": "codex.implement",
+  "params": {
+    "instruction": "Add input validation to the user registration endpoint.",
+    "scope_globs": ["app/controllers/*.rb", "spec/**"],
+    "acceptance_criteria": "All specs pass; validates email format and password strength."
+  }
+}

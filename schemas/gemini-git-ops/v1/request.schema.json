@@ -98,8 +98,8 @@
     "repo_root": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^(/|[A-Za-z]:[/\\\\])",
-      "description": "Absolute path to repository root (portable; never implicit cwd from orchestrator). Must start with / (Unix) or drive letter (Windows, e.g. C:\\). Executors MUST validate the path exists and reject path traversal attempts."
+      "pattern": "^(/|~|[A-Za-z]:[/\\\\])",
+      "description": "Absolute or home-relative path to repository root. Accepted formats: / (Unix absolute), ~ or ~user (Unix home-relative), or drive letter (Windows, e.g. C:\\). Executors MUST expand ~ paths, validate existence, and reject traversal attempts."
     },
     "params_status": {
       "type": "object",
