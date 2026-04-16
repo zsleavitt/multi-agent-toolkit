@@ -23,6 +23,10 @@ Use Gumloop **Input** node `input_name` values aligned with `examples/gumloop/in
 - Example API body: `examples/gumloop/start-pipeline.request.example.json`
 - Optional CLI (stdlib only): `scripts/gumloop_start_pipeline.py` — reads `GUMLOOP_API_KEY`, posts `start_pipeline`, prints `run_id` / `url`.
 
+## Validation
+
+Run **`python scripts/validate_gumloop_examples.py`** after `pip install -r requirements-dev.txt`. It checks that `examples/gumloop/*.json` is well-formed and that embedded **`mat2_request_json`** in `start-pipeline.request.example.json` validates against MAT-2 **`request.schema.json`**.
+
 ## Security
 
 - Never commit API keys or `saved_item_id` values; use Gumloop workspace secrets and env vars in CI.

@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **All 14 schema-track tickets are Done** on `main` — MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14 merged (ADR, CLAUDE.md, profiles, state, HITL, timeouts, git staging scope, Codex diagnose/review). **MAT-5 (Gumloop prototype)** lives under `docs/prototypes/mat-5-gumloop.md` and `examples/gumloop/`. **Remaining backlog (P2):** MAT-7 (architecture audit checklist).
+- **All 14 schema-track tickets are Done** on `main` — MAT-1, MAT-2, MAT-3, MAT-4, MAT-6, MAT-8, MAT-9, MAT-10, MAT-11, MAT-12, MAT-13, MAT-14 merged (ADR, CLAUDE.md, profiles, state, HITL, timeouts, git staging scope, Codex diagnose/review). **MAT-5 (Gumloop prototype)** is merged: **`docs/prototypes/mat-5-gumloop.md`** (flow topology, API pointers, security notes), **`examples/gumloop/`** (Input naming conventions + `start_pipeline` example), **`scripts/gumloop_start_pipeline.py`** (stdlib `start_pipeline` helper), **`scripts/validate_gumloop_examples.py`** (validates Gumloop examples + embedded MAT-2 JSON). **Remaining backlog (P2):** MAT-7 (architecture audit checklist).
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -60,6 +60,8 @@ multi-agent-toolkit/
 ├── scripts/validate_ai_team_repo_profile.py
 ├── scripts/validate_orchestrator_state.py
 ├── scripts/validate_hitl_asana_approval.py
+├── scripts/validate_gumloop_examples.py  # MAT-5: examples/gumloop + embedded MAT-2
+├── scripts/gumloop_start_pipeline.py     # MAT-5: optional start_pipeline POST
 ├── docs/prototypes/                  # MAT-5: Gumloop handoff (non-schema)
 ├── examples/gumloop/                 # MAT-5: Gumloop API / input conventions
 ├── research/multi-agent-research.md  # Architecture research
@@ -68,7 +70,7 @@ multi-agent-toolkit/
 
 ## Schema status (merged on `main`)
 
-MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` allowlists (where applicable), `examples/`, and `scripts/validate_*.py`. Historical bootstrap: **PR #1** (MAT-1 git contracts + registry + validators).
+MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` allowlists (where applicable), `examples/`, and five `scripts/validate_*.py` bundle validators. **MAT-5** adds `examples/gumloop/` plus **`scripts/validate_gumloop_examples.py`** (sixth validator). Historical bootstrap: **PR #1** (MAT-1 git contracts + registry + validators).
 
 ## Ticket board (Notion)
 
