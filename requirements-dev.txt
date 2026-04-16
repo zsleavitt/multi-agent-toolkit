@@ -1,2 +1,19 @@
-jsonschema>=4.22.0
-referencing>=0.35.0
+# Pinned dependencies with integrity hashes (supply chain security)
+# To update: pip download <pkg>==<version> -d /tmp && pip hash /tmp/<pkg>*.whl
+# See also: pip-compile --generate-hashes for full transitive lock
+#
+# Last audited: 2026-04-16
+# jsonschema 4.26.0 - no known CVEs as of audit date
+# referencing 0.37.0 - no known CVEs as of audit date
+
+jsonschema==4.26.0 \
+    --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
+
+referencing==0.37.0 \
+    --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
+
+# Transitive dependencies (installed automatically, audit periodically):
+# - attrs
+# - rpds-py
+# - jsonschema-specifications
+# For full supply chain security, use: pip-compile --generate-hashes requirements-dev.in

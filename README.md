@@ -84,6 +84,41 @@ python scripts/validate_hitl_asana_approval.py
 - **MAT-5** (Gumloop prototype): `docs/prototypes/mat-5-gumloop.md`, `examples/gumloop/`, `scripts/gumloop_start_pipeline.py`, `scripts/validate_gumloop_examples.py`.
 - Further tickets are tracked in your Notion **Multi-Agent Toolkit** board (remaining P2: **MAT-7**).
 
+## Security
+
+### Dependency management
+
+Dependencies are **pinned with SHA-256 hashes** to prevent supply chain attacks (see LiteLLM incident, March 2026).
+
+```bash
+# Verify hashes on install
+pip install --require-hashes -r requirements-dev.txt
+
+# To update a dependency:
+pip download <pkg>==<new_version> -d /tmp
+pip hash /tmp/<pkg>*.whl
+# Update requirements-dev.txt with new version and hash
+```
+
+### Secrets
+
+- **Never commit API keys** — use environment variables (`GUMLOOP_API_KEY`, etc.)
+- Example files use `REPLACE_WITH_...` placeholders
+- `.gitignore` covers `.env*`, `*.pem`, `*.key`, and secrets directories
+
+### Schema security
+
+- Operations are **enum-constrained** and **deny-by-default** via `manifest.json`
+- Input validation uses `additionalProperties: false` to prevent field injection
+- `repo_root` should be validated as an absolute path by executors (schema enhancement planned)
+
+### Audit schedule
+
+| Dependency | Last audit | CVE status |
+|------------|------------|------------|
+| jsonschema 4.26.0 | 2026-04-16 | Clean |
+| referencing 0.37.0 | 2026-04-16 | Clean |
+
 ## Principles
 
 - **Deny-by-default** executors: only `manifest.json` → `allowed_operations`.
