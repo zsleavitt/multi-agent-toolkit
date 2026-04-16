@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "providers": {
+    "insecure": {
+      "type": "custom",
+      "auth_env": "CUSTOM_API_KEY",
+      "api_base": "http://insecure-endpoint.local/v1"
+    }
+  },
+  "model_aliases": {
+    "default": {
+      "provider": "insecure",
+      "model": "local-model"
+    }
+  }
+}

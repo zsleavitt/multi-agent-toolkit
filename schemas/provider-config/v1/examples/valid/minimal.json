@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "providers": {
+    "anthropic": {
+      "type": "anthropic",
+      "auth_env": "ANTHROPIC_API_KEY"
+    }
+  },
+  "model_aliases": {
+    "default": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514"
+    }
+  }
+}

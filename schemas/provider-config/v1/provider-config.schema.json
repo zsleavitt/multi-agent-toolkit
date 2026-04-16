@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI team — provider configuration (MAT-16)",
+  "description": "Model-agnostic LLM provider configuration. Defines providers, model aliases, and budgets for orchestration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "providers", "model_aliases"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "providers": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/provider_config" },
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/provider_id" },
+      "description": "Map of provider_id to provider configuration. At least one provider required."
+    },
+    "model_aliases": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/model_alias" },
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/alias_name" },
+      "description": "Semantic model names (e.g. 'orchestrator', 'worker') mapped to provider+model."
+    },
+    "defaults": { "$ref": "#/$defs/defaults" },
+    "budgets": { "$ref": "#/$defs/budgets" }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when the config document shape changes."
+    },
+    "provider_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "Unique identifier for this provider instance (e.g. 'anthropic', 'openai-prod', 'ollama-local')."
+    },
+    "alias_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "Semantic alias name (e.g. 'orchestrator', 'worker', 'reviewer', 'fast', 'cheap')."
+    },
+    "env_var_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "description": "Environment variable name (uppercase with underscores). Never store actual secrets in config."
+    },
+    "provider_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "auth_env"],
+      "properties": {
+        "type": { "$ref": "#/$defs/provider_type" },
+        "auth_env": {
+          "$ref": "#/$defs/env_var_name",
+          "description": "Env var containing the API key or auth token. Executor reads this at runtime."
+        },
+        "api_base": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "description": "Optional base URL override (for enterprise, self-hosted, or proxy endpoints)."
+        },
+        "org_id_env": {
+          "$ref": "#/$defs/env_var_name",
+          "description": "Optional env var for organization ID (OpenAI, Anthropic enterprise)."
+        },
+        "default_headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Optional static headers added to all requests (e.g. custom routing headers)."
+        },
+        "rate_limit": { "$ref": "#/$defs/rate_limit" },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Set false to disable this provider without removing config."
+        }
+      }
+    },
+    "provider_type": {
+      "type": "string",
+      "enum": ["anthropic", "openai", "google", "azure", "bedrock", "ollama", "openrouter", "custom"],
+      "description": "Provider type determines API format and capabilities. 'custom' requires api_base."
+    },
+    "model_alias": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/provider_id",
+          "description": "Reference to a provider_id defined in providers map."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Model identifier as recognized by the provider API (e.g. 'claude-sonnet-4-20250514')."
+        },
+        "fallback": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fallback_entry" },
+          "maxItems": 5,
+          "description": "Optional fallback chain if primary model/provider is unavailable."
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Optional default max_tokens for this alias; can be overridden per-request."
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Optional default temperature for this alias."
+        }
+      }
+    },
+    "fallback_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/provider_id" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "rate_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Client-side rate limiting to stay within provider quotas.",
+      "properties": {
+        "requests_per_minute": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Max requests per minute to this provider."
+        },
+        "tokens_per_minute": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000,
+          "description": "Max tokens (input + output) per minute."
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Default settings applied when not specified per-alias or per-request.",
+      "properties": {
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 600000,
+          "description": "Default request timeout in milliseconds (1s–10min)."
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Default retry count for transient failures."
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Cost and usage guardrails. Executor should enforce these limits.",
+      "properties": {
+        "daily_token_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max tokens (all providers combined) per 24h rolling window."
+        },
+        "daily_cost_limit_cents": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max estimated cost in US cents per 24h rolling window."
+        },
+        "session_token_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max tokens per orchestration session."
+        }
+      }
+    }
+  }
+}

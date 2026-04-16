@@ -1,0 +1,13 @@
+{
+  "bundle_id": "provider-config@v1",
+  "title": "MAT Provider Configuration — bundle manifest",
+  "description": "Machine-readable index for MAT-16. Defines LLM provider configuration for model-agnostic agent orchestration.",
+  "schema_version": "1.0.0",
+  "config_schema": "./provider-config.schema.json",
+  "notes": [
+    "Provider config is separate from repo profiles (MAT-9) — one config can be shared across repos.",
+    "Auth credentials are NEVER stored in this config — only env var names that reference them.",
+    "Model aliases let orchestrators reference 'orchestrator', 'worker', etc. without hardcoding model IDs.",
+    "Fallback chains enable graceful degradation when a provider is unavailable."
+  ]
+}

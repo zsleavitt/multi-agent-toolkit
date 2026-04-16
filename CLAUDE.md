@@ -18,6 +18,7 @@ Use this file in the **Claude Code** session that **orchestrates** work across w
 - **MAT-4** — `schemas/orchestrator-state/v1/` — durable **`orchestrator.state.json`**: **queue**, **artifacts**, **checkpoints**; repo-relative paths (align with MAT-9 `path_overrides.artifacts_dir` / `agent_state_dir`).
 - **MAT-10** — same bundle — optional **`orchestrator_session`** (primary Claude Code session) and checkpoint **`fluency`** (`planning` / `review` / …) for **`/ai-fluency-insights`**-style tooling; keep high-signal planning and review in this orchestrator session when fluency scores matter.
 - **MAT-6** — `schemas/hitl-asana-approval/v1/` — **trigger** and **callback** JSON for Asana-backed approvals when MAT-4 queue status is **`blocked_hitl`** (correlation + `queue_item_id` threading).
+- **MAT-16** — `schemas/provider-config/v1/` — model-agnostic **LLM provider configuration**: providers map, **model_aliases** (semantic names like `orchestrator`, `worker`), fallback chains, budgets. Auth via env var references only (no secrets in config).
 - **Registry** — `config/schema-registry.json` — on-disk bundle paths; env overrides documented in each bundle’s README.
 
 Validation:
@@ -29,6 +30,7 @@ python scripts/validate_codex_code_exec.py
 python scripts/validate_ai_team_repo_profile.py
 python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
+python scripts/validate_provider_config.py
 python scripts/validate_gumloop_examples.py
 ```
 
