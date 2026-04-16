@@ -14,7 +14,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
   - **MAT-4** — Orchestrator state: queue, artifacts, checkpoints; optional orchestrator session + **fluency** (MAT-10) on `schema_version` **1.1.0** documents.
   - **MAT-6** — HITL: Asana approval **trigger** and **callback** JSON.
   - **MAT-9** — Portable **`ai-team.repo`** profile + work-item adapters (Linear, Jira, GitHub Issues, file, none).
-- **14 tickets** live in Notion — [Multi-Agent Toolkit — Tickets](https://www.notion.so/c54de570f4ec433587b7cac957b950c1). Parent context: [Multi Agent Toolkit](https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630).
+- **Tickets** live in Notion (set `$MAT_NOTION_TICKETS_URL` and `$MAT_NOTION_HUB_URL` in your environment).
 
 ## Sync the repo (do this first)
 
@@ -134,7 +134,6 @@ Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `ex
 
 ## References
 
-- Notion tickets: https://www.notion.so/c54de570f4ec433587b7cac957b950c1  
-- Notion parent hub: https://www.notion.so/343ad673c6c280879a1de5fb5a9f9630  
-- Merged PRs: [#1](https://github.com/zsleavitt/multi-agent-toolkit/pull/1), [#2](https://github.com/zsleavitt/multi-agent-toolkit/pull/2)  
+- Notion tickets: `$MAT_NOTION_TICKETS_URL` (set in your local environment)
+- Notion parent hub: `$MAT_NOTION_HUB_URL` (set in your local environment)
 - Research: `research/multi-agent-research.md`
