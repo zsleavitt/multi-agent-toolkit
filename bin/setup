@@ -1,0 +1,355 @@
+#!/usr/bin/env bash
+#
+# MAT Setup Script
+# Checks prerequisites and sets up the development environment.
+#
+# Usage:
+#   bin/setup          # Full setup (venv + deps + CLI check + auth prompts)
+#   bin/setup --check  # Check only, no installation or auth prompts
+#
+# The script will prompt to authenticate CLI tools (claude, codex, gemini)
+# if they are installed but not yet authenticated.
+#
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Counters
+ERRORS=0
+WARNINGS=0
+
+print_header() {
+    echo -e "\n${BLUE}==>${NC} $1"
+}
+
+print_success() {
+    echo -e "  ${GREEN}✓${NC} $1"
+}
+
+print_warning() {
+    echo -e "  ${YELLOW}!${NC} $1"
+    ((WARNINGS++)) || true
+}
+
+print_error() {
+    echo -e "  ${RED}✗${NC} $1"
+    ((ERRORS++)) || true
+}
+
+print_info() {
+    echo -e "  ${BLUE}→${NC} $1"
+}
+
+# Check if a command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
+# Get version of a command (first line of --version output)
+get_version() {
+    "$1" --version 2>/dev/null | head -1 || echo "unknown"
+}
+
+# ============================================================================
+# Python Environment
+# ============================================================================
+
+check_python() {
+    print_header "Python Environment"
+
+    if command_exists python3; then
+        local py_version
+        py_version=$(python3 --version 2>&1)
+        print_success "Python: $py_version"
+    else
+        print_error "Python 3 not found"
+        print_info "Install: https://www.python.org/downloads/"
+        return 1
+    fi
+}
+
+setup_venv() {
+    print_header "Virtual Environment"
+
+    local venv_path="$REPO_ROOT/.venv"
+
+    if [[ -d "$venv_path" ]]; then
+        print_success "Virtual environment exists at .venv/"
+    else
+        print_info "Creating virtual environment..."
+        python3 -m venv "$venv_path"
+        print_success "Created .venv/"
+    fi
+
+    # Activate for subsequent commands
+    # shellcheck source=/dev/null
+    source "$venv_path/bin/activate"
+    print_success "Activated .venv/"
+}
+
+install_deps() {
+    print_header "Python Dependencies"
+
+    local req_file="$REPO_ROOT/requirements-dev.txt"
+
+    if [[ -f "$req_file" ]]; then
+        print_info "Installing from requirements-dev.txt..."
+        pip install -q -r "$req_file"
+        print_success "Installed Python dependencies"
+    else
+        print_warning "requirements-dev.txt not found"
+    fi
+}
+
+# ============================================================================
+# CLI Tools (for mat_runtime)
+# ============================================================================
+
+# Check if a CLI tool is authenticated
+check_cli_auth() {
+    local cli="$1"
+    case "$cli" in
+        claude)
+            # Claude: check if auth config exists or try a simple command
+            if [[ -f "$HOME/.claude/config.json" ]] || [[ -f "$HOME/.config/claude/config.json" ]]; then
+                return 0
+            fi
+            return 1
+            ;;
+        codex)
+            # Codex: check for OpenAI credentials
+            if [[ -n "${OPENAI_API_KEY:-}" ]] || [[ -f "$HOME/.codex/config.json" ]]; then
+                return 0
+            fi
+            return 1
+            ;;
+        gemini)
+            # Gemini: check for Google credentials
+            if [[ -n "${GOOGLE_API_KEY:-}" ]] || [[ -f "$HOME/.config/gemini/config.json" ]]; then
+                return 0
+            fi
+            return 1
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+# Prompt user to authenticate a CLI tool
+prompt_cli_auth() {
+    local cli="$1"
+    local auth_cmd=""
+
+    case "$cli" in
+        claude)
+            auth_cmd="claude login"
+            ;;
+        codex)
+            auth_cmd="codex auth"
+            ;;
+        gemini)
+            auth_cmd="gemini auth login"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    echo ""
+    read -p "    Would you like to authenticate now? [y/N] " -n 1 -r
+    echo ""
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Running: $auth_cmd"
+        echo ""
+        $auth_cmd
+        if [[ $? -eq 0 ]]; then
+            print_success "$cli authenticated successfully"
+        else
+            print_error "$cli authentication failed"
+        fi
+    else
+        print_info "Skipped. Run '$auth_cmd' later to authenticate."
+    fi
+}
+
+check_cli_tools() {
+    print_header "CLI Tools (for mat_runtime)"
+    print_info "These are optional but required to use the runtime adapter."
+    echo ""
+
+    # Claude Code CLI
+    if command_exists claude; then
+        local claude_ver
+        claude_ver=$(claude --version 2>&1 | head -1 || echo "installed")
+        if check_cli_auth claude; then
+            print_success "claude: $claude_ver (authenticated)"
+        else
+            print_warning "claude: $claude_ver (not authenticated)"
+            print_info "   Auth: claude login"
+            if [[ "${INTERACTIVE:-true}" == "true" ]]; then
+                prompt_cli_auth claude
+            fi
+        fi
+    else
+        print_warning "claude CLI not found (Claude Code)"
+        print_info "Install: npm install -g @anthropic-ai/claude-code"
+        print_info "    or:  brew install claude-code"
+        print_info "   Docs: https://docs.anthropic.com/en/docs/claude-code"
+    fi
+
+    # Codex CLI
+    if command_exists codex; then
+        local codex_ver
+        codex_ver=$(codex --version 2>&1 | head -1 || echo "installed")
+        if check_cli_auth codex; then
+            print_success "codex: $codex_ver (authenticated)"
+        else
+            print_warning "codex: $codex_ver (not authenticated)"
+            print_info "   Auth: codex auth"
+            if [[ "${INTERACTIVE:-true}" == "true" ]]; then
+                prompt_cli_auth codex
+            fi
+        fi
+    else
+        print_warning "codex CLI not found (OpenAI Codex)"
+        print_info "Install: npm install -g @openai/codex"
+        print_info "   Docs: https://github.com/openai/codex-cli"
+    fi
+
+    # Gemini CLI
+    if command_exists gemini; then
+        local gemini_ver
+        gemini_ver=$(gemini --version 2>&1 | head -1 || echo "installed")
+        if check_cli_auth gemini; then
+            print_success "gemini: $gemini_ver (authenticated)"
+        else
+            print_warning "gemini: $gemini_ver (not authenticated)"
+            print_info "   Auth: gemini auth login"
+            if [[ "${INTERACTIVE:-true}" == "true" ]]; then
+                prompt_cli_auth gemini
+            fi
+        fi
+    else
+        print_warning "gemini CLI not found (Google Gemini)"
+        print_info "Install: npm install -g @google/gemini-cli"
+        print_info "   Docs: https://github.com/google-gemini/gemini-cli"
+    fi
+}
+
+# ============================================================================
+# Validation
+# ============================================================================
+
+run_validators() {
+    print_header "Schema Validators"
+
+    cd "$REPO_ROOT"
+
+    local validators=(
+        "scripts/validate_gemini_git_ops.py"
+        "scripts/validate_codex_code_exec.py"
+        "scripts/validate_ai_team_repo_profile.py"
+        "scripts/validate_orchestrator_state.py"
+        "scripts/validate_hitl_asana_approval.py"
+        "scripts/validate_provider_config.py"
+        "scripts/validate_agent_definitions.py"
+        "scripts/validate_gumloop_examples.py"
+    )
+
+    for validator in "${validators[@]}"; do
+        if [[ -f "$validator" ]]; then
+            if python "$validator" > /dev/null 2>&1; then
+                print_success "$(basename "$validator" .py)"
+            else
+                print_error "$(basename "$validator" .py) failed"
+            fi
+        fi
+    done
+}
+
+run_tests() {
+    print_header "Unit Tests"
+
+    cd "$REPO_ROOT"
+
+    if python -m pytest mat_runtime/tests/ -q 2>/dev/null; then
+        print_success "mat_runtime tests passed"
+    else
+        print_error "mat_runtime tests failed"
+    fi
+}
+
+# ============================================================================
+# Summary
+# ============================================================================
+
+print_summary() {
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    if [[ $ERRORS -eq 0 && $WARNINGS -eq 0 ]]; then
+        echo -e "${GREEN}Setup complete!${NC} All checks passed."
+    elif [[ $ERRORS -eq 0 ]]; then
+        echo -e "${YELLOW}Setup complete with $WARNINGS warning(s).${NC}"
+        echo "CLI tools are optional — install them to use mat_runtime."
+    else
+        echo -e "${RED}Setup incomplete.${NC} $ERRORS error(s), $WARNINGS warning(s)."
+    fi
+
+    echo ""
+    echo "Next steps:"
+    echo "  source .venv/bin/activate"
+    echo "  python -m mat_runtime list-agents"
+    echo ""
+}
+
+# ============================================================================
+# Main
+# ============================================================================
+
+main() {
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  Multi-Agent Toolkit — Setup"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    local check_only=false
+    export INTERACTIVE=true
+
+    if [[ "${1:-}" == "--check" ]]; then
+        check_only=true
+        export INTERACTIVE=false
+    fi
+
+    # Always check Python
+    check_python || exit 1
+
+    if [[ "$check_only" == false ]]; then
+        setup_venv
+        install_deps
+    fi
+
+    check_cli_tools
+
+    if [[ "$check_only" == false ]]; then
+        run_validators
+        run_tests
+    fi
+
+    print_summary
+
+    if [[ $ERRORS -gt 0 ]]; then
+        exit 1
+    fi
+}
+
+main "$@"
