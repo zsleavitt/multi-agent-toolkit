@@ -1,0 +1,7 @@
+{
+  "name": "bad-ops-agent",
+  "description": "An agent with invalid MAT-2 operations",
+  "role": "worker",
+  "cli": "codex",
+  "allowed_mat_ops": ["codex.implement", "codex.deploy"]
+}

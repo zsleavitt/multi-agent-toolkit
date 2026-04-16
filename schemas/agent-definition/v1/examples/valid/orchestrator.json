@@ -1,0 +1,8 @@
+{
+  "name": "orchestrator",
+  "description": "Plans, routes, and synthesizes work across agents",
+  "role": "orchestrator",
+  "cli": "claude",
+  "tools": ["read", "glob", "grep", "agent"],
+  "temperature": 0.7
+}

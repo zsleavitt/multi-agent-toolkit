@@ -1,0 +1,6 @@
+{
+  "name": "bad-cli-agent",
+  "description": "An agent with an invalid CLI",
+  "role": "worker",
+  "cli": "unknown-cli"
+}

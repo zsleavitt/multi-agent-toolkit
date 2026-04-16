@@ -1,0 +1,6 @@
+{
+  "name": "bad-role-agent",
+  "description": "An agent with an invalid role",
+  "role": "manager",
+  "cli": "codex"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "basic-agent",
+  "description": "A minimal agent definition",
+  "role": "worker",
+  "cli": "codex"
+}
