@@ -1,0 +1,36 @@
+{
+  "convention_id": "gumloop-mat-inputs@v1",
+  "description": "Recommended Gumloop Input node input_name strings when driving multi-agent-toolkit MAT-1/MAT-2 contracts. Gumloop pipeline_inputs values are strings — stringify nested JSON for mat1_request_json / mat2_request_json.",
+  "inputs": [
+    {
+      "input_name": "correlation_id",
+      "description": "UUID echoed on MAT-1/MAT-2 responses; ties Gumloop run to orchestrator logs.",
+      "value_kind": "uuid"
+    },
+    {
+      "input_name": "idempotency_key",
+      "description": "Stable retry key for MAT-1/MAT-2 requests (min 8 chars).",
+      "value_kind": "opaque"
+    },
+    {
+      "input_name": "repo_root",
+      "description": "Absolute repository root for MAT-1 and MAT-2 requests.",
+      "value_kind": "absolute_path"
+    },
+    {
+      "input_name": "mat2_request_json",
+      "description": "Stringified JSON validating against schemas/codex-code-exec/v1/request.schema.json.",
+      "value_kind": "json_string"
+    },
+    {
+      "input_name": "mat1_request_json",
+      "description": "Stringified JSON validating against schemas/gemini-git-ops/v1/request.schema.json.",
+      "value_kind": "json_string"
+    },
+    {
+      "input_name": "queue_item_id",
+      "description": "Optional MAT-4 queue item id for HITL correlation (MAT-6).",
+      "value_kind": "opaque"
+    }
+  ]
+}

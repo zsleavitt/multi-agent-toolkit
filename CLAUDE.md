@@ -29,6 +29,7 @@ python scripts/validate_codex_code_exec.py
 python scripts/validate_ai_team_repo_profile.py
 python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
+python scripts/validate_gumloop_examples.py
 ```
 
 ## Design defaults
@@ -40,4 +41,4 @@ python scripts/validate_hitl_asana_approval.py
 
 ## Handoff
 
-For Cursor-specific pickup steps and the Notion ticket board, read **`CURSOR_HANDOFF.md`**.
+For Cursor-specific pickup steps and the Notion ticket board, read **`CURSOR_HANDOFF.md`**. For running MAT contracts behind **Gumloop** flows (HTTP runner prototype), read **`docs/prototypes/mat-5-gumloop.md`**.
