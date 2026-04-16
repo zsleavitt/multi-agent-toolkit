@@ -4,7 +4,7 @@ Versioned JSON Schemas for requests and responses between the **orchestrator (Cl
 
 ## Schema identity (vendor-neutral)
 
-- Schemas use **only** the standard `$schema` keyword plus **`#/$defs/...` fragment references** inside each file. There is **no** embedded `https://` document id and no dependency on any particular docs host (the old `gusto.github.io/...` style ids were removed).
+- Schemas use **only** the standard `$schema` keyword plus **`#/$defs/...` fragment references** inside each file. There is **no** embedded `https://` document id and no dependency on any particular docs host (legacy org-hosted schema ids were removed).
 - Shared field shapes for requests live in **`request.schema.json` → `$defs`**. Response-only shared shapes (**`error_code`**, **`git_error_details`**, etc.) live in **`response.schema.json` → `$defs`** (small intentional duplication so each file validates standalone).
 - **`manifest.json`** is not a JSON Schema document; it uses a neutral **`bundle_id`** string (`gemini-git-ops@v1`), not a URL.
 
@@ -69,3 +69,16 @@ python scripts/validate_gemini_git_ops.py
 ## Portable `repo_root`
 
 Requests always carry **`repo_root`** (absolute path). Orchestration code must not assume cwd; profile-driven paths and work-item adapters are **MAT-9** (`schemas/ai-team-repo-profile/v1/`).
+
+### Path validation (MAT-23)
+
+The schema enforces that `repo_root` starts with:
+- `/` (Unix/macOS/Linux absolute)
+- `~` or `~user` (Unix home-relative, e.g. `~/projects/webapp` or `~first.last/projects`)
+- A drive letter followed by `:\` or `:/` (Windows, e.g. `C:\Projects` or `D:/repos`)
+
+**Executors MUST additionally:**
+1. Expand `~` paths to the appropriate home directory
+2. Verify the path exists on the filesystem
+3. Reject paths containing `/../` traversal sequences
+4. Ensure the resolved path is within allowed boundaries (e.g., not `/etc/passwd`)

@@ -19,7 +19,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 ## Sync the repo (do this first)
 
 ```bash
-cd /Users/zach.leavitt/.claude/multi-agent-toolkit
+cd /path/to/multi-agent-toolkit
 git checkout main
 git pull origin main
 ```
@@ -107,8 +107,8 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 
 ## Related codebases
 
-- **Minions**: `~/Guideline/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
-- **Claude introspection**: `~/Gusto/claude-code/plugins/claude-introspection/` — fluency skill; see MAT-10.
+- **Minions**: `~/org/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
+- **Claude introspection**: `~/org/claude-code/plugins/claude-introspection/` — fluency skill; see MAT-10.
 
 ## Suggested next steps (in order)
 
@@ -119,7 +119,7 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 ## Validation
 
 ```bash
-cd /Users/zach.leavitt/.claude/multi-agent-toolkit
+cd /path/to/multi-agent-toolkit
 python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 python scripts/validate_gemini_git_ops.py

@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "44444444-4444-4444-8444-444444444444",
+  "idempotency_key": "mat2-invalid-traversal-path",
+  "repo_root": "../../sensitive-repo",
+  "op": "codex.implement",
+  "params": {
+    "instruction": "Add backdoor"
+  }
+}

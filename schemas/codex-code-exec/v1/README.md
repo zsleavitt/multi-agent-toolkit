@@ -51,7 +51,20 @@ python scripts/validate_codex_code_exec.py
 
 ## Portable `repo_root`
 
-Same as MAT-1: requests carry **`repo_root`** (absolute path). Combined with future **MAT-9** repo profiles, paths stay explicit rather than implicit cwd.
+Same as MAT-1: requests carry **`repo_root`** (absolute path). Combined with **MAT-9** repo profiles, paths stay explicit rather than implicit cwd.
+
+### Path validation (MAT-23)
+
+The schema enforces that `repo_root` starts with:
+- `/` (Unix/macOS/Linux absolute)
+- `~` or `~user` (Unix home-relative, e.g. `~/projects/webapp` or `~first.last/projects`)
+- A drive letter followed by `:\` or `:/` (Windows, e.g. `C:\Projects` or `D:/repos`)
+
+**Executors MUST additionally:**
+1. Expand `~` paths to the appropriate home directory
+2. Verify the path exists on the filesystem
+3. Reject paths containing `/../` traversal sequences
+4. Ensure the resolved path is within allowed boundaries
 
 ## Scope boundaries
 
