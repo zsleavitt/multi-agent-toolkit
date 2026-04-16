@@ -74,7 +74,7 @@ Requests always carry **`repo_root`** (absolute path). Orchestration code must n
 
 The schema enforces that `repo_root` starts with:
 - `/` (Unix/macOS/Linux absolute)
-- `~` or `~user` (Unix home-relative, e.g. `~/guideline/app` or `~zach/projects`)
+- `~` or `~user` (Unix home-relative, e.g. `~/guideline/app` or `~first.last/projects`)
 - A drive letter followed by `:\` or `:/` (Windows, e.g. `C:\Projects` or `D:/repos`)
 
 **Executors MUST additionally:**

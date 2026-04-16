@@ -49,7 +49,7 @@ class TestValidPaths:
             "/tmp/repo",
             "/home/user/projects/app",
             "/",
-            "/Users/zach.leavitt/guideline/app",
+            "/Users/first.last/guideline/app",
             "/var/lib/data",
         ],
         ids=["tmp", "nested", "root", "macos-home", "var"],
@@ -75,11 +75,11 @@ class TestValidPaths:
     @pytest.mark.parametrize(
         "path",
         [
-            "~zach/projects",
+            "~user/projects",
             "~developer/repos/api",
             "~user123/code",
         ],
-        ids=["zach", "developer", "user123"],
+        ids=["user", "developer", "user123"],
     )
     def test_tilde_user(self, repo_root_pattern, path):
         """Tilde paths with username (~user/) should be valid."""
