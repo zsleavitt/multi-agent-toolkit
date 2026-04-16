@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **19 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16, MAT-17, MAT-22, MAT-23, MAT-25 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-18–21, MAT-24.
+- **20 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–18, MAT-22, MAT-23, MAT-25 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-19–21, MAT-24.
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -72,6 +72,13 @@ multi-agent-toolkit/
 │   ├── reviewer.md
 │   ├── security.md
 │   └── tester.md
+├── mat_runtime/                      # MAT-18: Runtime adapter layer
+│   ├── __init__.py
+│   ├── __main__.py                   # CLI: python -m mat_runtime
+│   ├── router.py                     # AgentRouter class
+│   ├── config.py                     # Config loading
+│   ├── adapters/                     # CLI tool adapters
+│   └── tests/
 ├── scripts/validate_gemini_git_ops.py
 ├── scripts/validate_codex_code_exec.py
 ├── scripts/validate_ai_team_repo_profile.py
@@ -111,7 +118,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-14 | Add timeout_ms to MAT-2 schemas | **Done** |
 | MAT-16 | Provider configuration schema | **Done** |
 | MAT-17 | Agent definition format | **Done** |
-| MAT-18 | Runtime adapter layer | Backlog (P1) |
+| MAT-18 | Runtime adapter layer | **Done** |
 | MAT-19 | Orchestrator skill integration | Backlog (P1) |
 | MAT-20 | Consumer repo documentation | Backlog (P1) |
 | MAT-21 | Optional LangChain integration | Backlog (P2) |
@@ -138,6 +145,8 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 
 8. **Agent definitions (MAT-17)**: Agents are defined as Markdown files in `agents/` with YAML frontmatter. The frontmatter specifies identity (`name`, `description`), role (`orchestrator` / `worker` / `executor`), CLI binding, allowed MAT-2 ops, and optional tools. The Markdown body is the system prompt. See `docs/agent-definition-format.md`.
 
+9. **Runtime adapter (MAT-18)**: `mat_runtime/` Python module provides `AgentRouter` class that loads agent definitions and MAT-16 config, then routes MAT-2 requests to CLI adapters. Run with `python -m mat_runtime invoke --agent coder --instruction "..."` or `python -m mat_runtime list-agents`. Unit tests in `mat_runtime/tests/`.
+
 ## Related codebases
 
 - **Minions**: `~/org/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
@@ -147,7 +156,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
 2. **Run all eight validation scripts** (see **Validation** below) and confirm green.
-3. When prioritized, pick up **MAT-18** (runtime adapter layer) or **MAT-7** (audit checklist).
+3. When prioritized, pick up **MAT-19** (orchestrator skill integration) or **MAT-7** (audit checklist).
 
 ## Validation
 
@@ -163,6 +172,7 @@ python scripts/validate_hitl_asana_approval.py
 python scripts/validate_provider_config.py
 python scripts/validate_agent_definitions.py
 python scripts/validate_gumloop_examples.py
+python -m pytest mat_runtime/tests/ -v   # MAT-18 runtime tests
 ```
 
 Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1`, `export MAT_ORCHESTRATOR_STATE_V1=/path/to/schemas/orchestrator-state/v1`, `export MAT_HITL_ASANA_APPROVAL_V1=/path/to/schemas/hitl-asana-approval/v1`, `export MAT_PROVIDER_CONFIG_V1=/path/to/schemas/provider-config/v1`, or `export MAT_AGENT_DEFINITION_V1=/path/to/schemas/agent-definition/v1` if a bundle is not at the default `root_relative` path.
