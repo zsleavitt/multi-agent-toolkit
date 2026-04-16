@@ -69,3 +69,14 @@ python scripts/validate_gemini_git_ops.py
 ## Portable `repo_root`
 
 Requests always carry **`repo_root`** (absolute path). Orchestration code must not assume cwd; profile-driven paths and work-item adapters are **MAT-9** (`schemas/ai-team-repo-profile/v1/`).
+
+### Path validation (MAT-23)
+
+The schema enforces that `repo_root` starts with:
+- `/` (Unix/macOS/Linux)
+- A drive letter followed by `:\` or `:/` (Windows, e.g. `C:\Projects` or `D:/repos`)
+
+**Executors MUST additionally:**
+1. Verify the path exists on the filesystem
+2. Reject paths containing `/../` traversal sequences
+3. Ensure the resolved path is within allowed boundaries (e.g., not `/etc/passwd`)

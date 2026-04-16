@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.2.0",
+  "correlation_id": "33333333-3333-4333-8333-333333333333",
+  "idempotency_key": "mat2-invalid-relative-path",
+  "repo_root": "src/my-project",
+  "op": "codex.review",
+  "params": {
+    "instruction": "Review for security issues",
+    "scope_paths": ["src/"]
+  }
+}
