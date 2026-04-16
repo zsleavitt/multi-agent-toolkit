@@ -1,0 +1,13 @@
+{
+  "bundle_id": "agent-definition@v1",
+  "title": "MAT Agent Definition — bundle manifest",
+  "description": "Machine-readable index for MAT-17. Defines the schema for agent definition frontmatter.",
+  "schema_version": "1.0.0",
+  "frontmatter_schema": "./agent-frontmatter.schema.json",
+  "notes": [
+    "Agent definitions are Markdown files with YAML frontmatter in the agents/ directory.",
+    "Frontmatter defines identity, capabilities, and constraints; body is the system prompt.",
+    "allowed_mat_ops must reference valid MAT-2 operations from codex-code-exec manifest.",
+    "cli must reference a valid tool from MAT-16 provider-config schema."
+  ]
+}

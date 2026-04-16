@@ -1,0 +1,5 @@
+{
+  "description": "An agent without a name",
+  "role": "worker",
+  "cli": "codex"
+}

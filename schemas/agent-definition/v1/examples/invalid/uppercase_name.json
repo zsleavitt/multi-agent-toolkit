@@ -1,0 +1,6 @@
+{
+  "name": "MyAgent",
+  "description": "An agent with invalid uppercase name",
+  "role": "worker",
+  "cli": "codex"
+}

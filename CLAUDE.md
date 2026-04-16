@@ -19,6 +19,7 @@ Use this file in the **Claude Code** session that **orchestrates** work across w
 - **MAT-10** — same bundle — optional **`orchestrator_session`** (primary Claude Code session) and checkpoint **`fluency`** (`planning` / `review` / …) for **`/ai-fluency-insights`**-style tooling; keep high-signal planning and review in this orchestrator session when fluency scores matter.
 - **MAT-6** — `schemas/hitl-asana-approval/v1/` — **trigger** and **callback** JSON for Asana-backed approvals when MAT-4 queue status is **`blocked_hitl`** (correlation + `queue_item_id` threading).
 - **MAT-16** — `schemas/provider-config/v1/` — **CLI-based agent configuration**: which CLI tool (`claude`, `codex`, `gemini`, etc.) handles which role (`orchestrator`, `worker`, `git-executor`). No API keys — each CLI uses its own license. See ADR 0002.
+- **MAT-17** — `schemas/agent-definition/v1/` — **Agent definition frontmatter schema**: validates `agents/*.md` files (YAML frontmatter + system prompt). Defines 5 core agents: orchestrator, coder, researcher, reviewer, tester.
 - **Registry** — `config/schema-registry.json` — on-disk bundle paths; env overrides documented in each bundle’s README.
 
 Validation:
@@ -31,6 +32,7 @@ python scripts/validate_ai_team_repo_profile.py
 python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
 python scripts/validate_provider_config.py
+python scripts/validate_agent_definitions.py
 python scripts/validate_gumloop_examples.py
 ```
 

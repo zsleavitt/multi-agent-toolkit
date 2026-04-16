@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent definition frontmatter (MAT-17)",
+  "description": "Schema for validating YAML frontmatter in agent definition Markdown files.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "role", "cli"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique agent identifier (lowercase alphanumeric with hyphens)."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Human-readable description of the agent's purpose."
+    },
+    "role": {
+      "type": "string",
+      "enum": ["orchestrator", "worker", "executor"],
+      "description": "Agent role: orchestrator (plan/route), worker (execute tasks), executor (constrained ops)."
+    },
+    "cli": {
+      "type": "string",
+      "enum": ["claude", "codex", "gemini", "cursor", "aider", "continue", "custom"],
+      "description": "CLI tool binding (must match MAT-16 agent config)."
+    },
+    "allowed_mat_ops": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "codex.implement",
+          "codex.test",
+          "codex.refactor",
+          "codex.diagnose",
+          "codex.review"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "MAT-2 operations this agent can perform. Omit for no restrictions."
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["read", "write", "edit", "bash", "glob", "grep", "agent", "mcp", "web"],
+        "description": "Tool name."
+      },
+      "uniqueItems": true,
+      "description": "Tools the agent has access to."
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 3600000,
+      "description": "Default timeout in milliseconds (1s–1h)."
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "Default temperature for generation (0.0–2.0)."
+    }
+  }
+}

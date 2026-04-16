@@ -1,0 +1,10 @@
+{
+  "name": "full-featured-agent",
+  "description": "An agent with all optional fields specified",
+  "role": "worker",
+  "cli": "codex",
+  "allowed_mat_ops": ["codex.implement", "codex.test", "codex.refactor"],
+  "tools": ["read", "write", "edit", "bash", "glob", "grep"],
+  "timeout_ms": 300000,
+  "temperature": 0.3
+}
