@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "orchestrator": {
+      "cli": "claude",
+      "capabilities": ["planning", "routing", "synthesis"]
+    },
+    "worker": {
+      "cli": "custom",
+      "command": "/usr/local/bin/my-codex-wrapper",
+      "capabilities": ["implement", "test", "refactor"],
+      "flags": ["--json-mode", "--no-interactive"],
+      "timeout_ms": 900000
+    },
+    "git-executor": {
+      "cli": "custom",
+      "command": "python3 -m mat_git_executor",
+      "capabilities": ["git-ops"],
+      "working_dir": "/tmp/mat-workdir"
+    }
+  },
+  "routing": {
+    "codex_ops": "worker",
+    "git_ops": "git-executor"
+  }
+}

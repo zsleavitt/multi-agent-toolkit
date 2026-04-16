@@ -14,7 +14,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
   - **MAT-4** — Orchestrator state: queue, artifacts, checkpoints; optional orchestrator session + **fluency** (MAT-10) on `schema_version` **1.1.0** documents.
   - **MAT-6** — HITL: Asana approval **trigger** and **callback** JSON.
   - **MAT-9** — Portable **`ai-team.repo`** profile + work-item adapters (Linear, Jira, GitHub Issues, file, none).
-  - **MAT-16** — Provider configuration: model-agnostic LLM provider config with **model_aliases**, fallback chains, and budgets.
+  - **MAT-16** — Agent configuration: CLI-based agent bindings (which CLI tool handles which role). No API keys required.
 - **Tickets** live in Notion (set `$MAT_NOTION_TICKETS_URL` and `$MAT_NOTION_HUB_URL` in your environment).
 
 ## Sync the repo (do this first)
@@ -119,6 +119,8 @@ MAT-1 through MAT-16 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 5. **Diagnose / review (MAT-13)**: **`codex.diagnose`** and **`codex.review`** are MAT-2 ops with structured response `$defs` (`result_diagnose`, `result_review`, `review_finding`). Use wire **`schema_version`** **1.2.0** for those requests/responses; they are analysis/review workflows, not MAT-1 git ops.
 
 6. **Gumloop runner (MAT-5)**: Gumloop’s **`start_pipeline`** API can kick off flows whose **HTTP** nodes forward bodies validated against MAT-1/MAT-2 schemas; use shared **`correlation_id`** across steps. See **`docs/prototypes/mat-5-gumloop.md`** and **`examples/gumloop/`**.
+
+7. **CLI delegation (ADR 0002)**: Agents are invoked via CLI tools (`claude`, `codex`, `gemini`), not direct API calls. No API keys required — each CLI uses its own license/subscription. MAT-16 defines which CLI handles which role.
 
 ## Related codebases
 

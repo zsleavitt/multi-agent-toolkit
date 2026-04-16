@@ -1,6 +1,8 @@
-# MAT-16 — Provider configuration schema (`v1`)
+# MAT-16 — Agent configuration schema (`v1`)
 
-Versioned JSON Schema for **model-agnostic LLM provider configuration**. This schema enables orchestrators and agents to work with any LLM provider without hardcoding vendor-specific details.
+Versioned JSON Schema for **CLI-based agent configuration**. This schema defines which CLI tools handle which roles in multi-agent orchestration — **no API keys required**.
+
+See **ADR 0002** (`docs/adr/0002-cli-delegation-vs-direct-api.md`) for architectural rationale.
 
 ## Schema identity (vendor-neutral)
 
@@ -19,122 +21,167 @@ Versioned JSON Schema for **model-agnostic LLM provider configuration**. This sc
 | File | Purpose |
 |------|---------|
 | `manifest.json` | Bundle metadata and notes. |
-| `provider-config.schema.json` | Main schema for provider configuration documents. |
+| `provider-config.schema.json` | Main schema for agent configuration documents. |
 | `examples/` | Valid / invalid fixtures for CI. |
+
+## CLI delegation model
+
+The toolkit uses **CLI delegation** instead of direct API calls:
+
+```
+┌─────────────────┐
+│   Orchestrator  │  → claude CLI (licensed)
+└────────┬────────┘
+         │ MAT-2 JSON
+         ▼
+┌─────────────────┐
+│     Worker      │  → codex CLI (licensed)
+└────────┬────────┘
+         │ MAT-1 JSON
+         ▼
+┌─────────────────┐
+│  Git Executor   │  → gemini CLI (licensed)
+└─────────────────┘
+```
+
+**Benefits:**
+- No API keys — each CLI uses its own subscription/license
+- No duplicate billing — CLI license covers usage
+- No auth management — each CLI handles its own login flow
 
 ## Core concepts
 
-### Providers
+### Agents
 
-Each provider entry configures access to an LLM API:
-
-```json
-{
-  "providers": {
-    "anthropic": {
-      "type": "anthropic",
-      "auth_env": "ANTHROPIC_API_KEY"
-    },
-    "openai-enterprise": {
-      "type": "openai",
-      "auth_env": "OPENAI_API_KEY",
-      "org_id_env": "OPENAI_ORG_ID",
-      "api_base": "https://api.enterprise.openai.com/v1"
-    }
-  }
-}
-```
-
-**Supported provider types:**
-- `anthropic` — Anthropic API (Claude models)
-- `openai` — OpenAI API (GPT, Codex models)
-- `google` — Google AI / Vertex AI (Gemini models)
-- `azure` — Azure OpenAI Service
-- `bedrock` — AWS Bedrock
-- `ollama` — Local Ollama instance
-- `openrouter` — OpenRouter proxy
-- `custom` — Any OpenAI-compatible API (requires `api_base`)
-
-### Model aliases
-
-Semantic names that decouple orchestration logic from specific models:
+Each agent binds a semantic role to a CLI tool:
 
 ```json
 {
-  "model_aliases": {
+  "agents": {
     "orchestrator": {
-      "provider": "anthropic",
-      "model": "claude-sonnet-4-20250514",
-      "max_tokens": 8192,
-      "fallback": [
-        { "provider": "openai", "model": "gpt-4o" }
-      ]
+      "cli": "claude",
+      "capabilities": ["planning", "routing", "synthesis"]
     },
     "worker": {
-      "provider": "openai",
-      "model": "codex-2",
-      "temperature": 0.2
+      "cli": "codex",
+      "capabilities": ["implement", "test", "refactor", "diagnose"]
     },
-    "fast": {
-      "provider": "anthropic",
-      "model": "claude-haiku-4-20250514"
+    "git-executor": {
+      "cli": "gemini",
+      "capabilities": ["git-ops", "research"]
     }
   }
 }
 ```
 
-**Common alias patterns:**
-- `orchestrator` — Primary planning/routing model (high capability)
-- `worker` — Code execution/implementation model
-- `reviewer` — Code review/analysis model
-- `fast` — Quick responses, lower latency
-- `cheap` — Cost-optimized for bulk operations
+**Supported CLI tools:**
+- `claude` — Claude Code CLI
+- `codex` — OpenAI Codex CLI
+- `gemini` — Google Gemini CLI
+- `cursor` — Cursor editor CLI
+- `aider` — Aider CLI
+- `continue` — Continue CLI
+- `custom` — Any CLI (requires `command` field)
 
-### Fallback chains
+### Capabilities
 
-When a primary model/provider is unavailable, fallbacks provide resilience:
+Capabilities describe what an agent can do:
+
+| Capability | Description | Typical CLI |
+|------------|-------------|-------------|
+| `planning` | Break down complex tasks | claude |
+| `routing` | Decide which agent handles what | claude |
+| `synthesis` | Combine results from multiple agents | claude |
+| `review` | Code review and analysis | claude, codex |
+| `implement` | Write/modify code | codex |
+| `test` | Write and run tests | codex |
+| `refactor` | Restructure existing code | codex |
+| `diagnose` | Debug and root-cause analysis | codex |
+| `git-ops` | Git operations (MAT-1) | gemini |
+| `research` | Information gathering | gemini |
+| `chat` | Interactive conversation | any |
+
+### Routing
+
+Optional explicit routing maps operation types to agents:
 
 ```json
 {
-  "fallback": [
-    { "provider": "openai", "model": "gpt-4o" },
-    { "provider": "ollama-local", "model": "llama3:70b" }
-  ]
-}
-```
-
-### Budgets
-
-Cost and usage guardrails enforced by the executor:
-
-```json
-{
-  "budgets": {
-    "daily_token_limit": 5000000,
-    "daily_cost_limit_cents": 5000,
-    "session_token_limit": 500000
+  "routing": {
+    "codex_ops": "worker",
+    "git_ops": "git-executor",
+    "planning": "orchestrator",
+    "research": "git-executor"
   }
 }
 ```
 
-## Security
+### Custom CLI tools
 
-**Critical: Never store API keys in config files.**
+For tools not in the preset list:
 
-- `auth_env` references an environment variable name, not the key itself
-- `org_id_env` similarly references an env var for organization IDs
-- Executors read these env vars at runtime
-- Config files can be safely committed to version control
+```json
+{
+  "agents": {
+    "worker": {
+      "cli": "custom",
+      "command": "/usr/local/bin/my-codex-wrapper",
+      "capabilities": ["implement"],
+      "flags": ["--json-mode"]
+    }
+  }
+}
+```
 
-### Recommended env var naming
+## Minimal example
 
-| Provider | API Key Env Var | Org ID Env Var |
-|----------|-----------------|----------------|
-| Anthropic | `ANTHROPIC_API_KEY` | — |
-| OpenAI | `OPENAI_API_KEY` | `OPENAI_ORG_ID` |
-| Google | `GOOGLE_AI_API_KEY` | — |
-| Azure | `AZURE_OPENAI_API_KEY` | — |
-| Bedrock | `AWS_ACCESS_KEY_ID` | — |
+```json
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "default": {
+      "cli": "claude",
+      "capabilities": ["planning", "routing", "synthesis", "implement", "review"]
+    }
+  }
+}
+```
+
+## Full example
+
+```json
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "orchestrator": {
+      "cli": "claude",
+      "capabilities": ["planning", "routing", "synthesis", "review"],
+      "timeout_ms": 300000
+    },
+    "worker": {
+      "cli": "codex",
+      "capabilities": ["implement", "test", "refactor", "diagnose"],
+      "flags": ["--approval-mode", "full-auto"],
+      "timeout_ms": 600000
+    },
+    "git-executor": {
+      "cli": "gemini",
+      "capabilities": ["git-ops", "research"],
+      "timeout_ms": 120000
+    }
+  },
+  "routing": {
+    "codex_ops": "worker",
+    "git_ops": "git-executor",
+    "planning": "orchestrator",
+    "research": "git-executor"
+  },
+  "defaults": {
+    "timeout_ms": 180000,
+    "max_retries": 2
+  }
+}
+```
 
 ## Validate locally
 
@@ -145,14 +192,16 @@ pip install -r requirements-dev.txt
 python scripts/validate_provider_config.py
 ```
 
-## Integration with MAT-9 repo profiles
+## Integration with other MAT schemas
 
-Provider config is **separate** from repo profiles (`ai-team.repo.json`):
-
-- **Provider config** — Which LLM providers/models to use (can be shared across repos)
-- **Repo profile** — Repository identity, paths, work-item adapters (per-repo)
+| Schema | Relationship |
+|--------|--------------|
+| **MAT-1** (git-ops) | Wire format for `git-executor` agent |
+| **MAT-2** (codex) | Wire format for `worker` agent |
+| **MAT-9** (repo profile) | Repository-specific paths and work-item adapters |
+| **MAT-16** (this schema) | Which CLI tool handles which role |
 
 A typical setup:
-1. `~/.config/mat/providers.json` — User's provider configuration
-2. `./ai-team.repo.json` — Repository-specific profile
-3. Environment variables — Actual API credentials
+1. `~/.config/mat/agents.json` — User's agent configuration
+2. `./ai-team.repo.json` — Repository-specific profile (MAT-9)
+3. CLI tools authenticated — Each via its own login flow
