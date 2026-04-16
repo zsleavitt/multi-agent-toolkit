@@ -38,6 +38,7 @@ multi-agent-toolkit/
 │   ├── coder.md
 │   ├── researcher.md
 │   ├── reviewer.md
+│   ├── security.md
 │   └── tester.md
 ```
 
@@ -127,7 +128,7 @@ When completing a task, summarize:
 
 ## Core agents
 
-The toolkit provides 5 core agent definitions:
+The toolkit provides 6 core agent definitions:
 
 | Agent | Role | CLI | Purpose |
 |-------|------|-----|---------|
@@ -135,6 +136,7 @@ The toolkit provides 5 core agent definitions:
 | `coder` | worker | codex | Code implementation |
 | `researcher` | executor | gemini | Information gathering, research |
 | `reviewer` | worker | claude | Code review, analysis |
+| `security` | worker | claude | Security analysis, vulnerability scanning |
 | `tester` | worker | codex | Test writing and execution |
 
 ## Validation

@@ -67,6 +67,7 @@ You are a code implementation agent...
 | `coder` | worker | codex | Implement code |
 | `researcher` | executor | gemini | Gather information |
 | `reviewer` | worker | claude | Code review |
+| `security` | worker | claude | Security analysis |
 | `tester` | worker | codex | Write and run tests |
 
 ## Validate locally
