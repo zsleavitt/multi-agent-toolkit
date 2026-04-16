@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI team — agent configuration (MAT-16)",
+  "description": "CLI-based agent configuration for multi-agent orchestration. Defines which CLI tools handle which roles — no API keys required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "agents"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "agents": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/agent_config" },
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/agent_role" },
+      "description": "Map of agent roles to CLI tool configurations. At least one agent required."
+    },
+    "routing": { "$ref": "#/$defs/routing" },
+    "defaults": { "$ref": "#/$defs/defaults" }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Bump only when the config document shape changes."
+    },
+    "agent_role": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "Semantic role name (e.g. 'orchestrator', 'worker', 'git-executor', 'researcher')."
+    },
+    "cli_tool": {
+      "type": "string",
+      "enum": ["claude", "codex", "gemini", "cursor", "aider", "continue", "custom"],
+      "description": "CLI tool identifier. 'custom' requires explicit command configuration."
+    },
+    "agent_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cli"],
+      "properties": {
+        "cli": { "$ref": "#/$defs/cli_tool" },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Custom command to invoke (required when cli is 'custom', optional override otherwise)."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capability" },
+          "uniqueItems": true,
+          "description": "Capabilities this agent provides. Used for routing decisions."
+        },
+        "flags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "maxItems": 20,
+          "description": "Default CLI flags passed to every invocation of this agent."
+        },
+        "working_dir": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Working directory for this agent (defaults to repo_root from request)."
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "description": "Default timeout in milliseconds for this agent (1s–1h)."
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Set false to disable this agent without removing config."
+        }
+      }
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "routing",
+        "synthesis",
+        "review",
+        "implement",
+        "test",
+        "refactor",
+        "diagnose",
+        "git-ops",
+        "research",
+        "chat"
+      ],
+      "description": "Agent capability used for automatic routing."
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional explicit routing rules. Maps operation patterns to agent roles.",
+      "properties": {
+        "codex_ops": {
+          "$ref": "#/$defs/agent_role",
+          "description": "Agent role for codex.* operations (implement, test, refactor, diagnose, review)."
+        },
+        "git_ops": {
+          "$ref": "#/$defs/agent_role",
+          "description": "Agent role for git.* operations (status, fetch, pull, push, etc.)."
+        },
+        "planning": {
+          "$ref": "#/$defs/agent_role",
+          "description": "Agent role for planning and decomposition tasks."
+        },
+        "research": {
+          "$ref": "#/$defs/agent_role",
+          "description": "Agent role for research and information gathering."
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Default settings applied across all agents.",
+      "properties": {
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "description": "Default timeout in milliseconds (1s–1h)."
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Default retry count for transient failures."
+        },
+        "working_dir_env": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Env var name to read default working directory from."
+        }
+      }
+    }
+  }
+}

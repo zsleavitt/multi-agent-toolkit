@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "orchestrator": {
+      "cli": "claude",
+      "capabilities": ["planning", "routing", "synthesis", "review"],
+      "timeout_ms": 300000
+    },
+    "worker": {
+      "cli": "codex",
+      "capabilities": ["implement", "test", "refactor", "diagnose"],
+      "flags": ["--approval-mode", "full-auto"],
+      "timeout_ms": 600000
+    },
+    "git-executor": {
+      "cli": "gemini",
+      "capabilities": ["git-ops", "research"],
+      "timeout_ms": 120000
+    }
+  },
+  "routing": {
+    "codex_ops": "worker",
+    "git_ops": "git-executor",
+    "planning": "orchestrator",
+    "research": "git-executor"
+  },
+  "defaults": {
+    "timeout_ms": 180000,
+    "max_retries": 2
+  }
+}
