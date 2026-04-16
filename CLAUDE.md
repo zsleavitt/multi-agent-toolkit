@@ -29,6 +29,7 @@ python scripts/validate_codex_code_exec.py
 python scripts/validate_ai_team_repo_profile.py
 python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
+python scripts/validate_gumloop_examples.py
 ```
 
 ## Design defaults

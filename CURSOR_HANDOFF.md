@@ -111,7 +111,7 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 ## Suggested next steps (in order)
 
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
-2. **Run all five validation scripts** (see **Validation** below) and confirm green.
+2. **Run all six validation scripts** (see **Validation** below) and confirm green.
 3. When prioritized, pick up **MAT-7** (audit repo vs architecture checklist).
 
 ## Validation
@@ -125,6 +125,7 @@ python scripts/validate_codex_code_exec.py
 python scripts/validate_ai_team_repo_profile.py
 python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
+python scripts/validate_gumloop_examples.py
 ```
 
 Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1`, `export MAT_ORCHESTRATOR_STATE_V1=/path/to/schemas/orchestrator-state/v1`, or `export MAT_HITL_ASANA_APPROVAL_V1=/path/to/schemas/hitl-asana-approval/v1` if a bundle is not at the default `root_relative` path.
