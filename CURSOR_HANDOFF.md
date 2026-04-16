@@ -107,8 +107,8 @@ MAT-1 through MAT-14 are represented in `schemas/*/v1/` with `manifest.json` all
 
 ## Related codebases
 
-- **Minions**: `~/Guideline/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
-- **Claude introspection**: `~/Gusto/claude-code/plugins/claude-introspection/` — fluency skill; see MAT-10.
+- **Minions**: `~/org/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
+- **Claude introspection**: `~/org/claude-code/plugins/claude-introspection/` — fluency skill; see MAT-10.
 
 ## Suggested next steps (in order)
 

@@ -49,7 +49,7 @@ class TestValidPaths:
             "/tmp/repo",
             "/home/user/projects/app",
             "/",
-            "/Users/first.last/guideline/app",
+            "/Users/first.last/acme/webapp",
             "/var/lib/data",
         ],
         ids=["tmp", "nested", "root", "macos-home", "var"],
@@ -62,7 +62,7 @@ class TestValidPaths:
         "path",
         [
             "~/repo",
-            "~/guideline/app",
+            "~/acme/webapp",
             "~/.claude/multi-agent-toolkit",
             "~/",
         ],
