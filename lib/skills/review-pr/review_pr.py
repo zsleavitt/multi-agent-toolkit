@@ -30,6 +30,59 @@ from lib.skills.github_review import (
 )
 
 
+def try_post_review(response, min_severity: str) -> int | None:
+    """
+    Attempt to post review findings to GitHub PR.
+
+    Args:
+        response: MAT2Response from reviewer agent.
+        min_severity: Minimum severity level to post.
+
+    Returns:
+        PR number if posted successfully, None otherwise.
+    """
+    # Check gh CLI availability
+    gh_ok, gh_error = check_gh_cli()
+    if not gh_ok:
+        print(f"Error: {gh_error}", file=sys.stderr)
+        print("\nFalling back to CLI output only.\n", file=sys.stderr)
+        return None
+
+    # Detect PR for current branch
+    pr_info = detect_pr_for_branch()
+    if pr_info is None:
+        # Prompt to create PR (only in interactive mode)
+        if sys.stdin.isatty():
+            create = input("No PR found for current branch. Create one? [y/N] ").strip().lower()
+            if create == "y":
+                result = subprocess.run(["gh", "pr", "create"], check=False)
+                if result.returncode == 0:
+                    pr_info = detect_pr_for_branch()
+        else:
+            print("No PR found for current branch. Skipping GitHub posting.", file=sys.stderr)
+
+    if not pr_info:
+        print("\nNo PR available. Showing CLI output only.\n", file=sys.stderr)
+        return None
+
+    # Get findings from response
+    findings = response.result.get("findings", [])
+    filtered = filter_findings_by_severity(findings, min_severity)
+
+    if not filtered:
+        print("No findings meet minimum severity threshold.", file=sys.stderr)
+        return None
+
+    payload = build_review_payload(filtered)
+    post_ok, post_error = post_review(pr_info, payload)
+    if post_ok:
+        return pr_info["number"]
+    else:
+        print(f"Error posting review: {post_error}", file=sys.stderr)
+        print("\nFalling back to CLI output only.\n", file=sys.stderr)
+        return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Code review via reviewer agent")
     parser.add_argument("target", nargs="+", help="What to review (file, PR, description)")
@@ -71,42 +124,7 @@ def main() -> int:
     # Handle --post flag for GitHub PR comments
     posted_pr = None
     if args.post and response.ok:
-        # Check gh CLI availability
-        gh_ok, gh_error = check_gh_cli()
-        if not gh_ok:
-            print(f"Error: {gh_error}", file=sys.stderr)
-            print("\nFalling back to CLI output only.\n", file=sys.stderr)
-        else:
-            # Detect PR for current branch
-            pr_info = detect_pr_for_branch()
-            if pr_info is None:
-                # Prompt to create PR (only in interactive mode)
-                if sys.stdin.isatty():
-                    create = input("No PR found for current branch. Create one? [y/N] ").strip().lower()
-                    if create == "y":
-                        result = subprocess.run(["gh", "pr", "create"], check=False)
-                        if result.returncode == 0:
-                            pr_info = detect_pr_for_branch()
-                else:
-                    print("No PR found for current branch. Skipping GitHub posting.", file=sys.stderr)
-
-            if pr_info:
-                # Get findings from response
-                findings = response.result.get("findings", [])
-                filtered = filter_findings_by_severity(findings, args.min_severity)
-
-                if filtered:
-                    payload = build_review_payload(filtered)
-                    post_ok, post_error = post_review(pr_info, payload)
-                    if post_ok:
-                        posted_pr = pr_info["number"]
-                    else:
-                        print(f"Error posting review: {post_error}", file=sys.stderr)
-                        print("\nFalling back to CLI output only.\n", file=sys.stderr)
-                else:
-                    print("No findings meet minimum severity threshold.", file=sys.stderr)
-            else:
-                print("\nNo PR available. Showing CLI output only.\n", file=sys.stderr)
+        posted_pr = try_post_review(response, args.min_severity)
 
     if args.json:
         print(response.to_json(indent=2))

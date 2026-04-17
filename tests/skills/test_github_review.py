@@ -196,12 +196,12 @@ def test_build_review_payload_handles_empty_findings():
 
 
 def test_detect_pr_for_branch_returns_pr_info_when_found():
-    """Should return PR number and repo when PR exists."""
+    """Should return PR number and repo from baseRepository (for cross-repo PR support)."""
     from lib.skills.github_review import detect_pr_for_branch
 
     mock_result = MagicMock()
     mock_result.returncode = 0
-    mock_result.stdout = '{"number": 42, "headRepository": {"owner": {"login": "myorg"}, "name": "myrepo"}}'
+    mock_result.stdout = '{"number": 42, "baseRepository": {"owner": {"login": "myorg"}, "name": "myrepo"}}'
 
     with patch("subprocess.run", return_value=mock_result) as mock_run:
         result = detect_pr_for_branch()
@@ -302,3 +302,93 @@ def test_post_review_returns_error_on_failure():
 
         assert ok is False
         assert "422" in error
+
+
+# --- Edge case tests ---
+
+
+def test_filter_findings_by_severity_raises_on_invalid_severity():
+    """Should raise ValueError for invalid min_severity."""
+    from lib.skills.github_review import filter_findings_by_severity
+
+    with pytest.raises(ValueError) as exc_info:
+        filter_findings_by_severity([], min_severity="invalid")
+
+    assert "invalid" in str(exc_info.value).lower()
+    assert "info" in str(exc_info.value)  # Shows valid options
+
+
+def test_filter_findings_by_severity_skips_unknown_finding_severity():
+    """Findings with unknown severity should be skipped, not crash."""
+    from lib.skills.github_review import filter_findings_by_severity
+
+    findings = [
+        {"severity": "info", "path": "a.py", "message": "msg"},
+        {"severity": "unknown", "path": "b.py", "message": "msg"},
+        {"severity": "blocker", "path": "c.py", "message": "msg"},
+    ]
+
+    result = filter_findings_by_severity(findings, min_severity="info")
+
+    assert len(result) == 2
+    assert result[0]["severity"] == "info"
+    assert result[1]["severity"] == "blocker"
+
+
+def test_format_summary_handles_empty_findings():
+    """Empty findings should produce 'No findings' summary."""
+    from lib.skills.github_review import format_summary
+
+    result = format_summary([])
+
+    assert "No findings" in result
+    assert "*Posted via /review-pr*" in result
+
+
+def test_check_gh_cli_returns_error_on_timeout():
+    """Should return error when gh CLI times out."""
+    from lib.skills.github_review import check_gh_cli
+
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("gh", 30)):
+        ok, error = check_gh_cli()
+
+        assert ok is False
+        assert "timed out" in error.lower()
+
+
+def test_detect_pr_for_branch_returns_none_on_timeout():
+    """Should return None when gh pr view times out."""
+    from lib.skills.github_review import detect_pr_for_branch
+
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("gh", 30)):
+        result = detect_pr_for_branch()
+
+        assert result is None
+
+
+def test_detect_pr_for_branch_returns_none_on_malformed_json():
+    """Should return None when gh returns malformed JSON."""
+    from lib.skills.github_review import detect_pr_for_branch
+
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = "not valid json"
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = detect_pr_for_branch()
+
+        assert result is None
+
+
+def test_post_review_returns_error_on_timeout():
+    """Should return error when gh api times out."""
+    from lib.skills.github_review import post_review
+
+    pr_info = {"number": 42, "owner": "myorg", "repo": "myrepo"}
+    payload = {"event": "COMMENT", "body": "summary", "comments": []}
+
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("gh", 30)):
+        ok, error = post_review(pr_info, payload)
+
+        assert ok is False
+        assert "timed out" in error.lower()

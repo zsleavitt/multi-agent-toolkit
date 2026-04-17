@@ -12,6 +12,9 @@ from typing import Any
 # Severity levels in order of increasing importance
 SEVERITY_ORDER = ["info", "suggestion", "issue", "blocker"]
 
+# Default timeout for gh CLI calls (seconds)
+GH_TIMEOUT_SECONDS = 30
+
 # Emoji mapping for severities
 SEVERITY_EMOJI = {
     "blocker": "\U0001f6ab",  # 🚫
@@ -34,7 +37,15 @@ def filter_findings_by_severity(
 
     Returns:
         Filtered list of findings.
+
+    Raises:
+        ValueError: If min_severity is not a valid severity level.
     """
+    if min_severity not in SEVERITY_ORDER:
+        raise ValueError(
+            f"Invalid min_severity '{min_severity}'. "
+            f"Must be one of: {', '.join(SEVERITY_ORDER)}"
+        )
     min_index = SEVERITY_ORDER.index(min_severity)
     result = []
     for f in findings:
@@ -145,9 +156,12 @@ def check_gh_cli() -> tuple[bool, str | None]:
             ["gh", "auth", "status"],
             capture_output=True,
             text=True,
+            timeout=GH_TIMEOUT_SECONDS,
         )
     except FileNotFoundError:
         return False, "GitHub CLI (gh) not found. Install from https://cli.github.com"
+    except subprocess.TimeoutExpired:
+        return False, f"GitHub CLI timed out after {GH_TIMEOUT_SECONDS}s"
 
     if result.returncode != 0:
         return False, "GitHub CLI not authenticated. Run `gh auth login`"
@@ -161,12 +175,17 @@ def detect_pr_for_branch() -> dict[str, Any] | None:
 
     Returns:
         Dict with 'number', 'owner', 'repo' if PR exists, None otherwise.
+        Uses baseRepository (not headRepository) so cross-repo PRs work correctly.
     """
-    result = subprocess.run(
-        ["gh", "pr", "view", "--json", "number,headRepository"],
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "view", "--json", "number,baseRepository"],
+            capture_output=True,
+            text=True,
+            timeout=GH_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return None
 
     if result.returncode != 0:
         return None
@@ -175,8 +194,8 @@ def detect_pr_for_branch() -> dict[str, Any] | None:
         data = json.loads(result.stdout)
         return {
             "number": data["number"],
-            "owner": data["headRepository"]["owner"]["login"],
-            "repo": data["headRepository"]["name"],
+            "owner": data["baseRepository"]["owner"]["login"],
+            "repo": data["baseRepository"]["name"],
         }
     except (json.JSONDecodeError, KeyError):
         return None
@@ -208,7 +227,10 @@ def post_review(
             ["gh", "api", endpoint, "--method", "POST", "--input", temp_path],
             capture_output=True,
             text=True,
+            timeout=GH_TIMEOUT_SECONDS,
         )
+    except subprocess.TimeoutExpired:
+        return False, f"GitHub API call timed out after {GH_TIMEOUT_SECONDS}s"
     finally:
         os.unlink(temp_path)
 
