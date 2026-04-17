@@ -5,8 +5,15 @@ Invokes the reviewer agent to analyze code for quality, security, and correctnes
 ## Usage
 
 ```
-/review-pr <target>
+/review-pr <target> [--post] [--min-severity info|suggestion|issue|blocker]
 ```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--post`, `-p` | Post findings as GitHub PR review |
+| `--min-severity`, `-m` | Minimum severity to post (default: `info`) |
 
 ## Examples
 
@@ -29,6 +36,28 @@ Invokes the reviewer agent to analyze code for quality, security, and correctnes
 ```
 /review-pr Comprehensive review of the changes in src/api/
 ```
+
+### Post review to GitHub PR
+```
+/review-pr Review staged changes --post
+```
+
+### Post only issues and blockers
+```
+/review-pr Review src/api/ --post --min-severity issue
+```
+
+## GitHub Integration
+
+When using `--post`, the skill will:
+1. Check that `gh` CLI is installed and authenticated
+2. Detect if there's an open PR for the current branch
+3. Post inline comments for each finding
+4. Submit a review with appropriate status (REQUEST_CHANGES if blockers/issues, COMMENT otherwise)
+
+**Requirements:**
+- GitHub CLI (`gh`) installed and authenticated (`gh auth login`)
+- Current branch must have an open PR (or you'll be prompted to create one)
 
 ## What the reviewer checks
 
