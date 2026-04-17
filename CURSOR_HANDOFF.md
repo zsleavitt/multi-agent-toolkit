@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **20 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–18, MAT-22, MAT-23, MAT-25 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-19–21, MAT-24.
+- **21 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–18, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-19–21, MAT-24.
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -30,6 +30,7 @@ git pull origin main
 
 ```
 multi-agent-toolkit/
+├── bin/setup                         # MAT-26: Setup script (venv, deps, CLI check)
 ├── CLAUDE.md                         # MAT-3: orchestrator context for Claude Code
 ├── CURSOR_HANDOFF.md                 # This file
 ├── docs/adr/                         # MAT-8 and later ADRs
@@ -126,6 +127,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-23 | Schema: repo_root validation | **Done** |
 | MAT-24 | Schema: maxLength on instructions | Backlog (P2) |
 | MAT-25 | Security agent definition | **Done** |
+| MAT-26 | Setup script + CLI prerequisites | **Done** |
 
 ## Key design decisions
 
