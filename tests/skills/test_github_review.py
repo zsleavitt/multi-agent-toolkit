@@ -222,3 +222,42 @@ def test_detect_pr_for_branch_returns_none_when_no_pr():
         result = detect_pr_for_branch()
 
         assert result is None
+
+
+def test_check_gh_cli_returns_true_when_installed_and_authed():
+    """Should return True when gh is installed and authenticated."""
+    from lib.skills.github_review import check_gh_cli
+
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+
+    with patch("subprocess.run", return_value=mock_result):
+        ok, error = check_gh_cli()
+
+        assert ok is True
+        assert error is None
+
+
+def test_check_gh_cli_returns_error_when_not_installed():
+    """Should return error message when gh is not installed."""
+    from lib.skills.github_review import check_gh_cli
+
+    with patch("subprocess.run", side_effect=FileNotFoundError()):
+        ok, error = check_gh_cli()
+
+        assert ok is False
+        assert "not found" in error.lower()
+
+
+def test_check_gh_cli_returns_error_when_not_authed():
+    """Should return error message when gh is not authenticated."""
+    from lib.skills.github_review import check_gh_cli
+
+    mock_result = MagicMock()
+    mock_result.returncode = 1
+
+    with patch("subprocess.run", return_value=mock_result):
+        ok, error = check_gh_cli()
+
+        assert ok is False
+        assert "not authenticated" in error.lower()

@@ -129,6 +129,28 @@ def build_review_payload(findings: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def check_gh_cli() -> tuple[bool, str | None]:
+    """
+    Check if gh CLI is installed and authenticated.
+
+    Returns:
+        Tuple of (ok, error_message). ok is True if ready, False with message otherwise.
+    """
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "status"],
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return False, "GitHub CLI (gh) not found. Install from https://cli.github.com"
+
+    if result.returncode != 0:
+        return False, "GitHub CLI not authenticated. Run `gh auth login`"
+
+    return True, None
+
+
 def detect_pr_for_branch() -> dict[str, Any] | None:
     """
     Detect if there's an open PR for the current branch.
