@@ -140,6 +140,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-28 | Skill: /test | **Done** |
 | MAT-29 | Skill: /diagnose | **Done** |
 | MAT-30 | Skill: /plan | **Done** |
+| MAT-31 | /review-pr: post comments to PR | Backlog (P2) |
 
 ## Key design decisions
 
