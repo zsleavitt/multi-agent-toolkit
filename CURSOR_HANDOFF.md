@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **21 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–18, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-19–21, MAT-24.
+- **22 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–19, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-20–21, MAT-24.
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -80,6 +80,9 @@ multi-agent-toolkit/
 │   ├── config.py                     # Config loading
 │   ├── adapters/                     # CLI tool adapters
 │   └── tests/
+├── skills/develop/                   # MAT-19: /develop skill — orchestrated workflow
+│   ├── SKILL.md
+│   └── develop.py
 ├── scripts/validate_gemini_git_ops.py
 ├── scripts/validate_codex_code_exec.py
 ├── scripts/validate_ai_team_repo_profile.py
@@ -120,7 +123,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-16 | Provider configuration schema | **Done** |
 | MAT-17 | Agent definition format | **Done** |
 | MAT-18 | Runtime adapter layer | **Done** |
-| MAT-19 | Orchestrator skill integration | Backlog (P1) |
+| MAT-19 | Orchestrator skill integration | **Done** |
 | MAT-20 | Consumer repo documentation | Backlog (P1) |
 | MAT-21 | Optional LangChain integration | Backlog (P2) |
 | MAT-22 | Security: .gitignore + deps | **Done** |
@@ -149,6 +152,8 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 
 9. **Runtime adapter (MAT-18)**: `mat_runtime/` Python module provides `AgentRouter` class that loads agent definitions and MAT-16 config, then routes MAT-2 requests to CLI adapters. Run with `python -m mat_runtime invoke --agent coder --instruction "..."` or `python -m mat_runtime list-agents`. Unit tests in `mat_runtime/tests/`.
 
+10. **Skill naming (ADR 0003)**: Skills use **domain-specific names** (`/develop`, `/review-pr`, `/test`) rather than generic names (`/invoke-agent`). This aligns with AI Fluency Insights pattern matching and improves discoverability. `/develop` orchestrates the full team; single-agent skills bypass the orchestrator for focused tasks.
+
 ## Related codebases
 
 - **Minions**: `~/org/ai-tools/scripts/minions/` — Jira→PR pipeline; reference for stages, not a hard dependency.
@@ -158,7 +163,8 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
 2. **Run all eight validation scripts** (see **Validation** below) and confirm green.
-3. When prioritized, pick up **MAT-19** (orchestrator skill integration) or **MAT-7** (audit checklist).
+3. When prioritized, pick up **MAT-20** (consumer repo documentation) or **MAT-7** (audit checklist).
+4. Consider adding single-agent skills: `/review-pr`, `/test`, `/diagnose` (see ADR 0003).
 
 ## Validation
 
