@@ -107,3 +107,46 @@ def test_format_inline_comment_handles_missing_category():
     result = format_inline_comment(finding)
 
     assert result == "**[suggestion]** Consider renaming this variable"
+
+
+def test_determine_review_event_request_changes_when_blocker():
+    """REQUEST_CHANGES when any blocker is present."""
+    from lib.skills.github_review import determine_review_event
+
+    findings = [
+        {"severity": "blocker", "path": "a.py", "message": "msg"},
+        {"severity": "info", "path": "b.py", "message": "msg"},
+    ]
+
+    assert determine_review_event(findings) == "REQUEST_CHANGES"
+
+
+def test_determine_review_event_request_changes_when_issue():
+    """REQUEST_CHANGES when any issue is present (no blockers)."""
+    from lib.skills.github_review import determine_review_event
+
+    findings = [
+        {"severity": "issue", "path": "a.py", "message": "msg"},
+        {"severity": "suggestion", "path": "b.py", "message": "msg"},
+    ]
+
+    assert determine_review_event(findings) == "REQUEST_CHANGES"
+
+
+def test_determine_review_event_comment_when_only_suggestions():
+    """COMMENT when only suggestions and info."""
+    from lib.skills.github_review import determine_review_event
+
+    findings = [
+        {"severity": "suggestion", "path": "a.py", "message": "msg"},
+        {"severity": "info", "path": "b.py", "message": "msg"},
+    ]
+
+    assert determine_review_event(findings) == "COMMENT"
+
+
+def test_determine_review_event_comment_when_empty():
+    """COMMENT when no findings."""
+    from lib.skills.github_review import determine_review_event
+
+    assert determine_review_event([]) == "COMMENT"

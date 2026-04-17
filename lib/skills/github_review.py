@@ -82,3 +82,19 @@ def format_inline_comment(finding: dict[str, Any]) -> str:
         return f"**[{severity}]** {category}: {message}"
     else:
         return f"**[{severity}]** {message}"
+
+
+def determine_review_event(findings: list[dict[str, Any]]) -> str:
+    """
+    Determine the GitHub review event type based on findings.
+
+    Args:
+        findings: List of finding dicts with 'severity' key.
+
+    Returns:
+        "REQUEST_CHANGES" if any blocker or issue, otherwise "COMMENT".
+    """
+    severities = {f["severity"] for f in findings}
+    if "blocker" in severities or "issue" in severities:
+        return "REQUEST_CHANGES"
+    return "COMMENT"
