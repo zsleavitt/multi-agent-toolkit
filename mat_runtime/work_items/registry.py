@@ -92,8 +92,6 @@ def _ensure_adapters_loaded():
     """Import adapter modules to trigger registration."""
     if not _ADAPTERS:
         # Import adapters to register them via @register_adapter
-        try:
-            from mat_runtime.work_items import notion  # noqa: F401
-        except ImportError:
-            pass
+        # Let ImportError propagate — indicates broken install, not optional dep
+        from mat_runtime.work_items import notion  # noqa: F401
         # Future: linear, jira, github_issues

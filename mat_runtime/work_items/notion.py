@@ -36,6 +36,12 @@ class NotionAdapter(WorkItemAdapter):
 
     adapter_name = "notion"
 
+    # MCP tool names for Notion operations
+    MCP_TOOL_CREATE = "notion-create-pages"
+    MCP_TOOL_UPDATE = "notion-update-page"
+    MCP_TOOL_QUERY = "notion-query-data-sources"
+    MCP_TOOL_FETCH = "notion-fetch"
+
     # Default field mappings for Notion
     DEFAULT_FIELD_MAP = {
         "title": "Name",
@@ -150,8 +156,9 @@ class NotionAdapter(WorkItemAdapter):
 
     def parse_notion_row(self, row: dict[str, Any]) -> WorkItem:
         """Parse a Notion query result row into a WorkItem."""
+        url = row.get("url") or ""
         return WorkItem(
-            id=row.get("url", "").split("/")[-1] if row.get("url") else None,
+            id=url.split("/")[-1] if url else None,
             ticket_id=row.get(self.get_field_name("ticket_id")),
             title=row.get(self.get_field_name("title"), ""),
             status=row.get(self.get_field_name("status")),

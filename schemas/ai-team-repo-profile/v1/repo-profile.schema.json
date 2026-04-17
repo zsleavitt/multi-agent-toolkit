@@ -211,15 +211,15 @@
           "type": "string",
           "minLength": 32,
           "maxLength": 36,
-          "pattern": "^[a-f0-9-]{32,36}$",
-          "description": "Notion database UUID (from database URL or API)."
+          "pattern": "^[a-f0-9]{32}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "description": "Notion database UUID (32 hex chars or hyphenated 8-4-4-4-12 format)."
         },
         "data_source_id": {
           "type": "string",
           "minLength": 32,
           "maxLength": 36,
-          "pattern": "^[a-f0-9-]{32,36}$",
-          "description": "Optional data source UUID for multi-source databases (from collection:// URL)."
+          "pattern": "^[a-f0-9]{32}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "description": "Optional data source UUID (32 hex chars or hyphenated 8-4-4-4-12 format)."
         },
         "field_map": {
           "$ref": "#/$defs/notion_field_map",

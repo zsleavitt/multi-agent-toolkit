@@ -52,7 +52,7 @@ def cmd_create(args: argparse.Namespace) -> dict:
     return {
         "action": "create",
         "adapter": adapter.adapter_name,
-        "mcp_tool": "notion-create-pages",
+        "mcp_tool": getattr(adapter, "MCP_TOOL_CREATE", None),
         "payload": {
             "parent": {
                 "type": "data_source_id",
@@ -89,7 +89,7 @@ def cmd_list(args: argparse.Namespace) -> dict:
     return {
         "action": "list",
         "adapter": adapter.adapter_name,
-        "mcp_tool": "notion-query-data-sources",
+        "mcp_tool": getattr(adapter, "MCP_TOOL_QUERY", None),
         "payload": query_payload,
         "filters": {
             "status": args.status,
@@ -124,7 +124,7 @@ def cmd_update(args: argparse.Namespace) -> dict:
     return {
         "action": "update",
         "adapter": adapter.adapter_name,
-        "mcp_tool": "notion-update-page",
+        "mcp_tool": getattr(adapter, "MCP_TOOL_UPDATE", None),
         "payload": payload,
         "item": {
             "id": item.id,

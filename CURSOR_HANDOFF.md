@@ -141,9 +141,9 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-29 | Skill: /diagnose | **Done** |
 | MAT-30 | Skill: /plan | **Done** |
 | MAT-31 | /review-pr: post comments to PR | Backlog (P2) |
-| MAT-32 | Schema: notion work_item_source adapter | Ready (P1) |
-| MAT-33 | Runtime: work item adapter classes | Ready (P1) |
-| MAT-34 | Skill: /ticket (orchestrator-level) | Backlog (P1) |
+| MAT-32 | Schema: notion work_item_source adapter | **Done** |
+| MAT-33 | Runtime: work item adapter classes | **Done** |
+| MAT-34 | Skill: /ticket (orchestrator-level) | **Done** |
 | MAT-35 | Setup wizard: MCP + ticket config | Backlog (P2) |
 
 ## Key design decisions
