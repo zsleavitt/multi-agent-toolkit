@@ -80,12 +80,15 @@ def main() -> int:
             # Detect PR for current branch
             pr_info = detect_pr_for_branch()
             if pr_info is None:
-                # Prompt to create PR
-                create = input("No PR found for current branch. Create one? [y/N] ").strip().lower()
-                if create == "y":
-                    result = subprocess.run(["gh", "pr", "create"], check=False)
-                    if result.returncode == 0:
-                        pr_info = detect_pr_for_branch()
+                # Prompt to create PR (only in interactive mode)
+                if sys.stdin.isatty():
+                    create = input("No PR found for current branch. Create one? [y/N] ").strip().lower()
+                    if create == "y":
+                        result = subprocess.run(["gh", "pr", "create"], check=False)
+                        if result.returncode == 0:
+                            pr_info = detect_pr_for_branch()
+                else:
+                    print("No PR found for current branch. Skipping GitHub posting.", file=sys.stderr)
 
             if pr_info:
                 # Get findings from response

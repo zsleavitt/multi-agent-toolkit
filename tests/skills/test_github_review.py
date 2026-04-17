@@ -5,8 +5,6 @@ from __future__ import annotations
 import pytest
 from unittest.mock import patch, MagicMock
 import subprocess
-import tempfile
-import os
 
 
 def test_filter_findings_by_severity_filters_below_threshold():

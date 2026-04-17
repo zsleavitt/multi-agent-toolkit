@@ -36,10 +36,12 @@ def filter_findings_by_severity(
         Filtered list of findings.
     """
     min_index = SEVERITY_ORDER.index(min_severity)
-    return [
-        f for f in findings
-        if SEVERITY_ORDER.index(f["severity"]) >= min_index
-    ]
+    result = []
+    for f in findings:
+        severity = f.get("severity")
+        if severity in SEVERITY_ORDER and SEVERITY_ORDER.index(severity) >= min_index:
+            result.append(f)
+    return result
 
 
 def format_summary(findings: list[dict[str, Any]]) -> str:
@@ -169,12 +171,15 @@ def detect_pr_for_branch() -> dict[str, Any] | None:
     if result.returncode != 0:
         return None
 
-    data = json.loads(result.stdout)
-    return {
-        "number": data["number"],
-        "owner": data["headRepository"]["owner"]["login"],
-        "repo": data["headRepository"]["name"],
-    }
+    try:
+        data = json.loads(result.stdout)
+        return {
+            "number": data["number"],
+            "owner": data["headRepository"]["owner"]["login"],
+            "repo": data["headRepository"]["name"],
+        }
+    except (json.JSONDecodeError, KeyError):
+        return None
 
 
 def post_review(
