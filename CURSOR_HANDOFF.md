@@ -87,7 +87,11 @@ multi-agent-toolkit/
 │   ├── review-pr/                    # MAT-27: /review-pr — code review
 │   ├── test/                         # MAT-28: /test — testing
 │   ├── diagnose/                     # MAT-29: /diagnose — debugging
-│   └── plan/                         # MAT-30: /plan — planning only
+│   ├── plan/                         # MAT-30: /plan — planning only
+│   └── ticket/                       # MAT-34: /ticket — work item management
+├── adapters/                         # Tool-specific discovery manifests
+│   ├── claude-code/plugin.json       # Claude Code plugin manifest
+│   └── cursor/.cursorrules           # Cursor rules file
 ├── scripts/validate_gemini_git_ops.py
 ├── scripts/validate_codex_code_exec.py
 ├── scripts/validate_ai_team_repo_profile.py
@@ -145,6 +149,37 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-33 | Runtime: work item adapter classes | **Done** |
 | MAT-34 | Skill: /ticket (orchestrator-level) | **Done** |
 | MAT-35 | Setup wizard: MCP + ticket config | Backlog (P2) |
+
+## Installing MAT skills
+
+Skills are provider-agnostic. Install the adapter for your tool:
+
+### Claude Code
+
+```bash
+# From multi-agent-toolkit directory
+/install-plugin adapters/claude-code
+```
+
+See `adapters/claude-code/README.md` for details.
+
+### Cursor
+
+Copy the rules file to your project:
+
+```bash
+cp adapters/cursor/.cursorrules /path/to/your/project/.cursorrules
+```
+
+See `adapters/cursor/README.md` for details.
+
+### Direct CLI (any tool)
+
+Run skills directly without an adapter:
+
+```bash
+python lib/skills/develop/develop.py "your task" --repo-root "$(pwd)"
+```
 
 ## Key design decisions
 

@@ -62,6 +62,8 @@ python -m mat_runtime invoke --request request.json
 | `bin/setup` | Setup script — creates venv, installs deps, checks CLI tools |
 | `mat_runtime/` | **MAT-18** — Runtime adapter layer with `AgentRouter` class |
 | `agents/` | **MAT-17** — Core agent definitions (orchestrator, coder, researcher, reviewer, security, tester) |
+| `skills/` | **MAT-19+** — Slash command skills (/develop, /diagnose, /plan, /review-pr, /test, /ticket) |
+| `adapters/` | Tool-specific discovery manifests (Claude Code, Cursor) |
 | `schemas/gemini-git-ops/v1/` | **MAT-1** — Git operations request/response schemas |
 | `schemas/codex-code-exec/v1/` | **MAT-2** — Code execution request/response schemas |
 | `schemas/provider-config/v1/` | **MAT-16** — CLI-based agent configuration |

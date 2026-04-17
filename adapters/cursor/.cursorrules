@@ -1,0 +1,111 @@
+# Multi-Agent Toolkit Skills
+
+You have access to the Multi-Agent Toolkit (MAT) for orchestrating work across specialized AI agents.
+
+## Available Commands
+
+When the user invokes any of these commands, execute the corresponding Python script from the repository root.
+
+### /develop <task>
+Orchestrated development workflow — coordinates coder, tester, and reviewer agents.
+
+```bash
+python lib/skills/develop/develop.py "<task>" --repo-root "$(pwd)"
+```
+
+**Examples:**
+- `/develop Add a fibonacci function to src/utils/math.py`
+- `/develop Fix the null pointer exception in UserService`
+
+### /diagnose <issue>
+Debug and investigate issues — root cause analysis.
+
+```bash
+python lib/skills/diagnose/diagnose.py "<issue>" --repo-root "$(pwd)"
+```
+
+**Examples:**
+- `/diagnose Why is the auth test failing?`
+- `/diagnose Users report 500 errors on checkout`
+
+### /plan <goal>
+Plan and decompose tasks without executing — architecture and design.
+
+```bash
+python lib/skills/plan/plan.py "<goal>" --repo-root "$(pwd)"
+```
+
+**Examples:**
+- `/plan Design OAuth2 authentication architecture`
+- `/plan Break down the GraphQL migration`
+
+### /review-pr <target>
+Code review for pull requests — quality, security, and correctness.
+
+```bash
+python lib/skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
+```
+
+**Examples:**
+- `/review-pr Review staged changes for security issues`
+- `/review-pr Review PR #42`
+
+### /test <task>
+Write and run tests via the tester agent.
+
+```bash
+python lib/skills/test/test.py "<task>" --repo-root "$(pwd)"
+```
+
+**Examples:**
+- `/test Write unit tests for src/utils/math.py`
+- `/test Run the auth module test suite`
+
+### /ticket <action>
+Create, list, and update tickets in your configured work item system.
+
+```bash
+python lib/skills/ticket/ticket.py <action> [args] --repo-root "$(pwd)"
+```
+
+**Examples:**
+- `/ticket create "Add OAuth2 support" --priority P1`
+- `/ticket list --status Backlog`
+- `/ticket update 42 --status "In progress"`
+
+## When to Use Which Command
+
+| Scenario | Command |
+|----------|---------|
+| Build a new feature with tests | `/develop` |
+| Debug an error or test failure | `/diagnose` |
+| Plan before implementing | `/plan` |
+| Review existing code or PR | `/review-pr` |
+| Just write/run tests | `/test` |
+| Manage work items | `/ticket` |
+
+## Configuration
+
+MAT uses `agents.json` (MAT-16 schema) to determine which CLI tool handles each role:
+
+```json
+{
+  "agents": {
+    "orchestrator": { "cli": "cursor", "capabilities": ["planning", "routing"] },
+    "worker": { "cli": "cursor", "capabilities": ["implement", "test", "review"] }
+  }
+}
+```
+
+## Prerequisites
+
+1. Python 3.10+ installed
+2. Run `bin/setup` from the multi-agent-toolkit root to install dependencies
+3. Configure `agents.json` for your preferred CLI tools
+
+## Error Handling
+
+If a skill fails:
+1. Check that `mat_runtime` is installed: `python -c "import mat_runtime"`
+2. Verify the repo root is correct
+3. Check `agents.json` configuration
