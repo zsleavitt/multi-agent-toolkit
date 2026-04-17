@@ -62,3 +62,23 @@ def format_summary(findings: list[dict[str, Any]]) -> str:
     counts_line = " \u00b7 ".join(parts) if parts else "No findings"
 
     return f"## Review Summary\n\n{counts_line}\n\n*Posted via /review-pr*"
+
+
+def format_inline_comment(finding: dict[str, Any]) -> str:
+    """
+    Format a finding as an inline comment body.
+
+    Args:
+        finding: Finding dict with severity, message, and optional category.
+
+    Returns:
+        Formatted comment body string.
+    """
+    severity = finding["severity"]
+    message = finding["message"]
+    category = finding.get("category")
+
+    if category:
+        return f"**[{severity}]** {category}: {message}"
+    else:
+        return f"**[{severity}]** {message}"

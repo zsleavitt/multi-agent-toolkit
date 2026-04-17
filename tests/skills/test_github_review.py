@@ -74,3 +74,36 @@ def test_format_summary_omits_zero_counts():
     assert "issue" not in result
     assert "1 suggestion" in result
     assert "info" not in result
+
+
+def test_format_inline_comment_includes_severity_and_category():
+    """Inline comment should format as **[severity]** category: message."""
+    from lib.skills.github_review import format_inline_comment
+
+    finding = {
+        "severity": "blocker",
+        "category": "security",
+        "message": "SQL injection risk",
+        "path": "db.py",
+        "line": 42,
+    }
+
+    result = format_inline_comment(finding)
+
+    assert result == "**[blocker]** security: SQL injection risk"
+
+
+def test_format_inline_comment_handles_missing_category():
+    """When category is missing, omit it from the comment."""
+    from lib.skills.github_review import format_inline_comment
+
+    finding = {
+        "severity": "suggestion",
+        "message": "Consider renaming this variable",
+        "path": "utils.py",
+        "line": 10,
+    }
+
+    result = format_inline_comment(finding)
+
+    assert result == "**[suggestion]** Consider renaming this variable"
