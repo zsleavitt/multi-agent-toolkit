@@ -41,6 +41,7 @@ def format_error(response: "MAT2Response", label: str) -> str:
         "timeout": [
             "The task took too long to complete",
             "Try breaking it into smaller, more focused tasks",
+            "Increase the timeout with `--timeout-ms`",
         ],
         "execution_error": [
             "Check that the required CLI tool is installed (`bin/setup --check`)",

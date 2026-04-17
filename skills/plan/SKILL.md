@@ -91,6 +91,10 @@ When the user invokes this skill:
 
 Note: This skill produces a plan only — no code changes are made. Use `/develop` to execute.
 
+## Implementation note
+
+This skill uses `codex.diagnose` as the underlying operation because MAT-2 schema 1.2.0 lacks a dedicated `codex.plan` op. The diagnose op is read-only analysis, making it appropriate for planning tasks that should not modify files. A future MAT-2 schema version (1.3.0+) may introduce a semantic `codex.plan` op.
+
 ## See also
 
 - `/develop` — Execute after planning

@@ -57,7 +57,7 @@ def main() -> int:
     if args.json:
         print(response.to_json(indent=2))
     elif response.ok:
-        print(format_success(response, "Development completed"))
+        print(format_success(response, "Development"))
     else:
         print(format_error(response, "orchestrator"), file=sys.stderr)
 
