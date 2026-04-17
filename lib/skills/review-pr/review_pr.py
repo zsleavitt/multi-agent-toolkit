@@ -29,6 +29,14 @@ def main() -> int:
     parser.add_argument("--timeout-ms", "-t", type=int, default=300000, help="Timeout in ms (default: 5 min)")
     parser.add_argument("--repo-root", "-r", type=Path, default=Path.cwd(), help="Repository root")
     parser.add_argument("--json", "-j", action="store_true", help="Output raw JSON")
+    parser.add_argument("--post", "-p", action="store_true", help="Post findings as GitHub PR review")
+    parser.add_argument(
+        "--min-severity",
+        "-m",
+        choices=["info", "suggestion", "issue", "blocker"],
+        default="info",
+        help="Minimum severity to post (default: info)",
+    )
 
     args = parser.parse_args()
     target = " ".join(args.target)
