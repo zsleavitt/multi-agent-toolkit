@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import subprocess
+import tempfile
+import os
 from collections import Counter
 from typing import Any
 
@@ -173,3 +175,39 @@ def detect_pr_for_branch() -> dict[str, Any] | None:
         "owner": data["headRepository"]["owner"]["login"],
         "repo": data["headRepository"]["name"],
     }
+
+
+def post_review(
+    pr_info: dict[str, Any],
+    payload: dict[str, Any],
+) -> tuple[bool, str | None]:
+    """
+    Post a review to a GitHub PR via gh api.
+
+    Args:
+        pr_info: Dict with 'number', 'owner', 'repo'.
+        payload: Review payload dict.
+
+    Returns:
+        Tuple of (ok, error_message). ok is True on success.
+    """
+    endpoint = f"repos/{pr_info['owner']}/{pr_info['repo']}/pulls/{pr_info['number']}/reviews"
+
+    # Write payload to temp file for --input
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(payload, f)
+        temp_path = f.name
+
+    try:
+        result = subprocess.run(
+            ["gh", "api", endpoint, "--method", "POST", "--input", temp_path],
+            capture_output=True,
+            text=True,
+        )
+    finally:
+        os.unlink(temp_path)
+
+    if result.returncode != 0:
+        return False, result.stderr.strip()
+
+    return True, None

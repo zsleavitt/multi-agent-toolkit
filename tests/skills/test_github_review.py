@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 from unittest.mock import patch, MagicMock
 import subprocess
+import tempfile
+import os
 
 
 def test_filter_findings_by_severity_filters_below_threshold():
@@ -261,3 +263,44 @@ def test_check_gh_cli_returns_error_when_not_authed():
 
         assert ok is False
         assert "not authenticated" in error.lower()
+
+
+def test_post_review_calls_gh_api_with_payload():
+    """Should call gh api with correct endpoint and payload."""
+    from lib.skills.github_review import post_review
+
+    pr_info = {"number": 42, "owner": "myorg", "repo": "myrepo"}
+    payload = {"event": "COMMENT", "body": "summary", "comments": []}
+
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = '{"id": 12345}'
+
+    with patch("subprocess.run", return_value=mock_result) as mock_run:
+        ok, error = post_review(pr_info, payload)
+
+        assert ok is True
+        assert error is None
+        # Verify gh api was called
+        call_args = mock_run.call_args[0][0]
+        assert "gh" in call_args
+        assert "api" in call_args
+        assert "repos/myorg/myrepo/pulls/42/reviews" in call_args
+
+
+def test_post_review_returns_error_on_failure():
+    """Should return error message when gh api fails."""
+    from lib.skills.github_review import post_review
+
+    pr_info = {"number": 42, "owner": "myorg", "repo": "myrepo"}
+    payload = {"event": "COMMENT", "body": "summary", "comments": []}
+
+    mock_result = MagicMock()
+    mock_result.returncode = 1
+    mock_result.stderr = "API error: 422 Unprocessable Entity"
+
+    with patch("subprocess.run", return_value=mock_result):
+        ok, error = post_review(pr_info, payload)
+
+        assert ok is False
+        assert "422" in error
