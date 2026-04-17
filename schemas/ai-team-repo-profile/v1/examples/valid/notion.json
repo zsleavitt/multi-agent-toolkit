@@ -5,7 +5,7 @@
     "title": "Multi-Agent Toolkit"
   },
   "repo": {
-    "default_branch": "mat/mat-1-toolkit-bootstrap"
+    "default_branch": "main"
   },
   "work_item_source": {
     "adapter": "notion",

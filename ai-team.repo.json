@@ -5,7 +5,7 @@
     "title": "Multi-Agent Toolkit"
   },
   "repo": {
-    "default_branch": "mat/mat-1-toolkit-bootstrap",
+    "default_branch": "main",
     "path_overrides": {
       "artifacts_dir": ".mat/artifacts",
       "agent_state_dir": ".mat/state"
