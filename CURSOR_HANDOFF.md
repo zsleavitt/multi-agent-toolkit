@@ -141,6 +141,10 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-29 | Skill: /diagnose | **Done** |
 | MAT-30 | Skill: /plan | **Done** |
 | MAT-31 | /review-pr: post comments to PR | Backlog (P2) |
+| MAT-32 | Schema: notion work_item_source adapter | Ready (P1) |
+| MAT-33 | Runtime: work item adapter classes | Ready (P1) |
+| MAT-34 | Skill: /ticket (orchestrator-level) | Backlog (P1) |
+| MAT-35 | Setup wizard: MCP + ticket config | Backlog (P2) |
 
 ## Key design decisions
 
@@ -163,6 +167,8 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 9. **Runtime adapter (MAT-18)**: `mat_runtime/` Python module provides `AgentRouter` class that loads agent definitions and MAT-16 config, then routes MAT-2 requests to CLI adapters. Run with `python -m mat_runtime invoke --agent coder --instruction "..."` or `python -m mat_runtime list-agents`. Unit tests in `mat_runtime/tests/`.
 
 10. **Skill naming (ADR 0003)**: Skills use **domain-specific names** (`/develop`, `/review-pr`, `/test`) rather than generic names (`/invoke-agent`). This aligns with AI Fluency Insights pattern matching and improves discoverability. `/develop` orchestrates the full team; single-agent skills bypass the orchestrator for focused tasks.
+
+11. **MCP & tool capabilities (ADR 0004)**: Integration-dependent operations (tickets, Slack, external APIs) run in the **orchestrator context** — workers don't inherit MCPs. Agent definitions may declare tool restrictions (e.g., reviewer can't edit). v1 keeps MCPs at orchestrator level; v2 may add MCP inheritance or shared config.
 
 ## Related codebases
 

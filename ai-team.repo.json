@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "multi-agent-toolkit",
+    "title": "Multi-Agent Toolkit"
+  },
+  "repo": {
+    "default_branch": "mat/mat-1-toolkit-bootstrap",
+    "path_overrides": {
+      "artifacts_dir": ".mat/artifacts",
+      "agent_state_dir": ".mat/state"
+    }
+  },
+  "work_item_source": {
+    "adapter": "notion",
+    "notion": {
+      "database_id": "c54de570-f4ec-4335-87b7-cac957b950c1",
+      "data_source_id": "72b0d1fc-88af-4986-ad73-5324a3696ac3",
+      "field_map": {
+        "title": "Name",
+        "status": "Status",
+        "priority": "Priority",
+        "description": "Acceptance criteria",
+        "ticket_id": "Ticket"
+      }
+    }
+  },
+  "orchestration": {
+    "branch_template": "mat-{{id}}"
+  }
+}
