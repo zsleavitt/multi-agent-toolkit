@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
 from collections import Counter
 from typing import Any
 
@@ -124,4 +126,28 @@ def build_review_payload(findings: list[dict[str, Any]]) -> dict[str, Any]:
         "event": determine_review_event(findings),
         "body": format_summary(findings),
         "comments": comments,
+    }
+
+
+def detect_pr_for_branch() -> dict[str, Any] | None:
+    """
+    Detect if there's an open PR for the current branch.
+
+    Returns:
+        Dict with 'number', 'owner', 'repo' if PR exists, None otherwise.
+    """
+    result = subprocess.run(
+        ["gh", "pr", "view", "--json", "number,headRepository"],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        return None
+
+    data = json.loads(result.stdout)
+    return {
+        "number": data["number"],
+        "owner": data["headRepository"]["owner"]["login"],
+        "repo": data["headRepository"]["name"],
     }

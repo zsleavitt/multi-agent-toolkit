@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import pytest
+from unittest.mock import patch, MagicMock
+import subprocess
 
 
 def test_filter_findings_by_severity_filters_below_threshold():
@@ -191,3 +193,32 @@ def test_build_review_payload_handles_empty_findings():
 
     assert payload["event"] == "COMMENT"
     assert payload["comments"] == []
+
+
+def test_detect_pr_for_branch_returns_pr_info_when_found():
+    """Should return PR number and repo when PR exists."""
+    from lib.skills.github_review import detect_pr_for_branch
+
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = '{"number": 42, "headRepository": {"owner": {"login": "myorg"}, "name": "myrepo"}}'
+
+    with patch("subprocess.run", return_value=mock_result) as mock_run:
+        result = detect_pr_for_branch()
+
+        mock_run.assert_called_once()
+        assert result == {"number": 42, "owner": "myorg", "repo": "myrepo"}
+
+
+def test_detect_pr_for_branch_returns_none_when_no_pr():
+    """Should return None when no PR exists for current branch."""
+    from lib.skills.github_review import detect_pr_for_branch
+
+    mock_result = MagicMock()
+    mock_result.returncode = 1
+    mock_result.stderr = "no pull requests found"
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = detect_pr_for_branch()
+
+        assert result is None
