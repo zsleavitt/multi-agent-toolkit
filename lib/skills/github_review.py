@@ -98,3 +98,30 @@ def determine_review_event(findings: list[dict[str, Any]]) -> str:
     if "blocker" in severities or "issue" in severities:
         return "REQUEST_CHANGES"
     return "COMMENT"
+
+
+def build_review_payload(findings: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    Build the GitHub API payload for creating a review.
+
+    Args:
+        findings: List of finding dicts.
+
+    Returns:
+        Dict suitable for POST to /repos/{owner}/{repo}/pulls/{pr}/reviews.
+    """
+    comments = []
+    for finding in findings:
+        comment: dict[str, Any] = {
+            "path": finding["path"],
+            "body": format_inline_comment(finding),
+        }
+        if "line" in finding:
+            comment["line"] = finding["line"]
+        comments.append(comment)
+
+    return {
+        "event": determine_review_event(findings),
+        "body": format_summary(findings),
+        "comments": comments,
+    }

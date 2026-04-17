@@ -150,3 +150,44 @@ def test_determine_review_event_comment_when_empty():
     from lib.skills.github_review import determine_review_event
 
     assert determine_review_event([]) == "COMMENT"
+
+
+def test_build_review_payload_creates_correct_structure():
+    """Payload should have event, body, and comments array."""
+    from lib.skills.github_review import build_review_payload
+
+    findings = [
+        {"severity": "issue", "path": "src/a.py", "line": 10, "message": "Bug here", "category": "correctness"},
+    ]
+
+    payload = build_review_payload(findings)
+
+    assert payload["event"] == "REQUEST_CHANGES"
+    assert "Review Summary" in payload["body"]
+    assert len(payload["comments"]) == 1
+    assert payload["comments"][0]["path"] == "src/a.py"
+    assert payload["comments"][0]["line"] == 10
+    assert "**[issue]**" in payload["comments"][0]["body"]
+
+
+def test_build_review_payload_omits_line_when_missing():
+    """Comments without line numbers should omit the line field."""
+    from lib.skills.github_review import build_review_payload
+
+    findings = [
+        {"severity": "suggestion", "path": "src/b.py", "message": "General suggestion"},
+    ]
+
+    payload = build_review_payload(findings)
+
+    assert "line" not in payload["comments"][0]
+
+
+def test_build_review_payload_handles_empty_findings():
+    """Empty findings should produce payload with no comments."""
+    from lib.skills.github_review import build_review_payload
+
+    payload = build_review_payload([])
+
+    assert payload["event"] == "COMMENT"
+    assert payload["comments"] == []
