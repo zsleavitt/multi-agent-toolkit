@@ -62,7 +62,7 @@ When the user invokes this skill:
 
 2. Invoke the reviewer agent:
    ```bash
-   python skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
+   python lib/skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
    ```
 
 3. Present the review findings organized by severity

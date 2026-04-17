@@ -43,7 +43,7 @@ adapters/                  ← Supplementary tool configuration
 |------|---------|--------------|
 | Claude Code | `claude-code/plugin.json` | See `claude-code/README.md` |
 | Cursor | `cursor/.cursorrules` | See `cursor/README.md` |
-| Direct CLI | None needed | Run `python skills/*/skill.py` directly |
+| Direct CLI | None needed | Run `python lib/skills/*/*.py` directly |
 
 ## Adding New Tool Adapters
 

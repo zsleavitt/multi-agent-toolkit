@@ -74,7 +74,7 @@ When the user invokes this skill:
 
 2. Invoke the orchestrator in planning mode:
    ```bash
-   python skills/plan/plan.py "<goal>" --repo-root "$(pwd)"
+   python lib/skills/plan/plan.py "<goal>" --repo-root "$(pwd)"
    ```
 
 3. Present the plan:

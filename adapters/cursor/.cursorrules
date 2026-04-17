@@ -10,7 +10,7 @@ When the user invokes any of these commands, execute the corresponding Python sc
 Orchestrated development workflow — coordinates coder, tester, and reviewer agents.
 
 ```bash
-python skills/develop/develop.py "<task>" --repo-root "$(pwd)"
+python lib/skills/develop/develop.py "<task>" --repo-root "$(pwd)"
 ```
 
 **Examples:**
@@ -21,7 +21,7 @@ python skills/develop/develop.py "<task>" --repo-root "$(pwd)"
 Debug and investigate issues — root cause analysis.
 
 ```bash
-python skills/diagnose/diagnose.py "<issue>" --repo-root "$(pwd)"
+python lib/skills/diagnose/diagnose.py "<issue>" --repo-root "$(pwd)"
 ```
 
 **Examples:**
@@ -32,7 +32,7 @@ python skills/diagnose/diagnose.py "<issue>" --repo-root "$(pwd)"
 Plan and decompose tasks without executing — architecture and design.
 
 ```bash
-python skills/plan/plan.py "<goal>" --repo-root "$(pwd)"
+python lib/skills/plan/plan.py "<goal>" --repo-root "$(pwd)"
 ```
 
 **Examples:**
@@ -43,7 +43,7 @@ python skills/plan/plan.py "<goal>" --repo-root "$(pwd)"
 Code review for pull requests — quality, security, and correctness.
 
 ```bash
-python skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
+python lib/skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
 ```
 
 **Examples:**
@@ -54,7 +54,7 @@ python skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
 Write and run tests via the tester agent.
 
 ```bash
-python skills/test/test.py "<task>" --repo-root "$(pwd)"
+python lib/skills/test/test.py "<task>" --repo-root "$(pwd)"
 ```
 
 **Examples:**
@@ -65,7 +65,7 @@ python skills/test/test.py "<task>" --repo-root "$(pwd)"
 Create, list, and update tickets in your configured work item system.
 
 ```bash
-python skills/ticket/ticket.py <action> [args] --repo-root "$(pwd)"
+python lib/skills/ticket/ticket.py <action> [args] --repo-root "$(pwd)"
 ```
 
 **Examples:**

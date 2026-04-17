@@ -62,7 +62,7 @@ When the user invokes this skill:
 
 2. Invoke the tester agent:
    ```bash
-   python skills/test/test.py "<task>" --repo-root "$(pwd)"
+   python lib/skills/test/test.py "<task>" --repo-root "$(pwd)"
    ```
 
 3. Present the test results:

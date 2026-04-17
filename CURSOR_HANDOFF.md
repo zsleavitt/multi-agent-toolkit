@@ -178,7 +178,7 @@ See `adapters/cursor/README.md` for details.
 Run skills directly without an adapter:
 
 ```bash
-python skills/develop/develop.py "your task" --repo-root "$(pwd)"
+python lib/skills/develop/develop.py "your task" --repo-root "$(pwd)"
 ```
 
 ## Key design decisions

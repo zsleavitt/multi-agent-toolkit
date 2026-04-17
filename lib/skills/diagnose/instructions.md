@@ -74,7 +74,7 @@ When the user invokes this skill:
 
 2. Invoke the coder agent with diagnose op:
    ```bash
-   python skills/diagnose/diagnose.py "<issue>" --repo-root "$(pwd)"
+   python lib/skills/diagnose/diagnose.py "<issue>" --repo-root "$(pwd)"
    ```
 
 3. Present the diagnosis:
