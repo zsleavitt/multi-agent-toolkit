@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "identity": {
+    "id": "my-project"
+  },
+  "repo": {
+    "default_branch": "main"
+  },
+  "work_item_source": {
+    "adapter": "notion",
+    "notion": {
+      "database_id": "c54de570f4ec433587b7cac957b950c1"
+    }
+  }
+}

@@ -117,6 +117,16 @@
             "adapter": { "const": "file" },
             "file": { "$ref": "#/$defs/file_adapter" }
           }
+        },
+        {
+          "title": "Notion database",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapter", "notion"],
+          "properties": {
+            "adapter": { "const": "notion" },
+            "notion": { "$ref": "#/$defs/notion_adapter" }
+          }
         }
       ]
     },
@@ -189,6 +199,73 @@
         "path": {
           "$ref": "#/$defs/repo_relative_path",
           "description": "Repo-relative path to backlog/tasks file (format is consumer-defined)."
+        }
+      }
+    },
+    "notion_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["database_id"],
+      "properties": {
+        "database_id": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 36,
+          "pattern": "^[a-f0-9]{32}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "description": "Notion database UUID (32 hex chars or hyphenated 8-4-4-4-12 format)."
+        },
+        "data_source_id": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 36,
+          "pattern": "^[a-f0-9]{32}$|^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "description": "Optional data source UUID (32 hex chars or hyphenated 8-4-4-4-12 format)."
+        },
+        "field_map": {
+          "$ref": "#/$defs/notion_field_map",
+          "description": "Optional mapping of MAT fields to Notion property names. Defaults provided if omitted."
+        }
+      }
+    },
+    "notion_field_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Maps MAT ticket fields to Notion database property names.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "Name",
+          "description": "Notion property for ticket title (default: 'Name')."
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "Status",
+          "description": "Notion property for ticket status (default: 'Status')."
+        },
+        "priority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "Priority",
+          "description": "Notion property for ticket priority (default: 'Priority')."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "Acceptance criteria",
+          "description": "Notion property for ticket description/acceptance criteria."
+        },
+        "ticket_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "default": "Ticket",
+          "description": "Notion property for auto-increment ticket ID (default: 'Ticket')."
         }
       }
     },
