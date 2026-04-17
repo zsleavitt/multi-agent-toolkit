@@ -15,11 +15,11 @@ class CodexAdapter(CLIAdapter):
     """
     Adapter for OpenAI Codex CLI.
 
-    Invokes `codex` CLI for code implementation, testing, and refactoring tasks.
+    Invokes `codex exec` for non-interactive code implementation, testing, and refactoring.
     """
 
     command: str = "codex"
-    flags: list[str] = field(default_factory=lambda: ["--quiet"])
+    flags: list[str] = field(default_factory=lambda: ["--full-auto"])
 
     def build_command(
         self,
@@ -28,14 +28,16 @@ class CodexAdapter(CLIAdapter):
         **kwargs: Any,
     ) -> list[str]:
         """Build codex CLI command."""
-        cmd = [self.command, *self.flags]
+        # Use 'codex exec' for non-interactive execution
+        cmd = [self.command, "exec", *self.flags]
 
-        # Codex uses --instructions for system prompt
+        # Combine system prompt with the task prompt
+        full_prompt = prompt
         if system_prompt:
-            cmd.extend(["--instructions", system_prompt])
+            full_prompt = f"{system_prompt}\n\n---\n\nTask: {prompt}"
 
         # Add the prompt as the main argument
-        cmd.append(prompt)
+        cmd.append(full_prompt)
 
         return cmd
 
@@ -51,29 +53,18 @@ class CodexAdapter(CLIAdapter):
         """
         Invoke Codex CLI.
 
-        For long system prompts, writes to a temp file.
+        Uses `codex exec` with --full-auto for sandboxed automatic execution.
         """
-        system_prompt_file = None
-        actual_system_prompt = system_prompt
+        # For very long prompts, write to a temp file and read from stdin
+        full_prompt = prompt
+        if system_prompt:
+            full_prompt = f"{system_prompt}\n\n---\n\nTask: {prompt}"
 
-        if system_prompt and len(system_prompt) > 4000:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".md", delete=False
-            ) as f:
-                f.write(system_prompt)
-                f.flush()
-                system_prompt_file = f.name
-                actual_system_prompt = f"@{system_prompt_file}"
-
-        try:
-            return super().invoke(
-                prompt=prompt,
-                system_prompt=actual_system_prompt,
-                working_dir=working_dir,
-                timeout_ms=timeout_ms,
-                correlation_id=correlation_id,
-                **kwargs,
-            )
-        finally:
-            if system_prompt_file:
-                Path(system_prompt_file).unlink(missing_ok=True)
+        return super().invoke(
+            prompt=full_prompt,
+            system_prompt=None,  # Already combined into prompt
+            working_dir=working_dir,
+            timeout_ms=timeout_ms,
+            correlation_id=correlation_id,
+            **kwargs,
+        )

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import tempfile
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from mat_runtime.adapters.base import CLIAdapter, InvocationResult
@@ -15,11 +13,11 @@ class GeminiAdapter(CLIAdapter):
     """
     Adapter for Google Gemini CLI.
 
-    Invokes `gemini` CLI for research, git operations, and general tasks.
+    Invokes `gemini` CLI in non-interactive mode for research, git operations, and general tasks.
     """
 
     command: str = "gemini"
-    flags: list[str] = field(default_factory=list)
+    flags: list[str] = field(default_factory=lambda: ["--yolo"])  # Auto-approve actions
 
     def build_command(
         self,
@@ -30,12 +28,13 @@ class GeminiAdapter(CLIAdapter):
         """Build gemini CLI command."""
         cmd = [self.command, *self.flags]
 
-        # Gemini CLI uses -s for system instructions
+        # Combine system prompt with task prompt
+        full_prompt = prompt
         if system_prompt:
-            cmd.extend(["-s", system_prompt])
+            full_prompt = f"{system_prompt}\n\n---\n\nTask: {prompt}"
 
-        # Add prompt
-        cmd.append(prompt)
+        # Use -p/--prompt for non-interactive (headless) mode
+        cmd.extend(["--prompt", full_prompt])
 
         return cmd
 
@@ -49,31 +48,20 @@ class GeminiAdapter(CLIAdapter):
         **kwargs: Any,
     ) -> InvocationResult:
         """
-        Invoke Gemini CLI.
+        Invoke Gemini CLI in non-interactive mode.
 
-        For long system prompts, writes to a temp file.
+        Uses --prompt for headless execution and --yolo for auto-approval.
         """
-        system_prompt_file = None
-        actual_system_prompt = system_prompt
+        # Combine prompts
+        full_prompt = prompt
+        if system_prompt:
+            full_prompt = f"{system_prompt}\n\n---\n\nTask: {prompt}"
 
-        if system_prompt and len(system_prompt) > 4000:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".md", delete=False
-            ) as f:
-                f.write(system_prompt)
-                f.flush()
-                system_prompt_file = f.name
-                actual_system_prompt = f"@{system_prompt_file}"
-
-        try:
-            return super().invoke(
-                prompt=prompt,
-                system_prompt=actual_system_prompt,
-                working_dir=working_dir,
-                timeout_ms=timeout_ms,
-                correlation_id=correlation_id,
-                **kwargs,
-            )
-        finally:
-            if system_prompt_file:
-                Path(system_prompt_file).unlink(missing_ok=True)
+        return super().invoke(
+            prompt=full_prompt,
+            system_prompt=None,  # Already combined into prompt
+            working_dir=working_dir,
+            timeout_ms=timeout_ms,
+            correlation_id=correlation_id,
+            **kwargs,
+        )
