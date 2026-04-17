@@ -80,9 +80,14 @@ multi-agent-toolkit/
 │   ├── config.py                     # Config loading
 │   ├── adapters/                     # CLI tool adapters
 │   └── tests/
-├── skills/develop/                   # MAT-19: /develop skill — orchestrated workflow
-│   ├── SKILL.md
-│   └── develop.py
+├── skills/
+│   ├── lib/                          # Shared skill utilities
+│   │   └── formatting.py             # Response formatting
+│   ├── develop/                      # MAT-19: /develop — orchestrated workflow
+│   ├── review-pr/                    # MAT-27: /review-pr — code review
+│   ├── test/                         # MAT-28: /test — testing
+│   ├── diagnose/                     # MAT-29: /diagnose — debugging
+│   └── plan/                         # MAT-30: /plan — planning only
 ├── scripts/validate_gemini_git_ops.py
 ├── scripts/validate_codex_code_exec.py
 ├── scripts/validate_ai_team_repo_profile.py
@@ -131,6 +136,10 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-24 | Schema: maxLength on instructions | Backlog (P2) |
 | MAT-25 | Security agent definition | **Done** |
 | MAT-26 | Setup script + CLI prerequisites | **Done** |
+| MAT-27 | Skill: /review-pr | **Done** |
+| MAT-28 | Skill: /test | **Done** |
+| MAT-29 | Skill: /diagnose | **Done** |
+| MAT-30 | Skill: /plan | **Done** |
 
 ## Key design decisions
 
@@ -164,7 +173,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
 2. **Run all eight validation scripts** (see **Validation** below) and confirm green.
 3. When prioritized, pick up **MAT-20** (consumer repo documentation) or **MAT-7** (audit checklist).
-4. Consider adding single-agent skills: `/review-pr`, `/test`, `/diagnose` (see ADR 0003).
+4. **Remaining backlog:** MAT-7, MAT-20, MAT-21, MAT-24.
 
 ## Validation
 
