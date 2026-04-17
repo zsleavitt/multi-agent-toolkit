@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """
-Skill helper script for invoking MAT agents.
+Skill helper script for the /develop workflow.
 
 Usage:
-    python invoke.py <agent_name> <task_description> [--scope-paths <paths>] [--timeout-ms <ms>]
+    python develop.py <task_description> [--scope-paths <paths>] [--timeout-ms <ms>]
+    python develop.py --agent <agent> <task_description>  # Override agent
 
-This script wraps mat_runtime to provide better error handling and output formatting
-for use within Claude Code skills.
+This script invokes the orchestrator agent by default, which coordinates the
+full development workflow (planning, coding, testing, review).
+
+For direct single-agent invocation, use --agent to specify a different agent.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-import os
 import sys
 import uuid
 from pathlib import Path
@@ -32,7 +33,7 @@ def format_success(response: MAT2Response, agent_name: str) -> str:
     files_modified = result.get("files_modified", [])
 
     lines = [
-        f"## Agent: {agent_name}",
+        f"## {agent_name.title()} completed",
         "",
     ]
 
@@ -63,7 +64,7 @@ def format_error(response: MAT2Response, agent_name: str) -> str:
     message = error.get("message", "An unknown error occurred")
 
     lines = [
-        f"## Agent Error: {agent_name}",
+        f"## Error: {agent_name}",
         "",
         f"**Error code:** `{code}`",
         "",
@@ -76,16 +77,7 @@ def format_error(response: MAT2Response, agent_name: str) -> str:
         lines.extend([
             "### Suggestions",
             "",
-            "- Check the agent name spelling",
             "- Run `python -m mat_runtime list-agents` to see available agents",
-            "",
-        ])
-    elif code == "operation_not_allowed":
-        lines.extend([
-            "### Suggestions",
-            "",
-            "- This agent cannot perform the requested operation",
-            "- Try a different agent (e.g., `coder` for implementation, `tester` for tests)",
             "",
         ])
     elif code == "timeout":
@@ -111,16 +103,18 @@ def format_error(response: MAT2Response, agent_name: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Invoke a MAT agent to perform a task"
-    )
-    parser.add_argument(
-        "agent",
-        help="Agent name (coder, tester, reviewer, security, researcher, orchestrator)",
+        description="Orchestrated development workflow via MAT agents"
     )
     parser.add_argument(
         "task",
         nargs="+",
         help="Task description / instruction",
+    )
+    parser.add_argument(
+        "--agent",
+        "-a",
+        default="orchestrator",
+        help="Agent to invoke (default: orchestrator for full workflow)",
     )
     parser.add_argument(
         "--scope-paths",
@@ -159,6 +153,7 @@ def main() -> int:
 
     # Join task words into a single string
     task_description = " ".join(args.task)
+    agent_name = args.agent
 
     # Auto-detect operation based on agent if not specified
     op = args.op
@@ -169,9 +164,9 @@ def main() -> int:
             "reviewer": "codex.review",
             "security": "codex.review",
             "researcher": "codex.diagnose",
-            "orchestrator": "codex.diagnose",
+            "orchestrator": "codex.implement",  # Orchestrator coordinates implementation
         }
-        op = op_map.get(args.agent, "codex.implement")
+        op = op_map.get(agent_name, "codex.implement")
 
     # Build the request
     request = MAT2Request(
@@ -193,22 +188,22 @@ def main() -> int:
         return 1
 
     # Check if agent exists
-    if not router.find_agent(args.agent):
+    if not router.find_agent(agent_name):
         available = ", ".join(sorted(router.agents.keys()))
-        print(f"Agent '{args.agent}' not found. Available: {available}", file=sys.stderr)
+        print(f"Agent '{agent_name}' not found. Available: {available}", file=sys.stderr)
         return 1
 
     # Invoke the agent
-    response = router.invoke(args.agent, request)
+    response = router.invoke(agent_name, request)
 
     # Output
     if args.json:
         print(response.to_json(indent=2))
     else:
         if response.ok:
-            print(format_success(response, args.agent))
+            print(format_success(response, agent_name))
         else:
-            print(format_error(response, args.agent), file=sys.stderr)
+            print(format_error(response, agent_name), file=sys.stderr)
 
     return 0 if response.ok else 1
 
