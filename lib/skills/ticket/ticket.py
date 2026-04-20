@@ -49,17 +49,11 @@ def cmd_create(args: argparse.Namespace) -> dict:
 
     payload = adapter.build_create_payload(item)
 
-    return {
+    # Build response based on adapter type
+    result = {
         "action": "create",
         "adapter": adapter.adapter_name,
         "mcp_tool": getattr(adapter, "MCP_TOOL_CREATE", None),
-        "payload": {
-            "parent": {
-                "type": "data_source_id",
-                "data_source_id": adapter.data_source_id or adapter.database_id,
-            },
-            "pages": [payload],
-        },
         "item": {
             "title": item.title,
             "status": item.status,
@@ -67,6 +61,22 @@ def cmd_create(args: argparse.Namespace) -> dict:
             "description": item.description,
         },
     }
+
+    # Adapter-specific payload wrapping
+    if adapter.adapter_name == "notion":
+        result["payload"] = {
+            "parent": {
+                "type": "data_source_id",
+                "data_source_id": getattr(adapter, "data_source_id", None)
+                or getattr(adapter, "database_id", ""),
+            },
+            "pages": [payload],
+        }
+    else:
+        # GitHub Issues and other adapters use payload directly
+        result["payload"] = payload
+
+    return result
 
 
 def cmd_list(args: argparse.Namespace) -> dict:
