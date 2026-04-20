@@ -27,14 +27,14 @@ def base_coder() -> AgentDefinition:
 
 @pytest.fixture
 def variant_without_cli(base_coder: AgentDefinition) -> AgentDefinition:
-    """Variant that doesn't specify cli."""
+    """Variant that doesn't specify cli (uses None to inherit)."""
     return AgentDefinition(
         name="ruby-engineer",
         description="Ruby specialist",
         role="",  # Will be inherited
-        cli="",  # Will be inherited
+        cli=None,  # None = inherit from base
         allowed_mat_ops=["codex.diagnose"],
-        tools=[],  # Will be inherited
+        tools=None,  # None = inherit from base
         system_prompt="You specialize in Ruby.",
         variant_of="coder",
         specialization={"domain": "backend", "languages": ["ruby"]},
@@ -49,10 +49,10 @@ def variant_with_cli(base_coder: AgentDefinition) -> AgentDefinition:
         description="Python specialist",
         role="",
         cli="claude",  # Override
-        allowed_mat_ops=[],
-        tools=["read", "glob", "grep"],  # Override
+        allowed_mat_ops=None,  # None = inherit only
+        tools=["read", "glob", "grep"],  # Override (explicit list)
         temperature=0.5,  # Override
-        system_prompt="",  # Will inherit base system_prompt
+        system_prompt=None,  # None = inherit base system_prompt
         variant_of="coder",
         specialization={"domain": "backend", "languages": ["python"]},
     )
@@ -109,7 +109,7 @@ class TestAgentDefinitionResolveVariant:
             name="test-variant",
             description="Test",
             role="",
-            cli="",
+            cli=None,
             allowed_mat_ops=["codex.implement", "codex.test"],  # implement is duplicate
             variant_of="coder",
         )
@@ -136,12 +136,57 @@ class TestAgentDefinitionResolveVariant:
         assert "write" not in resolved.tools
         assert "bash" not in resolved.tools
 
-    def test_variant_inherits_tools_if_empty(
+    def test_variant_inherits_tools_if_none(
         self, base_coder: AgentDefinition, variant_without_cli: AgentDefinition
     ):
-        """Variant without tools inherits base's tools."""
+        """Variant with tools=None inherits base's tools."""
         resolved = variant_without_cli.resolve_variant(base_coder)
         assert resolved.tools == ["read", "write", "edit", "bash"]
+
+    def test_variant_explicit_empty_tools_clears_inheritance(
+        self, base_coder: AgentDefinition
+    ):
+        """Variant with tools=[] explicitly clears tools (no inheritance)."""
+        variant = AgentDefinition(
+            name="minimal-variant",
+            description="Minimal tools",
+            role="",
+            cli=None,
+            tools=[],  # Explicit empty list = don't inherit
+            variant_of="coder",
+        )
+        resolved = variant.resolve_variant(base_coder)
+        assert resolved.tools == []
+
+    def test_variant_explicit_empty_system_prompt_clears_inheritance(
+        self, base_coder: AgentDefinition
+    ):
+        """Variant with system_prompt='' explicitly clears prompt (no inheritance)."""
+        variant = AgentDefinition(
+            name="silent-variant",
+            description="No system prompt",
+            role="",
+            cli=None,
+            system_prompt="",  # Explicit empty string = don't inherit
+            variant_of="coder",
+        )
+        resolved = variant.resolve_variant(base_coder)
+        assert resolved.system_prompt == ""
+
+    def test_variant_explicit_empty_cli_is_invalid(
+        self, base_coder: AgentDefinition
+    ):
+        """Variant with cli='' is treated as explicit empty (edge case)."""
+        variant = AgentDefinition(
+            name="no-cli-variant",
+            description="No CLI",
+            role="",
+            cli="",  # Explicit empty string
+            variant_of="coder",
+        )
+        resolved = variant.resolve_variant(base_coder)
+        # Empty string is not None, so it's treated as an override
+        assert resolved.cli == ""
 
     def test_variant_overrides_temperature(
         self, base_coder: AgentDefinition, variant_with_cli: AgentDefinition

@@ -19,17 +19,21 @@ except ImportError:
 
 @dataclass
 class AgentDefinition:
-    """Parsed agent definition from agents/*.md files."""
+    """Parsed agent definition from agents/*.md files.
+
+    For variants, fields set to None indicate "inherit from base".
+    Empty string/list means "explicitly set to empty" (override, not inherit).
+    """
 
     name: str
     description: str
     role: str
-    cli: str
-    allowed_mat_ops: list[str] = field(default_factory=list)
-    tools: list[str] = field(default_factory=list)
+    cli: str | None = None
+    allowed_mat_ops: list[str] | None = None
+    tools: list[str] | None = None
     timeout_ms: int | None = None
     temperature: float | None = None
-    system_prompt: str = ""
+    system_prompt: str | None = None
     source_path: Path | None = None
     variant_of: str | None = None
     specialization: dict[str, Any] | None = None
@@ -38,34 +42,42 @@ class AgentDefinition:
         """
         Resolve this variant against its base agent.
 
-        Inheritance rules:
-        - system_prompt: base if variant has none; variant replaces if present
-        - cli: variant overrides if present, otherwise inherits
-        - tools: variant replaces base list entirely if present; inherits if absent
-        - allowed_mat_ops: variant appends to base list (union)
+        Inheritance rules (None = inherit, explicit value = override):
+        - system_prompt: base if variant is None; variant replaces if not None
+        - cli: variant overrides if not None, otherwise inherits
+        - tools: variant replaces if not None; inherits if None
+        - allowed_mat_ops: variant appends to base list (union); None = inherit only
         - role: always inherits from base; cannot be overridden
-        - temperature: variant overrides if present, otherwise inherits
+        - temperature: variant overrides if not None, otherwise inherits
         - description: variant must provide its own; does not inherit
-        - timeout_ms: variant overrides if present, otherwise inherits
+        - timeout_ms: variant overrides if not None, otherwise inherits
         - specialization: variant-only field
         - variant_of: variant-only field
         """
         # Union of allowed_mat_ops (base + variant, no duplicates)
-        combined_ops = list(base.allowed_mat_ops)
-        for op in self.allowed_mat_ops:
+        base_ops = base.allowed_mat_ops or []
+        variant_ops = self.allowed_mat_ops or []
+        combined_ops = list(base_ops)
+        for op in variant_ops:
             if op not in combined_ops:
                 combined_ops.append(op)
+
+        # For tools: None means inherit, empty list means explicitly empty
+        if self.tools is not None:
+            resolved_tools = list(self.tools)
+        else:
+            resolved_tools = list(base.tools) if base.tools else []
 
         return AgentDefinition(
             name=self.name,
             description=self.description,  # Must be provided by variant
             role=base.role,  # Always inherited from base
-            cli=self.cli if self.cli else base.cli,
+            cli=self.cli if self.cli is not None else base.cli,
             allowed_mat_ops=combined_ops,
-            tools=self.tools if self.tools else list(base.tools),
+            tools=resolved_tools,
             timeout_ms=self.timeout_ms if self.timeout_ms is not None else base.timeout_ms,
             temperature=self.temperature if self.temperature is not None else base.temperature,
-            system_prompt=self.system_prompt if self.system_prompt else base.system_prompt,
+            system_prompt=self.system_prompt if self.system_prompt is not None else base.system_prompt,
             source_path=self.source_path,
             variant_of=self.variant_of,
             specialization=self.specialization,
@@ -135,20 +147,31 @@ def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
 
 
 def load_agent_definition(path: Path) -> AgentDefinition:
-    """Load a single agent definition from a markdown file."""
+    """Load a single agent definition from a markdown file.
+
+    Uses None for fields not present in frontmatter, allowing variants
+    to distinguish "inherit from base" (None) from "explicitly empty" ([]/``).
+    """
     content = path.read_text(encoding="utf-8")
     frontmatter, body = _parse_frontmatter(content)
+
+    # For variants, None means "inherit from base"
+    # For base agents, we apply sensible defaults after loading
+    is_variant = "variant_of" in frontmatter
 
     return AgentDefinition(
         name=frontmatter.get("name", path.stem),
         description=frontmatter.get("description", ""),
         role=frontmatter.get("role", "worker"),
-        cli=frontmatter.get("cli", ""),
-        allowed_mat_ops=frontmatter.get("allowed_mat_ops", []),
-        tools=frontmatter.get("tools", []),
+        # Use None if absent (for variants to inherit); base agents get cli from frontmatter
+        cli=frontmatter.get("cli"),
+        # Use None if key absent; explicit [] in YAML becomes empty list
+        allowed_mat_ops=frontmatter.get("allowed_mat_ops"),
+        tools=frontmatter.get("tools"),
         timeout_ms=frontmatter.get("timeout_ms"),
         temperature=frontmatter.get("temperature"),
-        system_prompt=body,
+        # body is always present (may be empty string); use None only if truly absent
+        system_prompt=body if body else (None if is_variant else ""),
         source_path=path,
         variant_of=frontmatter.get("variant_of"),
         specialization=frontmatter.get("specialization"),

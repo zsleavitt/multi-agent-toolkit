@@ -194,7 +194,8 @@ def main() -> None:
 
             print(f"OK agent    {path.relative_to(ROOT)} (name={name}, role={fm.get('role')})")
 
-        # Second pass: validate variants in agents/variants/*.md
+        # Second pass: load and validate variants in agents/variants/*.md (schema only)
+        variant_info: list[tuple[str, str, Path]] = []  # (name, variant_of, path)
         if VARIANTS_DIR.is_dir():
             for path in sorted(VARIANTS_DIR.glob("*.md")):
                 # Skip README
@@ -228,13 +229,16 @@ def main() -> None:
                         "Variants must specify their base agent."
                     )
 
-                # variant_of must reference an existing base agent
-                if variant_of not in all_agents:
-                    raise SystemExit(
-                        f"Variant '{name}' references non-existent base agent '{variant_of}'"
-                    )
+                variant_info.append((name, variant_of, path))
 
-                print(f"OK variant  {path.relative_to(ROOT)} (name={name}, variant_of={variant_of})")
+        # Third pass: validate variant_of references (after all agents are loaded)
+        # This allows variant chains where child sorts before parent alphabetically
+        for name, variant_of, path in variant_info:
+            if variant_of not in all_agents:
+                raise SystemExit(
+                    f"Variant '{name}' references non-existent agent '{variant_of}'"
+                )
+            print(f"OK variant  {path.relative_to(ROOT)} (name={name}, variant_of={variant_of})")
 
         # Detect circular references
         circular = _detect_circular_variants(all_agents)
