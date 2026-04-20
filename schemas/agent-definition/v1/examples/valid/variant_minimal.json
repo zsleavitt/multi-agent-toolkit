@@ -1,0 +1,8 @@
+{
+  "name": "go-engineer",
+  "description": "Implements Go services",
+  "variant_of": "coder",
+  "specialization": {
+    "domain": "backend"
+  }
+}

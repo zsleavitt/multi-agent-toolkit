@@ -31,6 +31,45 @@ class AgentDefinition:
     temperature: float | None = None
     system_prompt: str = ""
     source_path: Path | None = None
+    variant_of: str | None = None
+    specialization: dict[str, Any] | None = None
+
+    def resolve_variant(self, base: "AgentDefinition") -> "AgentDefinition":
+        """
+        Resolve this variant against its base agent.
+
+        Inheritance rules:
+        - system_prompt: base if variant has none; variant replaces if present
+        - cli: variant overrides if present, otherwise inherits
+        - tools: variant replaces base list entirely if present; inherits if absent
+        - allowed_mat_ops: variant appends to base list (union)
+        - role: always inherits from base; cannot be overridden
+        - temperature: variant overrides if present, otherwise inherits
+        - description: variant must provide its own; does not inherit
+        - timeout_ms: variant overrides if present, otherwise inherits
+        - specialization: variant-only field
+        - variant_of: variant-only field
+        """
+        # Union of allowed_mat_ops (base + variant, no duplicates)
+        combined_ops = list(base.allowed_mat_ops)
+        for op in self.allowed_mat_ops:
+            if op not in combined_ops:
+                combined_ops.append(op)
+
+        return AgentDefinition(
+            name=self.name,
+            description=self.description,  # Must be provided by variant
+            role=base.role,  # Always inherited from base
+            cli=self.cli if self.cli else base.cli,
+            allowed_mat_ops=combined_ops,
+            tools=self.tools if self.tools else list(base.tools),
+            timeout_ms=self.timeout_ms if self.timeout_ms is not None else base.timeout_ms,
+            temperature=self.temperature if self.temperature is not None else base.temperature,
+            system_prompt=self.system_prompt if self.system_prompt else base.system_prompt,
+            source_path=self.source_path,
+            variant_of=self.variant_of,
+            specialization=self.specialization,
+        )
 
 
 @dataclass
@@ -104,14 +143,47 @@ def load_agent_definition(path: Path) -> AgentDefinition:
         name=frontmatter.get("name", path.stem),
         description=frontmatter.get("description", ""),
         role=frontmatter.get("role", "worker"),
-        cli=frontmatter.get("cli", "claude"),
+        cli=frontmatter.get("cli", ""),
         allowed_mat_ops=frontmatter.get("allowed_mat_ops", []),
         tools=frontmatter.get("tools", []),
         timeout_ms=frontmatter.get("timeout_ms"),
         temperature=frontmatter.get("temperature"),
         system_prompt=body,
         source_path=path,
+        variant_of=frontmatter.get("variant_of"),
+        specialization=frontmatter.get("specialization"),
     )
+
+
+def _detect_circular_variants(
+    agents: dict[str, AgentDefinition],
+) -> list[str]:
+    """
+    Detect circular references in variant_of chains.
+
+    Returns list of agent names involved in circular references.
+    """
+    circular: list[str] = []
+
+    for name, agent in agents.items():
+        if not agent.variant_of:
+            continue
+
+        # Walk the chain, tracking visited nodes
+        visited: set[str] = {name}
+        current = agent.variant_of
+
+        while current:
+            if current in visited:
+                circular.append(name)
+                break
+            visited.add(current)
+            current_agent = agents.get(current)
+            if not current_agent:
+                break
+            current = current_agent.variant_of
+
+    return circular
 
 
 def load_agent_definitions(
@@ -121,12 +193,19 @@ def load_agent_definitions(
     """
     Load all agent definitions from agents/ directory.
 
+    Loads base agents from agents/*.md and variants from agents/variants/*.md.
+    Variants are resolved against their base agents per inheritance rules.
+
     Args:
         agents_dir: Path to agents directory. If None, uses repo_root/agents.
         repo_root: Repository root. If None, searches up from cwd.
 
     Returns:
-        Dict mapping agent name to AgentDefinition.
+        Dict mapping agent name to AgentDefinition (resolved variants included).
+
+    Raises:
+        ValueError: If a variant references a non-existent base agent.
+        ValueError: If circular variant_of references are detected.
     """
     if agents_dir:
         agents_path = Path(agents_dir)
@@ -144,11 +223,64 @@ def load_agent_definitions(
         return {}
 
     agents: dict[str, AgentDefinition] = {}
+
+    # Load base agents from agents/*.md (excluding README and other non-agent files)
     for md_file in agents_path.glob("*.md"):
+        if md_file.name.lower() == "readme.md":
+            continue
         agent = load_agent_definition(md_file)
         agents[agent.name] = agent
 
-    return agents
+    # Load variants from agents/variants/*.md
+    variants_path = agents_path / "variants"
+    if variants_path.exists():
+        for md_file in variants_path.glob("*.md"):
+            if md_file.name.lower() == "readme.md":
+                continue
+            agent = load_agent_definition(md_file)
+            agents[agent.name] = agent
+
+    # Detect circular references before resolution
+    circular = _detect_circular_variants(agents)
+    if circular:
+        raise ValueError(
+            f"Circular variant_of references detected: {', '.join(circular)}"
+        )
+
+    # Resolve variants against their bases
+    # Need to resolve in dependency order (base before variant)
+    resolved: dict[str, AgentDefinition] = {}
+
+    def resolve_agent(name: str) -> AgentDefinition:
+        """Recursively resolve an agent, handling variant chains."""
+        if name in resolved:
+            return resolved[name]
+
+        agent = agents.get(name)
+        if agent is None:
+            raise ValueError(f"Agent '{name}' not found")
+
+        if agent.variant_of is None:
+            # Base agent, no resolution needed
+            resolved[name] = agent
+            return agent
+
+        # Variant: resolve the base first
+        base_name = agent.variant_of
+        if base_name not in agents:
+            raise ValueError(
+                f"Variant '{name}' references non-existent base agent '{base_name}'"
+            )
+
+        base = resolve_agent(base_name)
+        resolved_agent = agent.resolve_variant(base)
+        resolved[name] = resolved_agent
+        return resolved_agent
+
+    for name in agents:
+        resolve_agent(name)
+
+    return resolved
 
 
 def load_provider_config(

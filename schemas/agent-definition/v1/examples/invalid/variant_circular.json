@@ -1,0 +1,9 @@
+{
+  "name": "circular-variant",
+  "description": "A variant with invalid specialization (extra property)",
+  "variant_of": "coder",
+  "specialization": {
+    "domain": "backend",
+    "invalid_extra_field": "not allowed"
+  }
+}
