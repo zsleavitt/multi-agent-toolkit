@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/zsleavitt/multi-agent-toolkit/blob/main/README.md
+    about: Read the README and CURSOR_HANDOFF.md before opening an issue
