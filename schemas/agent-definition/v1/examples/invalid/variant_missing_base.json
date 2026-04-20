@@ -1,0 +1,8 @@
+{
+  "name": "orphan-variant",
+  "description": "A variant with invalid variant_of pattern (uppercase)",
+  "variant_of": "NonExistentAgent",
+  "specialization": {
+    "domain": "backend"
+  }
+}

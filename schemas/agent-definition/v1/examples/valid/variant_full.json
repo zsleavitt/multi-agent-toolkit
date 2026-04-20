@@ -1,0 +1,14 @@
+{
+  "name": "rust-engineer",
+  "description": "Implements high-performance Rust services and CLI tools",
+  "variant_of": "coder",
+  "cli": "codex",
+  "temperature": 0.1,
+  "allowed_mat_ops": ["codex.implement", "codex.refactor"],
+  "specialization": {
+    "domain": "backend",
+    "languages": ["rust"],
+    "frameworks": ["tokio", "actix-web", "clap"],
+    "tags": ["rust", "performance", "systems", "cli"]
+  }
+}

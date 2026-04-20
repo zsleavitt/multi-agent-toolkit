@@ -54,6 +54,8 @@ def cmd_list_agents(args: argparse.Namespace) -> int:
                 "role": agent.role,
                 "cli": agent.cli,
                 "allowed_mat_ops": agent.allowed_mat_ops,
+                "variant_of": agent.variant_of,
+                "specialization": agent.specialization,
             }
             for name, agent in router.agents.items()
         }
@@ -63,14 +65,32 @@ def cmd_list_agents(args: argparse.Namespace) -> int:
             print("No agents found.")
             return 0
 
-        print(f"Found {len(router.agents)} agent(s):\n")
+        # Separate base agents from variants
+        base_agents = {k: v for k, v in router.agents.items() if not v.variant_of}
+        variants = {k: v for k, v in router.agents.items() if v.variant_of}
+
+        print(f"Found {len(router.agents)} agent(s) ({len(base_agents)} base, {len(variants)} variants):\n")
+
         for name, agent in sorted(router.agents.items()):
-            print(f"  {name}")
+            if agent.variant_of:
+                print(f"  {name} (variant of {agent.variant_of})")
+            else:
+                print(f"  {name}")
             print(f"    Description: {agent.description}")
             print(f"    Role: {agent.role}")
             print(f"    CLI: {agent.cli}")
             if agent.allowed_mat_ops:
                 print(f"    MAT ops: {', '.join(agent.allowed_mat_ops)}")
+            if agent.specialization:
+                spec = agent.specialization
+                if spec.get("domain"):
+                    print(f"    Domain: {spec['domain']}")
+                if spec.get("languages"):
+                    print(f"    Languages: {', '.join(spec['languages'])}")
+                if spec.get("frameworks"):
+                    print(f"    Frameworks: {', '.join(spec['frameworks'])}")
+                if spec.get("tags"):
+                    print(f"    Tags: {', '.join(spec['tags'])}")
             print()
 
     return 0
