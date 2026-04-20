@@ -1,0 +1,78 @@
+name: Schema Change
+description: Propose a change to a MAT schema (MAT-1, MAT-2, MAT-4, etc.)
+title: "[Schema]: "
+labels: ["schema"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Schema changes require careful consideration of backwards compatibility.
+
+  - type: input
+    id: ticket-id
+    attributes:
+      label: Ticket ID
+      description: "MAT ticket ID (e.g., MAT-36)"
+      placeholder: "MAT-XX"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: schema
+    attributes:
+      label: Schema Bundle
+      description: Which schema does this affect?
+      options:
+        - MAT-1 (gemini-git-ops)
+        - MAT-2 (codex-code-exec)
+        - MAT-4 (orchestrator-state)
+        - MAT-6 (hitl-asana-approval)
+        - MAT-9 (ai-team-repo-profile)
+        - MAT-16 (provider-config)
+        - MAT-17 (agent-definition)
+        - New schema
+    validations:
+      required: true
+
+  - type: dropdown
+    id: change-type
+    attributes:
+      label: Change Type
+      description: Is this backwards compatible?
+      options:
+        - Additive (new optional fields) - minor version bump
+        - Breaking (required fields, type changes) - major version bump
+        - Documentation only
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief description of the schema change
+    validations:
+      required: true
+
+  - type: textarea
+    id: schema-changes
+    attributes:
+      label: Proposed Schema Changes
+      description: Show the JSON Schema additions/modifications
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What needs to be true for this to be complete?
+      placeholder: |
+        - [ ] Schema updated
+        - [ ] manifest.json version bumped
+        - [ ] Examples added (valid + invalid)
+        - [ ] Validation script passes
+        - [ ] CURSOR_HANDOFF.md updated
+    validations:
+      required: true

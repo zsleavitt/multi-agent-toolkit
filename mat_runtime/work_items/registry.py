@@ -94,4 +94,5 @@ def _ensure_adapters_loaded():
         # Import adapters to register them via @register_adapter
         # Let ImportError propagate — indicates broken install, not optional dep
         from mat_runtime.work_items import notion  # noqa: F401
-        # Future: linear, jira, github_issues
+        from mat_runtime.work_items import github_issues  # noqa: F401
+        # Future: linear, jira

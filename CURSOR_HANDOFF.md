@@ -1,6 +1,6 @@
 # Multi-Agent Toolkit — Cursor Handoff
 
-Read this file first when picking up work in **Cursor** (or any editor). It complements the root `README.md` and the Notion board.
+Read this file first when picking up work in **Cursor** (or any editor). It complements the root `README.md` and the [GitHub Issues board](https://github.com/zsleavitt/multi-agent-toolkit/issues).
 
 ## Quick summary
 
@@ -16,7 +16,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
   - **MAT-9** — Portable **`ai-team.repo`** profile + work-item adapters (Linear, Jira, GitHub Issues, file, none).
   - **MAT-16** — Agent configuration: CLI-based agent bindings (which CLI tool handles which role). No API keys required.
   - **MAT-17** — Agent definitions: Markdown files with YAML frontmatter defining agent identity, capabilities, and system prompts.
-- **Tickets** live in Notion (set `$MAT_NOTION_TICKETS_URL` and `$MAT_NOTION_HUB_URL` in your environment).
+- **Tickets** live in [GitHub Issues](https://github.com/zsleavitt/multi-agent-toolkit/issues).
 
 ## Sync the repo (do this first)
 
@@ -111,7 +111,7 @@ multi-agent-toolkit/
 
 MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` with `manifest.json` allowlists (where applicable), `examples/`, and **eight** `scripts/validate_*.py` bundle validators. Historical bootstrap: **PR #1** (MAT-1 git contracts + registry + validators).
 
-## Ticket board (Notion)
+## Ticket board (GitHub Issues)
 
 | Ticket | Name | Status |
 |--------|------|--------|
@@ -238,6 +238,5 @@ Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `ex
 
 ## References
 
-- Notion tickets: `$MAT_NOTION_TICKETS_URL` (set in your local environment)
-- Notion parent hub: `$MAT_NOTION_HUB_URL` (set in your local environment)
+- Tickets: [GitHub Issues](https://github.com/zsleavitt/multi-agent-toolkit/issues)
 - Research: `research/multi-agent-research.md`

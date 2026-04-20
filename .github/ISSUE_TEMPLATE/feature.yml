@@ -1,0 +1,76 @@
+name: Feature Request
+description: Propose a new feature or enhancement for the Multi-Agent Toolkit
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to propose a feature!
+
+  - type: input
+    id: ticket-id
+    attributes:
+      label: Ticket ID
+      description: "Optional MAT ticket ID (e.g., MAT-36)"
+      placeholder: "MAT-XX"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - P1 - Critical
+        - P2 - Important
+        - P3 - Nice to have
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this feature affect?
+      options:
+        - Schema (MAT-1, MAT-2, MAT-4, MAT-6, MAT-9, MAT-16, MAT-17)
+        - Runtime (mat_runtime, adapters)
+        - Skills (/develop, /review-pr, /test, etc.)
+        - Agents (agent definitions, variants)
+        - Documentation
+        - Tooling (validation scripts, setup)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief description of the feature
+      placeholder: "Add support for..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What needs to be true for this feature to be complete?
+      placeholder: |
+        - [ ] Schema updated with new fields
+        - [ ] Validation script passes
+        - [ ] Tests added
+        - [ ] Documentation updated
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, links to related issues, or design notes
+    validations:
+      required: false

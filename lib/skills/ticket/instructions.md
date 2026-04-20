@@ -34,7 +34,28 @@ Creates, lists, and updates tickets in your configured work item system (Notion,
 
 ## Configuration
 
-The skill reads from `ai-team.repo.json` in the repo root:
+The skill reads from `ai-team.repo.json` in the repo root.
+
+### GitHub Issues
+
+```json
+{
+  "work_item_source": {
+    "adapter": "github_issues",
+    "github_issues": {
+      "owner": "your-username",
+      "repo": "your-repo",
+      "priority_labels": {
+        "P0": "priority:critical",
+        "P1": "priority:high",
+        "P2": "priority:medium"
+      }
+    }
+  }
+}
+```
+
+### Notion
 
 ```json
 {
@@ -57,9 +78,9 @@ The skill reads from `ai-team.repo.json` in the repo root:
 | Adapter | MCP Required | Status |
 |---------|--------------|--------|
 | `notion` | Notion MCP | Implemented |
+| `github_issues` | GitHub MCP | Implemented |
 | `linear` | Linear MCP | Planned |
 | `jira` | Jira MCP | Planned |
-| `github_issues` | GitHub MCP | Planned |
 
 ## Architecture
 
@@ -68,9 +89,10 @@ This skill runs in the **orchestrator context** (Claude Code) where MCPs are ava
 ```
 /ticket skill
     |
-NotionAdapter (builds payloads)
+WorkItemAdapter (builds payloads)
     |
-Notion MCP tools (notion-create-pages, notion-query-data-sources)
++-- NotionAdapter → Notion MCP tools
++-- GitHubIssuesAdapter → GitHub MCP tools
 ```
 
 ## Execution

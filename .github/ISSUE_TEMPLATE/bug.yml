@@ -1,0 +1,60 @@
+name: Bug Report
+description: Report a bug in the Multi-Agent Toolkit
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug!
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area is affected?
+      options:
+        - Schema validation
+        - Runtime (mat_runtime)
+        - Skills
+        - Agent definitions
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Run `python -m mat_runtime ...`
+        2. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output
+      description: Paste any relevant error messages or logs
+      render: shell
+    validations:
+      required: false
