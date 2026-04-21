@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mat.dev/schemas/crew/v1/crew.schema.json",
+  "title": "Crew definition (MAT-42)",
+  "description": "Schema for defining a named collection of agents with shared goals and routing configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "agents"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique crew identifier (lowercase alphanumeric with hyphens)"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Human-readable description of the crew's purpose"
+    },
+    "shared_goal": {
+      "type": "string",
+      "maxLength": 2048,
+      "description": "Goal text injected into each agent's context when dispatched"
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Agent name reference (must exist in agents/)"
+          },
+          {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$",
+                "description": "Agent name reference"
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 1000,
+                "maximum": 3600000,
+                "description": "Override default timeout for this agent in this crew"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Routing priority (higher = preferred)"
+              },
+              "required_capabilities": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Capabilities this agent must have for task routing"
+              }
+            }
+          }
+        ]
+      },
+      "description": "Member agents - by name or with per-crew overrides"
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["round-robin", "capability", "priority", "random"],
+          "default": "round-robin",
+          "description": "Primary routing strategy"
+        },
+        "match_on": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["tags", "domain", "languages", "frameworks"]
+          },
+          "description": "Agent specialization fields to match against (required for capability strategy)"
+        },
+        "fallback": {
+          "type": "string",
+          "enum": ["round-robin", "random", "first-available", "error"],
+          "default": "round-robin",
+          "description": "Strategy when no capability match found"
+        },
+        "task_assignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allow_reassignment": {
+              "type": "boolean",
+              "default": false,
+              "description": "Allow tasks to be reassigned on agent failure"
+            },
+            "prefer_idle": {
+              "type": "boolean",
+              "default": true,
+              "description": "Prefer agents not currently working on tasks"
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": { "strategy": { "const": "capability" } },
+        "required": ["strategy"]
+      },
+      "then": {
+        "required": ["match_on"]
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_concurrent_agents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum agents working simultaneously"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 86400000,
+          "description": "Crew-level timeout (1s to 24h)"
+        },
+        "max_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum tasks before crew auto-terminates"
+        },
+        "retry_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_retries": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 0,
+              "description": "Retry attempts on agent task failure (not hooks)"
+            },
+            "backoff_ms": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 60000,
+              "default": 1000,
+              "description": "Initial backoff between retries"
+            },
+            "backoff_multiplier": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 2,
+              "description": "Exponential backoff multiplier"
+            }
+          }
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on_start": {
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run when crew starts"
+        },
+        "on_task_assigned": {
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run when a task is assigned to an agent"
+        },
+        "on_task_complete": {
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run when an agent completes a task"
+        },
+        "on_agent_failure": {
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run when an agent fails"
+        },
+        "on_finish": {
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run when crew completes all work"
+        },
+        "on_error": {
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run on crew-level error (timeout, max_tasks exceeded)"
+        }
+      }
+    },
+    "communication": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shared_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["memory", "file", "none"],
+              "default": "none",
+              "description": "Context store type"
+            },
+            "path": {
+              "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+              "description": "File path for 'file' type (relative to repo root)"
+            },
+            "ttl_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Time-to-live for context entries (0 = no expiry)"
+            }
+          },
+          "if": {
+            "properties": { "type": { "const": "file" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["path"]
+          }
+        },
+        "message_passing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["none", "broadcast", "direct"],
+              "default": "none",
+              "description": "How agents can send messages to each other"
+            },
+            "max_queue_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100,
+              "description": "Maximum pending messages per agent"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version. Bump when crew definition shape changes."
+    },
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![a-zA-Z]:)(?!https?://)(?!.*\\.\\.)[^\\x00]+$",
+      "description": "Repo-relative path. Rejects absolute, Windows, URL, traversal, and empty paths."
+    }
+  }
+}

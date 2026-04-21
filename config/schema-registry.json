@@ -28,6 +28,10 @@
     "agent-definition@v1": {
       "root_relative": "schemas/agent-definition/v1",
       "published_document_base": null
+    },
+    "crew@v1": {
+      "root_relative": "schemas/crew/v1",
+      "published_document_base": null
     }
   }
 }

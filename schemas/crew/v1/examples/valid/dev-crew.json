@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "name": "dev-crew",
+  "description": "Full-stack development team with TDD focus",
+  "shared_goal": "Implement features using test-driven development with high code quality",
+  "agents": [
+    "coder",
+    "tester",
+    {
+      "name": "reviewer",
+      "timeout_ms": 120000,
+      "priority": 50
+    }
+  ],
+  "routing": {
+    "strategy": "capability",
+    "match_on": ["tags", "languages"],
+    "fallback": "round-robin",
+    "task_assignment": {
+      "allow_reassignment": true,
+      "prefer_idle": true
+    }
+  },
+  "constraints": {
+    "max_concurrent_agents": 2,
+    "timeout_ms": 600000,
+    "retry_policy": {
+      "max_retries": 2,
+      "backoff_ms": 2000
+    }
+  },
+  "hooks": {
+    "on_task_complete": "hooks/notify-progress.sh",
+    "on_finish": "hooks/crew-complete.sh"
+  },
+  "communication": {
+    "shared_context": {
+      "type": "memory",
+      "ttl_ms": 300000
+    },
+    "message_passing": {
+      "mode": "direct"
+    }
+  }
+}
