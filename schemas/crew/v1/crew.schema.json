@@ -5,7 +5,7 @@
   "description": "Schema for defining a named collection of agents with shared goals and routing configuration.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "name"],
+  "required": ["schema_version", "name", "agents"],
   "properties": {
     "schema_version": { "$ref": "#/$defs/schema_version" },
     "name": {
@@ -24,6 +24,49 @@
       "type": "string",
       "maxLength": 2048,
       "description": "Goal text injected into each agent's context when dispatched"
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Agent name reference (must exist in agents/)"
+          },
+          {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$",
+                "description": "Agent name reference"
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 1000,
+                "maximum": 3600000,
+                "description": "Override default timeout for this agent in this crew"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Routing priority (higher = preferred)"
+              },
+              "required_capabilities": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Capabilities this agent must have for task routing"
+              }
+            }
+          }
+        ]
+      },
+      "description": "Member agents - by name or with per-crew overrides"
     }
   },
   "$defs": {
