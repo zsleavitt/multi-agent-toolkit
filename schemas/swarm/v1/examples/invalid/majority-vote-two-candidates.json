@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "name": "invalid-majority",
+  "dispatch_mode": "parallel_model",
+  "candidates": ["claude", "codex"],
+  "consensus_strategy": "majority-vote"
+}
