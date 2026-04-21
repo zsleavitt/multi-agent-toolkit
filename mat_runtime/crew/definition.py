@@ -32,10 +32,15 @@ class RoutingConfig:
 
 @dataclass
 class ConstraintsConfig:
-    """Constraints configuration for a crew."""
+    """Constraints configuration for a crew.
+
+    Note: timeout_ms (crew-level timeout) is parsed but not enforced in v1.
+    Enforcement is deferred to v2. Per-agent timeouts via AgentRef.timeout_ms
+    are enforced.
+    """
 
     max_concurrent_agents: int | None = None
-    timeout_ms: int | None = None
+    timeout_ms: int | None = None  # Not enforced in v1, deferred to v2
     max_tasks: int | None = None
     max_retries: int = 0
     backoff_ms: int = 1000

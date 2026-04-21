@@ -7,7 +7,29 @@ import time
 from pathlib import Path
 from typing import Any
 
-from mat_runtime.crew.context import ContextStore, create_context_store
+from mat_runtime.crew.context import create_context_store
+
+
+def _find_repo_root(start_path: Path) -> Path:
+    """
+    Find the repository root by walking up from start_path.
+
+    Looks for common repo markers: .git, CLAUDE.md, pyproject.toml, setup.py.
+    Falls back to start_path if no marker found.
+    """
+    markers = {".git", "CLAUDE.md", "pyproject.toml", "setup.py", "ai-team.repo.json"}
+    current = start_path.resolve()
+
+    for _ in range(20):  # Limit search depth
+        for marker in markers:
+            if (current / marker).exists():
+                return current
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+
+    return start_path.resolve()
 from mat_runtime.crew.definition import (
     AgentRef,
     CrewDefinition,
@@ -53,7 +75,11 @@ class Crew:
             ValueError: If any referenced agent is unknown.
         """
         self._definition = load_crew_definition(definition_path)
-        self._repo_root = Path(repo_root) if repo_root else Path(definition_path).parent
+        if repo_root:
+            self._repo_root = Path(repo_root).resolve()
+        else:
+            # Auto-detect repo root by walking up from definition file
+            self._repo_root = _find_repo_root(Path(definition_path).parent)
 
         # Initialize router and validate agents exist
         self._router = router or AgentRouter(repo_root=self._repo_root)
@@ -167,33 +193,33 @@ class Crew:
         start_time = time.monotonic()
         constraints = self._definition.constraints
 
-        # Check max_tasks constraint
-        if constraints.max_tasks and self._task_count >= constraints.max_tasks:
-            await self._hooks.run(
-                "on_error",
-                {
-                    "crew": self._definition.name,
-                    "error": "max_tasks_exceeded",
-                    "task_id": task.correlation_id,
-                },
-            )
-            return CrewResult(
-                ok=False,
-                agent_used="",
-                output=None,
-                correlation_id=task.correlation_id,
-                duration_ms=int((time.monotonic() - start_time) * 1000),
-                error={
-                    "code": "max_tasks_exceeded",
-                    "message": f"Crew reached max_tasks limit ({constraints.max_tasks})",
-                },
-            )
-
         # Acquire semaphore if configured
         if self._semaphore:
             await self._semaphore.acquire()
 
         try:
+            # Check max_tasks constraint (inside semaphore to prevent race)
+            if constraints.max_tasks and self._task_count >= constraints.max_tasks:
+                await self._hooks.run(
+                    "on_error",
+                    {
+                        "crew": self._definition.name,
+                        "error": "max_tasks_exceeded",
+                        "task_id": task.correlation_id,
+                    },
+                )
+                return CrewResult(
+                    ok=False,
+                    agent_used="",
+                    output=None,
+                    correlation_id=task.correlation_id,
+                    duration_ms=int((time.monotonic() - start_time) * 1000),
+                    error={
+                        "code": "max_tasks_exceeded",
+                        "message": f"Crew reached max_tasks limit ({constraints.max_tasks})",
+                    },
+                )
+
             # Run on_task_assigned hook (inside semaphore)
             await self._hooks.run(
                 "on_task_assigned",
@@ -209,12 +235,13 @@ class Crew:
 
             selected = self._strategy.select(candidates, task, self._routing_state)
 
-            # Execute with retry loop
-            result = await self._execute_with_retry(selected, task)
-
-            # Update state
+            # Reserve task slot after selection to maintain round-robin order
+            # Note: max_tasks check above + semaphore prevents race conditions
             self._task_count += 1
             self._routing_state.task_count = self._task_count
+
+            # Execute with retry loop
+            result = await self._execute_with_retry(selected, task)
             self._routing_state.agent_task_counts[selected.name] = (
                 self._routing_state.agent_task_counts.get(selected.name, 0) + 1
             )

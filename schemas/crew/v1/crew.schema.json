@@ -89,7 +89,7 @@
         },
         "fallback": {
           "type": "string",
-          "enum": ["round-robin", "random", "first-available", "error"],
+          "enum": ["round-robin", "priority", "random"],
           "default": "round-robin",
           "description": "Strategy when no capability match found"
         },
@@ -250,26 +250,15 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["memory", "file", "none"],
+              "enum": ["memory", "none"],
               "default": "none",
-              "description": "Context store type"
-            },
-            "path": {
-              "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
-              "description": "File path for 'file' type (relative to repo root)"
+              "description": "Context store type (file support deferred to v2)"
             },
             "ttl_ms": {
               "type": "integer",
               "minimum": 0,
               "description": "Time-to-live for context entries (0 = no expiry)"
             }
-          },
-          "if": {
-            "properties": { "type": { "const": "file" } },
-            "required": ["type"]
-          },
-          "then": {
-            "required": ["path"]
           }
         },
         "message_passing": {

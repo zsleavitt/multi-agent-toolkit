@@ -111,7 +111,7 @@ class CapabilityStrategy:
         elif strategy_name == "random":
             return RandomStrategy()
         else:
-            return RoundRobinStrategy()
+            raise ValueError(f"Unknown fallback strategy: {strategy_name}")
 
     def _get_agent_capabilities(self, agent_name: str) -> set[str]:
         """Extract all capability values from agent specialization."""
