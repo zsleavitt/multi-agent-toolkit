@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mat.dev/schemas/crew/v1/crew.schema.json",
+  "title": "Crew definition (MAT-42)",
+  "description": "Schema for defining a named collection of agents with shared goals and routing configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "agents"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique crew identifier (lowercase alphanumeric with hyphens)"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Human-readable description of the crew's purpose"
+    },
+    "shared_goal": {
+      "type": "string",
+      "maxLength": 2048,
+      "description": "Goal text injected into each agent's context when dispatched"
+    }
+  }
+}
