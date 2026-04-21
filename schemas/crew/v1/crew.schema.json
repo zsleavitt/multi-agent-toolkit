@@ -67,6 +67,48 @@
         ]
       },
       "description": "Member agents - by name or with per-crew overrides"
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["round-robin", "capability", "priority", "random"],
+          "default": "round-robin",
+          "description": "Primary routing strategy"
+        },
+        "match_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["tags", "domain", "languages", "frameworks"]
+          },
+          "description": "Agent specialization fields to match against (for capability strategy)"
+        },
+        "fallback": {
+          "type": "string",
+          "enum": ["round-robin", "random", "first-available", "error"],
+          "default": "round-robin",
+          "description": "Strategy when no capability match found"
+        },
+        "task_assignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allow_reassignment": {
+              "type": "boolean",
+              "default": false,
+              "description": "Allow tasks to be reassigned on agent failure"
+            },
+            "prefer_idle": {
+              "type": "boolean",
+              "default": true,
+              "description": "Prefer agents not currently working on tasks"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
