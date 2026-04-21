@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import sys
 from pathlib import Path
 
+from mat_runtime.crew import Crew, CrewTask
 from mat_runtime.router import AgentRouter, MAT2Request
 
 
@@ -96,6 +98,52 @@ def cmd_list_agents(args: argparse.Namespace) -> int:
     return 0
 
 
+async def cmd_invoke_crew_async(args: argparse.Namespace) -> int:
+    """Handle the invoke-crew command (async implementation)."""
+    crew = Crew(
+        definition_path=args.crew,
+        repo_root=args.repo_root,
+    )
+
+    await crew.start()
+
+    try:
+        task = CrewTask(
+            instruction=args.instruction,
+            op=args.op,
+            scope_paths=args.scope_paths or [],
+            timeout_ms=args.timeout_ms,
+        )
+
+        result = await crew.submit(task)
+
+        # Output result
+        output = {
+            "ok": result.ok,
+            "agent_used": result.agent_used,
+            "correlation_id": result.correlation_id,
+            "duration_ms": result.duration_ms,
+            "attempts": result.attempts,
+        }
+        if result.ok:
+            output["output"] = result.output
+        else:
+            output["error"] = result.error
+            if result.retry_reasons:
+                output["retry_reasons"] = result.retry_reasons
+
+        print(json.dumps(output, indent=2 if args.pretty else None))
+        return 0 if result.ok else 1
+
+    finally:
+        await crew.shutdown()
+
+
+def cmd_invoke_crew(args: argparse.Namespace) -> int:
+    """Handle the invoke-crew command."""
+    return asyncio.run(cmd_invoke_crew_async(args))
+
+
 def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -177,6 +225,50 @@ def main() -> int:
         help="Output as JSON",
     )
     list_parser.set_defaults(func=cmd_list_agents)
+
+    # invoke-crew command
+    invoke_crew_parser = subparsers.add_parser(
+        "invoke-crew", help="Submit a task to a crew"
+    )
+    invoke_crew_parser.add_argument(
+        "--crew",
+        "-c",
+        type=Path,
+        required=True,
+        help="Path to crew definition JSON file",
+    )
+    invoke_crew_parser.add_argument(
+        "--instruction",
+        "-i",
+        required=True,
+        help="Task instruction",
+    )
+    invoke_crew_parser.add_argument(
+        "--op",
+        "-o",
+        default="codex.implement",
+        help="Operation (default: codex.implement)",
+    )
+    invoke_crew_parser.add_argument(
+        "--scope-paths",
+        "-s",
+        nargs="*",
+        help="Scope paths",
+    )
+    invoke_crew_parser.add_argument(
+        "--timeout-ms",
+        "-t",
+        type=int,
+        help="Task timeout in milliseconds",
+    )
+    invoke_crew_parser.add_argument(
+        "--pretty",
+        "-p",
+        action="store_true",
+        default=True,
+        help="Pretty-print JSON output (default: true)",
+    )
+    invoke_crew_parser.set_defaults(func=cmd_invoke_crew)
 
     args = parser.parse_args()
 
