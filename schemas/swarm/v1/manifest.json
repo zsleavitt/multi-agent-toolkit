@@ -1,0 +1,14 @@
+{
+  "bundle_id": "swarm@v1",
+  "title": "MAT Swarm Definition — bundle manifest",
+  "description": "Machine-readable index for MAT-45. Defines the schema for Swarm parallel dispatch.",
+  "schema_version": "1.0.0",
+  "swarm_schema": "./swarm.schema.json",
+  "notes": [
+    "Swarm definitions are JSON files in the swarms/ directory (parallel to crews/).",
+    "dispatch_mode determines candidate semantics: CLI adapters (parallel_model) or agent names (variant).",
+    "candidates are dispatched as concurrent MAT-2 requests.",
+    "consensus_strategy is constrained by dispatch_mode (schema-enforced + Python belt-and-suspenders).",
+    "v1 does not include synthesis consensus — deferred to v2 (requires meta-agent invocation)."
+  ]
+}
