@@ -176,25 +176,67 @@
           "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when crew starts"
         },
+        "on_start_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000,
+          "description": "Timeout for on_start hook (default 30s)"
+        },
         "on_task_assigned": {
           "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when a task is assigned to an agent"
+        },
+        "on_task_assigned_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000,
+          "description": "Timeout for on_task_assigned hook (default 30s)"
         },
         "on_task_complete": {
           "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when an agent completes a task"
         },
+        "on_task_complete_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000,
+          "description": "Timeout for on_task_complete hook (default 30s)"
+        },
         "on_agent_failure": {
           "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when an agent fails"
+        },
+        "on_agent_failure_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000,
+          "description": "Timeout for on_agent_failure hook (default 30s)"
         },
         "on_finish": {
           "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when crew completes all work"
         },
+        "on_finish_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000,
+          "description": "Timeout for on_finish hook (default 30s)"
+        },
         "on_error": {
           "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run on crew-level error (timeout, max_tasks exceeded)"
+        },
+        "on_error_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000,
+          "description": "Timeout for on_error hook (default 30s)"
         }
       }
     },
