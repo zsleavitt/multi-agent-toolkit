@@ -247,7 +247,14 @@ class AgentRouter:
                 },
             )
         else:
-            error_code = "timeout" if result.timeout_exceeded else "execution_error"
+            if result.timeout_exceeded:
+                error_code = "timeout"
+            elif result.stdout.strip():
+                # Agent produced output but failed = semantic refusal
+                error_code = "agent_refused"
+            else:
+                # No output = infrastructure failure
+                error_code = "execution_error"
             return MAT2Response(
                 schema_version=req.schema_version,
                 correlation_id=req.correlation_id,

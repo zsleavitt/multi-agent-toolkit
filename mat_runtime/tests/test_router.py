@@ -252,6 +252,53 @@ class TestAgentRouter:
         # Should have routed to coder based on codex.implement
         mock_adapter.invoke.assert_called_once()
 
+    @patch("mat_runtime.router.get_adapter")
+    def test_invoke_agent_refused_when_output_but_failure(
+        self, mock_get_adapter, sample_agents, sample_request
+    ):
+        """Agent produces output but indicates failure = agent_refused."""
+        mock_adapter = MagicMock()
+        mock_adapter.invoke.return_value = InvocationResult(
+            ok=False,
+            return_code=1,
+            stdout="I cannot perform this task because it violates safety guidelines.",
+            stderr="",
+            timeout_exceeded=False,
+            correlation_id=sample_request.correlation_id,
+        )
+        mock_get_adapter.return_value = mock_adapter
+
+        router = AgentRouter(agents=sample_agents)
+        sample_request.instruction = "Do something unsafe"
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is False
+        assert response.error is not None
+        assert response.error["code"] == "agent_refused"
+
+    @patch("mat_runtime.router.get_adapter")
+    def test_invoke_execution_error_when_no_output(
+        self, mock_get_adapter, sample_agents, sample_request
+    ):
+        """Agent fails with no output = execution_error (infrastructure failure)."""
+        mock_adapter = MagicMock()
+        mock_adapter.invoke.return_value = InvocationResult(
+            ok=False,
+            return_code=1,
+            stdout="",
+            stderr="Connection refused",
+            timeout_exceeded=False,
+            correlation_id=sample_request.correlation_id,
+        )
+        mock_get_adapter.return_value = mock_adapter
+
+        router = AgentRouter(agents=sample_agents)
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is False
+        assert response.error is not None
+        assert response.error["code"] == "execution_error"
+
 
 class TestConfigIntegration:
     """Integration tests for config loading."""
