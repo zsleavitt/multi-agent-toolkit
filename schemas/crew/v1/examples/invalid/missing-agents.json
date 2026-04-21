@@ -1,0 +1,5 @@
+{
+  "schema_version": "1.0.0",
+  "name": "broken-crew",
+  "description": "This crew is missing the required agents field"
+}
