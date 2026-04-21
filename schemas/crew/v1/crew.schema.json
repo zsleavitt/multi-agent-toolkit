@@ -80,11 +80,12 @@
         },
         "match_on": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string",
             "enum": ["tags", "domain", "languages", "frameworks"]
           },
-          "description": "Agent specialization fields to match against (for capability strategy)"
+          "description": "Agent specialization fields to match against (required for capability strategy)"
         },
         "fallback": {
           "type": "string",
@@ -108,6 +109,13 @@
             }
           }
         }
+      },
+      "if": {
+        "properties": { "strategy": { "const": "capability" } },
+        "required": ["strategy"]
+      },
+      "then": {
+        "required": ["match_on"]
       }
     },
     "constraints": {
@@ -166,26 +174,32 @@
       "properties": {
         "on_start": {
           "type": "string",
-          "description": "Script/command to run when crew starts (relative to repo root)"
+          "pattern": "^(?!/)(?!.*\\.\\.)",
+          "description": "Script to run when crew starts (relative path, no traversal)"
         },
         "on_task_assigned": {
           "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)",
           "description": "Script to run when a task is assigned to an agent"
         },
         "on_task_complete": {
           "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)",
           "description": "Script to run when an agent completes a task"
         },
         "on_agent_failure": {
           "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)",
           "description": "Script to run when an agent fails"
         },
         "on_finish": {
           "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)",
           "description": "Script to run when crew completes all work"
         },
         "on_error": {
           "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)",
           "description": "Script to run on crew-level error (timeout, max_tasks exceeded)"
         }
       }

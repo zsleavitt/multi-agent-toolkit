@@ -9,7 +9,10 @@
     "Agents are referenced by name (must exist in agents/) or with override objects.",
     "shared_goal is injected into agent context when dispatched by this Crew.",
     "routing.match_on references agent specialization fields from agent-frontmatter schema.",
+    "routing.match_on is required when strategy is 'capability' (enforced by if/then).",
     "hooks are relative paths to scripts invoked by the Crew runtime (MAT-43).",
-    "communication.shared_context enables state sharing between agents."
+    "hooks reject absolute paths and '..' traversal for security (MAT-23 alignment).",
+    "communication.shared_context enables state sharing between agents.",
+    "message_passing.mode 'broadcast' = all agents receive every message; 'direct' = addressed delivery to specific agent."
   ]
 }
