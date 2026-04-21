@@ -109,6 +109,56 @@
           }
         }
       }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_concurrent_agents": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum agents working simultaneously"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 86400000,
+          "description": "Crew-level timeout (1s to 24h)"
+        },
+        "max_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum tasks before crew auto-terminates"
+        },
+        "retry_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_retries": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 0,
+              "description": "Retry attempts on agent task failure (not hooks)"
+            },
+            "backoff_ms": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 60000,
+              "default": 1000,
+              "description": "Initial backoff between retries"
+            },
+            "backoff_multiplier": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 2,
+              "description": "Exponential backoff multiplier"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
