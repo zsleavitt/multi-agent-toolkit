@@ -5,8 +5,9 @@
   "description": "Schema for defining a named collection of agents with shared goals and routing configuration.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["name"],
+  "required": ["schema_version", "name"],
   "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
     "name": {
       "type": "string",
       "minLength": 1,
@@ -23,6 +24,13 @@
       "type": "string",
       "maxLength": 2048,
       "description": "Goal text injected into each agent's context when dispatched"
+    }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version. Bump when crew definition shape changes."
     }
   }
 }
