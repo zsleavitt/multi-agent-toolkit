@@ -280,7 +280,7 @@ await crew.shutdown()   # on_finish hook
 
 ### submit() Flow
 
-1. Check `max_tasks` constraint
+1. Check `max_tasks` constraint → run `on_error` hook if exceeded, return early
 2. Acquire semaphore
 3. Run `on_task_assigned` hook
 4. Select agent (with prefer_idle pre-filter)
@@ -289,6 +289,16 @@ await crew.shutdown()   # on_finish hook
 7. Release semaphore
 8. Run `on_task_complete` hook
 9. Return `CrewResult`
+
+```python
+# Step 1: max_tasks check with on_error hook
+if constraints.max_tasks and self._task_count >= constraints.max_tasks:
+    await self._hooks.run("on_error", {
+        "crew": self._definition.name,
+        "error": "max_tasks_exceeded",
+    })
+    return CrewResult(ok=False, ..., error={"code": "max_tasks_exceeded", ...})
+```
 
 ### Concurrency
 
@@ -365,6 +375,7 @@ Backwards-compatible: new optional fields with defaults.
 10. Add tests for each module
 11. Update `mat_runtime/__init__.py` exports
 12. Add validation script or integrate with existing
+13. Update `mat_runtime/__main__.py` — async entry point, add `invoke-crew` command
 
 ## References
 
