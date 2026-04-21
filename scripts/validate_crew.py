@@ -39,18 +39,33 @@ def _load_json(path: Path) -> dict:
 def _load_agent_names() -> set[str]:
     """Load all valid agent names from agents/*.md frontmatter."""
     import re
+    import yaml
     names: set[str] = set()
     if not AGENTS_DIR.is_dir():
         return names
 
-    # Match agents/*.md and agents/variants/*.md
+    # Match agents/*.md and agents/variants/*.md, skip README/docs
     for pattern in ["*.md", "variants/*.md"]:
         for path in AGENTS_DIR.glob(pattern):
+            # Skip non-agent files
+            if path.name.lower() in ("readme.md", "index.md"):
+                continue
+
             content = path.read_text(encoding="utf-8")
-            # Extract name from YAML frontmatter
-            match = re.search(r"^---\s*\n.*?^name:\s*([a-z][a-z0-9-]*)", content, re.MULTILINE | re.DOTALL)
-            if match:
-                names.add(match.group(1))
+            # Parse YAML frontmatter properly
+            if not content.startswith("---"):
+                continue
+            end = content.find("\n---", 3)
+            if end == -1:
+                continue
+            try:
+                frontmatter = yaml.safe_load(content[4:end])
+                if isinstance(frontmatter, dict) and "name" in frontmatter:
+                    name = frontmatter["name"]
+                    if isinstance(name, str) and re.match(r"^[a-z][a-z0-9-]*$", name):
+                        names.add(name)
+            except yaml.YAMLError:
+                continue
     return names
 
 
@@ -65,6 +80,18 @@ def _extract_agent_refs(instance: dict) -> list[str]:
             if name:
                 refs.append(name)
     return refs
+
+
+def _check_duplicate_agents(refs: list[str], path: Path) -> None:
+    """Check for duplicate agent names in a crew definition."""
+    seen: set[str] = set()
+    for ref in refs:
+        if ref in seen:
+            raise SystemExit(
+                f"Duplicate agent '{ref}' in {path}. "
+                f"Each agent can only appear once in a crew."
+            )
+        seen.add(ref)
 
 
 def _build_registry():
@@ -111,9 +138,11 @@ def main() -> None:
         for path in sorted(valid_dir.glob("*.json")):
             instance = _load_json(path)
             validator.validate(instance)
-            # Semantic check: verify agent references exist (skip if no agents loaded)
+            # Semantic checks
+            refs = _extract_agent_refs(instance)
+            _check_duplicate_agents(refs, path)
             if known_agents:
-                for ref in _extract_agent_refs(instance):
+                for ref in refs:
                     if ref not in known_agents:
                         raise SystemExit(
                             f"Unknown agent '{ref}' in {path}. "
@@ -142,9 +171,11 @@ def main() -> None:
                     f"Invalid crew definition in {path}:\n  {errs[0].message}"
                 )
 
-            # Semantic check: verify agent references exist
+            # Semantic checks
+            refs = _extract_agent_refs(instance)
+            _check_duplicate_agents(refs, path)
             if known_agents:
-                for ref in _extract_agent_refs(instance):
+                for ref in refs:
                     if ref not in known_agents:
                         raise SystemExit(
                             f"Unknown agent '{ref}' in {path}. "

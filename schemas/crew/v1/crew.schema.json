@@ -173,33 +173,27 @@
       "additionalProperties": false,
       "properties": {
         "on_start": {
-          "type": "string",
-          "pattern": "^(?!/)(?!.*\\.\\.)",
-          "description": "Script to run when crew starts (relative path, no traversal)"
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
+          "description": "Script to run when crew starts"
         },
         "on_task_assigned": {
-          "type": "string",
-          "pattern": "^(?!/)(?!.*\\.\\.)",
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when a task is assigned to an agent"
         },
         "on_task_complete": {
-          "type": "string",
-          "pattern": "^(?!/)(?!.*\\.\\.)",
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when an agent completes a task"
         },
         "on_agent_failure": {
-          "type": "string",
-          "pattern": "^(?!/)(?!.*\\.\\.)",
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when an agent fails"
         },
         "on_finish": {
-          "type": "string",
-          "pattern": "^(?!/)(?!.*\\.\\.)",
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run when crew completes all work"
         },
         "on_error": {
-          "type": "string",
-          "pattern": "^(?!/)(?!.*\\.\\.)",
+          "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
           "description": "Script to run on crew-level error (timeout, max_tasks exceeded)"
         }
       }
@@ -219,7 +213,7 @@
               "description": "Context store type"
             },
             "path": {
-              "type": "string",
+              "allOf": [{ "$ref": "#/$defs/repo_relative_path" }],
               "description": "File path for 'file' type (relative to repo root)"
             },
             "ttl_ms": {
@@ -263,6 +257,12 @@
       "type": "string",
       "const": "1.0.0",
       "description": "Schema version. Bump when crew definition shape changes."
+    },
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![a-zA-Z]:)(?!https?://)(?!.*\\.\\.)[^\\x00]+$",
+      "description": "Repo-relative path. Rejects absolute, Windows, URL, traversal, and empty paths."
     }
   }
 }
