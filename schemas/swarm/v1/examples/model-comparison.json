@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "name": "model-comparison",
+  "description": "Compare Claude, Codex, and Gemini on implementation tasks",
+  "dispatch_mode": "parallel_model",
+  "candidates": ["claude", "codex", "gemini"],
+  "consensus_strategy": "majority-vote",
+  "constraints": {
+    "timeout_ms": 120000
+  }
+}
