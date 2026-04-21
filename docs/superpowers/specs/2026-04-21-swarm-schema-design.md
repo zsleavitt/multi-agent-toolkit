@@ -127,6 +127,8 @@ swarms/
 | `majority-vote` | `parallel_model` | Return most common result among successful responses |
 | `return-all` | `variant` | Return array of all successful responses |
 
+**Note:** `consensus_strategy` is required in the top-level `required` array alongside `schema_version`, `name`, `dispatch_mode`, and `candidates`.
+
 **Schema conditional validation:**
 ```json
 "if": {
@@ -318,7 +320,7 @@ The validation script must test both JSON Schema validation (catches `wrong-cons
 - [MAT-45](https://github.com/zsleavitt/multi-agent-toolkit/issues/42) — This issue
 - [MAT-46/47/48](https://github.com/zsleavitt/multi-agent-toolkit/issues/43) — Swarm runtime implementation
 - [MAT-49](https://github.com/zsleavitt/multi-agent-toolkit/issues/46) — Hive (routes tasks to Crew or Swarm)
-- [MAT-50](https://github.com/zsleavitt/multi-agent-toolkit/issues/47) — Hive runtime (synthesis consensus v2)
+- [MAT-50](https://github.com/zsleavitt/multi-agent-toolkit/issues/47) — Synthesis consensus strategy (v2)
 - [MAT-2](../../../schemas/codex-code-exec/v1/manifest.json) — Wire format (each candidate dispatch)
 - [MAT-16](../../../schemas/provider-config/v1/manifest.json) — Provider config (parallel_model candidate validation)
 - [MAT-17](../../../schemas/agent-definition/v1/manifest.json) — Agent definition schema (variant candidate validation)
