@@ -159,6 +159,36 @@
           }
         }
       }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on_start": {
+          "type": "string",
+          "description": "Script/command to run when crew starts (relative to repo root)"
+        },
+        "on_task_assigned": {
+          "type": "string",
+          "description": "Script to run when a task is assigned to an agent"
+        },
+        "on_task_complete": {
+          "type": "string",
+          "description": "Script to run when an agent completes a task"
+        },
+        "on_agent_failure": {
+          "type": "string",
+          "description": "Script to run when an agent fails"
+        },
+        "on_finish": {
+          "type": "string",
+          "description": "Script to run when crew completes all work"
+        },
+        "on_error": {
+          "type": "string",
+          "description": "Script to run on crew-level error (timeout, max_tasks exceeded)"
+        }
+      }
     }
   },
   "$defs": {
