@@ -1,0 +1,15 @@
+{
+  "bundle_id": "crew@v1",
+  "title": "MAT Crew Definition — bundle manifest",
+  "description": "Machine-readable index for MAT-42. Defines the schema for Crew definitions.",
+  "schema_version": "1.0.0",
+  "crew_schema": "./crew.schema.json",
+  "notes": [
+    "Crew definitions are JSON files in the crews/ directory.",
+    "Agents are referenced by name (must exist in agents/) or with override objects.",
+    "shared_goal is injected into agent context when dispatched by this Crew.",
+    "routing.match_on references agent specialization fields from agent-frontmatter schema.",
+    "hooks are relative paths to scripts invoked by the Crew runtime (MAT-43).",
+    "communication.shared_context enables state sharing between agents."
+  ]
+}
