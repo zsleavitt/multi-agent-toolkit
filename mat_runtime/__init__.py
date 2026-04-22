@@ -18,6 +18,7 @@ from mat_runtime.swarm import (
     Swarm,
     SwarmTask,
     SwarmResult,
+    CandidateResult,
     SwarmDefinition,
     load_swarm_definition,
 )
@@ -36,6 +37,7 @@ __all__ = [
     "Swarm",
     "SwarmTask",
     "SwarmResult",
+    "CandidateResult",
     "SwarmDefinition",
     "load_swarm_definition",
 ]
