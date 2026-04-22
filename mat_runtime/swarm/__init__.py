@@ -2,9 +2,19 @@
 """Swarm runtime - parallel dispatch to multiple CLI adapters."""
 
 from mat_runtime.swarm.types import SwarmTask, CandidateResult, SwarmResult
+from mat_runtime.swarm.definition import (
+    ConstraintsConfig,
+    SwarmDefinition,
+    load_swarm_definition,
+)
 
 __all__ = [
+    # Types
     "SwarmTask",
     "CandidateResult",
     "SwarmResult",
+    # Definition
+    "ConstraintsConfig",
+    "SwarmDefinition",
+    "load_swarm_definition",
 ]
