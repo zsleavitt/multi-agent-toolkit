@@ -1,0 +1,9 @@
+# MAT CLI tool versions managed by mise
+# Run `mise install` to install these tools
+
+[tools]
+# Codex CLI for code implementation/review agents
+codex = "latest"
+
+# Optional: uncomment if using gemini agents
+# gemini = "latest"

@@ -87,6 +87,7 @@ class CLIAdapter:
                 cmd,
                 capture_output=True,
                 text=True,
+                stdin=subprocess.DEVNULL,
                 cwd=cwd,
                 timeout=timeout_sec,
             )

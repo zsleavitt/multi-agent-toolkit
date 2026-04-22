@@ -224,3 +224,187 @@ class TestSwarmDispatch:
         result = asyncio.run(swarm.dispatch(task))
 
         assert result.correlation_id == "my-correlation-123"
+
+
+class TestCandidateResultVariant:
+    """Tests for CandidateResult with variant mode output."""
+
+    def test_candidate_result_stores_variant_output(self):
+        """CandidateResult can store variant-specific output dict."""
+        from mat_runtime.swarm.types import CandidateResult
+
+        result = CandidateResult(
+            candidate="python-engineer",
+            ok=True,
+            response=None,
+            duration_ms=1500,
+            variant_output={"files_modified": ["src/main.py"], "output": "Done"},
+        )
+
+        assert result.variant_output is not None
+        assert result.variant_output["output"] == "Done"
+
+
+class TestReturnAllParallelModel:
+    """Tests for return-all consensus with parallel_model dispatch."""
+
+    @pytest.fixture
+    def return_all_swarm_path(self) -> Path:
+        """Create a return-all parallel_model swarm definition."""
+        path = _write_definition({
+            "name": "return-all-swarm",
+            "dispatch_mode": "parallel_model",
+            "candidates": ["claude", "codex"],
+            "consensus_strategy": "return-all",
+        })
+        yield path
+        path.unlink()
+
+    def test_return_all_collects_all_successes(self, return_all_swarm_path: Path):
+        """Return-all collects outputs from all successful candidates."""
+        swarm = Swarm(definition_path=return_all_swarm_path)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="claude review output"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="codex review output"
+        )
+
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        task = SwarmTask(instruction="review this code")
+        result = asyncio.run(swarm.dispatch(task))
+
+        assert result.ok is True
+        assert result.consensus_strategy == "return-all"
+        assert result.winning_candidate is None  # No winner in return-all
+        assert "claude" in result.output
+        assert "codex" in result.output
+        assert result.output["claude"]["ok"] is True
+        assert result.output["claude"]["output"] == "claude review output"
+        assert result.output["codex"]["ok"] is True
+        assert result.output["codex"]["output"] == "codex review output"
+
+    def test_return_all_partial_success(self, return_all_swarm_path: Path):
+        """Return-all succeeds if at least one candidate succeeds."""
+        swarm = Swarm(definition_path=return_all_swarm_path)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="claude success"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=False, stderr="codex failed"
+        )
+
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        task = SwarmTask(instruction="review")
+        result = asyncio.run(swarm.dispatch(task))
+
+        assert result.ok is True
+        assert result.output["claude"]["ok"] is True
+        assert result.output["claude"]["output"] == "claude success"
+        assert result.output["codex"]["ok"] is False
+        assert "error" in result.output["codex"]
+
+    def test_return_all_all_fail(self, return_all_swarm_path: Path):
+        """Return-all fails only if all candidates fail."""
+        swarm = Swarm(definition_path=return_all_swarm_path)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=False, stderr="claude error"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=False, stderr="codex error"
+        )
+
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        task = SwarmTask(instruction="review")
+        result = asyncio.run(swarm.dispatch(task))
+
+        assert result.ok is False
+        assert result.error is not None
+        assert result.error["code"] == "all_candidates_failed"
+        assert result.output["claude"]["ok"] is False
+        assert result.output["codex"]["ok"] is False
+
+
+class TestSwarmVariantInit:
+    """Tests for Swarm initialization with variant dispatch_mode."""
+
+    def test_accept_variant_candidates_with_router(self):
+        """Accept variant swarm when all candidates exist as agents."""
+        from mat_runtime.config import AgentDefinition
+
+        path = _write_definition({
+            "name": "variant-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["python-engineer", "ruby-engineer"],
+            "consensus_strategy": "return-all",
+        })
+
+        mock_agents = {
+            "python-engineer": AgentDefinition(
+                name="python-engineer",
+                description="Python specialist",
+                role="worker",
+                cli="codex",
+                variant_of="coder",
+            ),
+            "ruby-engineer": AgentDefinition(
+                name="ruby-engineer",
+                description="Ruby specialist",
+                role="worker",
+                cli="codex",
+                variant_of="coder",
+            ),
+        }
+
+        with patch("mat_runtime.swarm.swarm.load_agent_definitions", return_value=mock_agents):
+            swarm = Swarm(definition_path=path)
+
+        assert swarm.name == "variant-swarm"
+        assert swarm.definition.dispatch_mode == "variant"
+        assert swarm._router is not None
+        assert "python-engineer" in swarm._agents
+        assert "ruby-engineer" in swarm._agents
+
+        path.unlink()
+
+    def test_reject_unknown_variant_candidate(self):
+        """Reject swarm with unknown agent variant."""
+        from mat_runtime.config import AgentDefinition
+
+        path = _write_definition({
+            "name": "bad-variant-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["python-engineer", "unknown-agent"],
+            "consensus_strategy": "return-all",
+        })
+
+        mock_agents = {
+            "python-engineer": AgentDefinition(
+                name="python-engineer",
+                description="Python specialist",
+                role="worker",
+                cli="codex",
+                variant_of="coder",
+            ),
+        }
+
+        with patch("mat_runtime.swarm.swarm.load_agent_definitions", return_value=mock_agents):
+            with pytest.raises(ValueError, match="Unknown agent variant 'unknown-agent'"):
+                Swarm(definition_path=path)
+
+        path.unlink()

@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from mat_runtime.adapters import ADAPTER_REGISTRY, CLIAdapter, get_adapter
+from mat_runtime.config import AgentDefinition, load_agent_definitions
+from mat_runtime.router import AgentRouter, MAT2Request
 from mat_runtime.swarm.definition import SwarmDefinition, load_swarm_definition
 from mat_runtime.swarm.types import CandidateResult, SwarmResult, SwarmTask
 
@@ -57,8 +59,9 @@ class Swarm:
                 Defaults to definition file's parent (auto-detects repo root).
 
         Raises:
-            ValueError: If dispatch_mode is not "parallel_model".
-            ValueError: If any candidate is not a registered CLI adapter.
+            ValueError: If any candidate is not valid for the dispatch mode.
+                - parallel_model: candidates must be registered CLI adapters.
+                - variant: candidates must be known agent definitions.
         """
         self._definition = load_swarm_definition(definition_path)
         if repo_root:
@@ -67,6 +70,18 @@ class Swarm:
             # Auto-detect repo root by walking up from definition file
             self._repo_root = _find_repo_root(Path(definition_path).parent)
 
+        # Initialize based on dispatch mode
+        self._adapters: dict[str, CLIAdapter] = {}
+        self._agents: dict[str, AgentDefinition] = {}
+        self._router: AgentRouter | None = None
+
+        if self._definition.dispatch_mode == "parallel_model":
+            self._init_parallel_model()
+        elif self._definition.dispatch_mode == "variant":
+            self._init_variant()
+
+    def _init_parallel_model(self) -> None:
+        """Initialize for parallel_model dispatch mode."""
         # Validate all candidates are registered adapters
         for candidate in self._definition.candidates:
             if candidate not in ADAPTER_REGISTRY:
@@ -76,12 +91,33 @@ class Swarm:
                 )
 
         # Create adapters
-        self._adapters: dict[str, CLIAdapter] = {}
         for candidate in self._definition.candidates:
             self._adapters[candidate] = get_adapter(
                 cli=candidate,
                 working_dir=str(self._repo_root),
             )
+
+    def _init_variant(self) -> None:
+        """Initialize for variant dispatch mode."""
+        self._agents = load_agent_definitions(repo_root=self._repo_root)
+
+        # Validate all candidates are known agents AND are actual variants
+        for candidate in self._definition.candidates:
+            if candidate not in self._agents:
+                available = ", ".join(sorted(self._agents.keys()))
+                raise ValueError(
+                    f"Unknown agent variant '{candidate}'. "
+                    f"Available agents: {available if available else '(none found)'}"
+                )
+            agent_def = self._agents[candidate]
+            if not agent_def.variant_of:
+                raise ValueError(
+                    f"Candidate '{candidate}' is not a variant agent (missing variant_of). "
+                    f"dispatch_mode 'variant' requires all candidates to be agent variants. "
+                    f"Found base agent. Use a variant like 'python-engineer' instead of 'coder'."
+                )
+
+        self._router = AgentRouter(repo_root=self._repo_root, agents=self._agents)
 
     @property
     def name(self) -> str:
@@ -140,7 +176,24 @@ class Swarm:
         task: SwarmTask,
     ) -> CandidateResult:
         """
-        Invoke a single candidate adapter.
+        Invoke a single candidate.
+
+        Routes to appropriate method based on dispatch_mode.
+        Never raises - catches all exceptions and returns CandidateResult
+        with ok=False and error message.
+        """
+        if self._definition.dispatch_mode == "parallel_model":
+            return await self._invoke_adapter(candidate, task)
+        else:
+            return await self._invoke_variant(candidate, task)
+
+    async def _invoke_adapter(
+        self,
+        candidate: str,
+        task: SwarmTask,
+    ) -> CandidateResult:
+        """
+        Invoke a CLI adapter candidate (parallel_model mode).
 
         Never raises - catches all exceptions and returns CandidateResult
         with ok=False and error message.
@@ -175,6 +228,73 @@ class Swarm:
                 error=str(e),
             )
 
+    async def _invoke_variant(
+        self,
+        candidate: str,
+        task: SwarmTask,
+    ) -> CandidateResult:
+        """
+        Invoke an agent variant candidate (variant mode).
+
+        Never raises - catches all exceptions and returns CandidateResult
+        with ok=False and error message.
+        """
+        start = time.monotonic()
+        try:
+            timeout_ms = (
+                task.timeout_ms
+                if task.timeout_ms is not None
+                else self._definition.constraints.timeout_ms
+            )
+            timeout_s = (timeout_ms / 1000) if timeout_ms else None
+
+            request = MAT2Request(
+                schema_version="1.0.0",
+                correlation_id=task.correlation_id,
+                idempotency_key=task.correlation_id,
+                op=task.op,
+                repo_root=str(self._repo_root),
+                instruction=task.instruction,
+                timeout_ms=timeout_ms,
+            )
+
+            # Wrap with asyncio.wait_for to enforce hard timeout ceiling
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._router.invoke,
+                    agent_name=candidate,
+                    request=request,
+                ),
+                timeout=timeout_s,
+            )
+
+            return CandidateResult(
+                candidate=candidate,
+                ok=response.ok,
+                response=None,
+                duration_ms=int((time.monotonic() - start) * 1000),
+                error=response.error if isinstance(response.error, dict) else {"message": str(response.error)} if response.error else None,
+                variant_output=response.result if response.ok else None,
+            )
+        except asyncio.TimeoutError:
+            return CandidateResult(
+                candidate=candidate,
+                ok=False,
+                response=None,
+                duration_ms=int((time.monotonic() - start) * 1000),
+                error={"code": "timeout", "message": f"Candidate '{candidate}' exceeded timeout"},
+                variant_output=None,
+            )
+        except Exception as e:
+            return CandidateResult(
+                candidate=candidate,
+                ok=False,
+                response=None,
+                duration_ms=int((time.monotonic() - start) * 1000),
+                error={"code": "exception", "message": str(e)},
+                variant_output=None,
+            )
+
     def _apply_consensus(
         self,
         results: list[CandidateResult],
@@ -184,7 +304,22 @@ class Swarm:
         """
         Apply consensus strategy to candidate results.
 
-        For first-complete:
+        Routes to appropriate method based on consensus_strategy.
+        """
+        if self._definition.consensus_strategy == "return-all":
+            return self._apply_return_all_consensus(results, task, total_duration_ms)
+        else:
+            return self._apply_first_complete_consensus(results, task, total_duration_ms)
+
+    def _apply_first_complete_consensus(
+        self,
+        results: list[CandidateResult],
+        task: SwarmTask,
+        total_duration_ms: int,
+    ) -> SwarmResult:
+        """
+        Apply first-complete consensus (parallel_model mode).
+
         - Sort by duration_ms (completion order)
         - Return first where ok == True
         - If all failed, aggregate errors
@@ -227,5 +362,64 @@ class Swarm:
                 "code": "all_candidates_failed",
                 "message": "All candidates failed",
                 "details": errors,
+            },
+        )
+
+    def _apply_return_all_consensus(
+        self,
+        results: list[CandidateResult],
+        task: SwarmTask,
+        total_duration_ms: int,
+    ) -> SwarmResult:
+        """
+        Apply return-all consensus (variant or parallel_model mode).
+
+        Collects ALL outputs into a dict keyed by candidate name.
+        - ok=True if ANY candidate succeeded
+        - winning_candidate=None (no winner in return-all mode)
+        - output is dict of all results: {candidate: {"ok": bool, "output": ..., "duration_ms": int}}
+
+        For variant mode, output comes from variant_output.
+        For parallel_model mode, output comes from response.stdout.
+        """
+        outputs: dict[str, Any] = {}
+        any_ok = False
+        is_variant_mode = self._definition.dispatch_mode == "variant"
+
+        for result in results:
+            if result.ok:
+                any_ok = True
+                # Extract output based on dispatch mode
+                if is_variant_mode:
+                    output_value = result.variant_output
+                else:
+                    # parallel_model: use response stdout
+                    output_value = result.response.stdout if result.response else None
+                outputs[result.candidate] = {
+                    "ok": True,
+                    "output": output_value,
+                    "duration_ms": result.duration_ms,
+                }
+            else:
+                outputs[result.candidate] = {
+                    "ok": False,
+                    "error": result.error,
+                    "duration_ms": result.duration_ms,
+                }
+
+        error_code = "all_variants_failed" if is_variant_mode else "all_candidates_failed"
+        error_message = "All agent variants failed" if is_variant_mode else "All candidates failed"
+
+        return SwarmResult(
+            ok=any_ok,
+            consensus_strategy=self._definition.consensus_strategy,
+            winning_candidate=None,
+            output=outputs,
+            correlation_id=task.correlation_id,
+            duration_ms=total_duration_ms,
+            candidate_results=results,
+            error=None if any_ok else {
+                "code": error_code,
+                "message": error_message,
             },
         )

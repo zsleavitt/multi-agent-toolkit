@@ -24,7 +24,7 @@ Code review for pull requests — quality, security, and correctness analysis.
 1. Parse the review target from the input
 2. Run the skill script:
    ```bash
-   python lib/skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
+   python3 lib/skills/review-pr/review_pr.py "<target>" --repo-root "$(pwd)"
    ```
 3. Present findings organized by severity: blocker, issue, suggestion, info
 

@@ -43,8 +43,10 @@ def load_swarm_definition(path: Path | str) -> SwarmDefinition:
     Load and parse a swarm definition from JSON.
 
     Validates:
-    - dispatch_mode is "parallel_model" (variant not supported in MAT-46)
-    - consensus_strategy is valid for dispatch_mode
+    - dispatch_mode is "parallel_model" or "variant"
+    - consensus_strategy is valid for dispatch_mode:
+      - parallel_model: "first-complete", "return-all" (majority-vote not implemented)
+      - variant: "return-all"
     - candidates list has >= 2 items
 
     Args:
@@ -70,11 +72,12 @@ def load_swarm_definition(path: Path | str) -> SwarmDefinition:
     if not dispatch_mode:
         raise ValueError("Swarm definition missing required field: dispatch_mode")
 
-    # MAT-46: only parallel_model supported
-    if dispatch_mode != "parallel_model":
+    # Validate dispatch_mode
+    valid_modes = {"parallel_model", "variant"}
+    if dispatch_mode not in valid_modes:
         raise ValueError(
-            f"dispatch_mode '{dispatch_mode}' not supported in MAT-46. "
-            f"Only 'parallel_model' is implemented."
+            f"dispatch_mode '{dispatch_mode}' not valid. "
+            f"Use one of: {', '.join(sorted(valid_modes))}"
         )
 
     candidates = data.get("candidates", [])
@@ -89,20 +92,27 @@ def load_swarm_definition(path: Path | str) -> SwarmDefinition:
     if not consensus_strategy:
         raise ValueError("Swarm definition missing required field: consensus_strategy")
 
-    # Validate consensus_strategy for parallel_model
-    valid_strategies = {"first-complete", "majority-vote"}
-    if consensus_strategy not in valid_strategies:
-        raise ValueError(
-            f"consensus_strategy '{consensus_strategy}' not valid for parallel_model. "
-            f"Use one of: {', '.join(sorted(valid_strategies))}"
-        )
-
-    # MAT-46: only first-complete implemented
-    if consensus_strategy == "majority-vote":
-        raise ValueError(
-            "consensus_strategy 'majority-vote' not implemented in MAT-46. "
-            "Use 'first-complete'."
-        )
+    # Validate consensus_strategy based on dispatch_mode
+    if dispatch_mode == "parallel_model":
+        valid_strategies = {"first-complete", "majority-vote", "return-all"}
+        if consensus_strategy not in valid_strategies:
+            raise ValueError(
+                f"consensus_strategy '{consensus_strategy}' not valid for parallel_model. "
+                f"Use one of: {', '.join(sorted(valid_strategies))}"
+            )
+        # MAT-46: only first-complete and return-all implemented
+        if consensus_strategy == "majority-vote":
+            raise ValueError(
+                "consensus_strategy 'majority-vote' not implemented. "
+                "Use 'first-complete' or 'return-all'."
+            )
+    elif dispatch_mode == "variant":
+        valid_strategies = {"return-all"}
+        if consensus_strategy not in valid_strategies:
+            raise ValueError(
+                f"consensus_strategy '{consensus_strategy}' not valid for variant mode. "
+                f"Use one of: {', '.join(sorted(valid_strategies))}"
+            )
 
     return SwarmDefinition(
         name=name,
