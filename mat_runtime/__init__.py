@@ -14,15 +14,31 @@ from mat_runtime.crew import (
     CrewDefinition,
     load_crew_definition,
 )
+from mat_runtime.swarm import (
+    Swarm,
+    SwarmTask,
+    SwarmResult,
+    CandidateResult,
+    SwarmDefinition,
+    load_swarm_definition,
+)
 
 __all__ = [
     "AgentRouter",
     "load_provider_config",
     "load_agent_definitions",
+    # Crew
     "Crew",
     "CrewTask",
     "CrewResult",
     "CrewDefinition",
     "load_crew_definition",
+    # Swarm
+    "Swarm",
+    "SwarmTask",
+    "SwarmResult",
+    "CandidateResult",
+    "SwarmDefinition",
+    "load_swarm_definition",
 ]
 __version__ = "0.1.0"

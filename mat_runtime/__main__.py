@@ -144,6 +144,54 @@ def cmd_invoke_crew(args: argparse.Namespace) -> int:
     return asyncio.run(cmd_invoke_crew_async(args))
 
 
+async def cmd_invoke_swarm_async(args: argparse.Namespace) -> int:
+    """Handle the invoke-swarm command (async implementation)."""
+    from mat_runtime.swarm import Swarm, SwarmTask
+
+    swarm = Swarm(
+        definition_path=args.swarm,
+        repo_root=args.repo_root,
+    )
+
+    task = SwarmTask(
+        instruction=args.instruction,
+        op=args.op,
+        timeout_ms=args.timeout_ms,
+    )
+
+    result = await swarm.dispatch(task)
+
+    # Output result
+    output = {
+        "ok": result.ok,
+        "consensus_strategy": result.consensus_strategy,
+        "winning_candidate": result.winning_candidate,
+        "correlation_id": result.correlation_id,
+        "duration_ms": result.duration_ms,
+        "candidate_results": [
+            {
+                "candidate": cr.candidate,
+                "ok": cr.ok,
+                "duration_ms": cr.duration_ms,
+                "error": cr.error,
+            }
+            for cr in result.candidate_results
+        ],
+    }
+    if result.ok:
+        output["output"] = result.output
+    else:
+        output["error"] = result.error
+
+    print(json.dumps(output, indent=2 if args.pretty else None))
+    return 0 if result.ok else 1
+
+
+def cmd_invoke_swarm(args: argparse.Namespace) -> int:
+    """Handle the invoke-swarm command."""
+    return asyncio.run(cmd_invoke_swarm_async(args))
+
+
 def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -269,6 +317,44 @@ def main() -> int:
         help="Pretty-print JSON output (default: true)",
     )
     invoke_crew_parser.set_defaults(func=cmd_invoke_crew)
+
+    # invoke-swarm command
+    invoke_swarm_parser = subparsers.add_parser(
+        "invoke-swarm", help="Dispatch a task to a swarm"
+    )
+    invoke_swarm_parser.add_argument(
+        "--swarm",
+        "-s",
+        type=Path,
+        required=True,
+        help="Path to swarm definition JSON file",
+    )
+    invoke_swarm_parser.add_argument(
+        "--instruction",
+        "-i",
+        required=True,
+        help="Task instruction",
+    )
+    invoke_swarm_parser.add_argument(
+        "--op",
+        "-o",
+        default="codex.implement",
+        help="Operation (default: codex.implement)",
+    )
+    invoke_swarm_parser.add_argument(
+        "--timeout-ms",
+        "-t",
+        type=int,
+        help="Task timeout in milliseconds",
+    )
+    invoke_swarm_parser.add_argument(
+        "--pretty",
+        "-p",
+        action="store_true",
+        default=True,
+        help="Pretty-print JSON output (default: true)",
+    )
+    invoke_swarm_parser.set_defaults(func=cmd_invoke_swarm)
 
     args = parser.parse_args()
 
