@@ -2,7 +2,7 @@
 name: review-pr
 description: Code review for pull requests — quality, security, and correctness analysis. Use when reviewing PRs, staged changes, or specific files.
 version: 1.0.0
-allowed-tools: Bash(python *)
+allowed-tools: Bash(python3 *)
 ---
 
 # Review PR
@@ -28,7 +28,7 @@ For complete documentation, see [instructions.md](../../../lib/skills/review-pr/
 Run the skill script:
 
 ```bash
-python lib/skills/review-pr/review_pr.py "$ARGUMENTS" --repo-root "$(pwd)"
+python3 lib/skills/review-pr/review_pr.py "$ARGUMENTS" --repo-root "$(pwd)"
 ```
 
 Returns findings organized by severity: blocker, issue, suggestion, info.
