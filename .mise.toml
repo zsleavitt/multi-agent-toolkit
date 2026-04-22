@@ -1,9 +1,11 @@
 # MAT CLI tool versions managed by mise
-# Run `mise install` to install these tools
+# Run `mise install` so shims (e.g. `codex`) resolve; otherwise the runtime uses
+# `npx @openai/codex` from the CodexAdapter / CodexReviewAdapter.
 
 [tools]
 # Codex CLI for code implementation/review agents
 codex = "latest"
+gemini = "latest"
 
 # Optional: uncomment if using gemini agents
 # gemini = "latest"

@@ -192,6 +192,22 @@ def cmd_invoke_swarm(args: argparse.Namespace) -> int:
     return asyncio.run(cmd_invoke_swarm_async(args))
 
 
+def cmd_smoke(args: argparse.Namespace) -> int:
+    """Handle the smoke command — adapter preflight; optional real MAT-2 with MAT_SMOKE_REAL_CLI=1."""
+    from mat_runtime.smoke import SMOKE_INSTRUCTION, run_smoke
+
+    return run_smoke(
+        Path(args.repo_root) if args.repo_root else Path.cwd(),
+        real=args.real,
+        per_cli=args.per_cli,
+        agent=args.agent,
+        instruction=(args.instruction or SMOKE_INSTRUCTION),
+        timeout_ms=args.timeout_ms,
+        strict=args.strict,
+        as_json=args.json,
+    )
+
+
 def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -355,6 +371,51 @@ def main() -> int:
         help="Pretty-print JSON output (default: true)",
     )
     invoke_swarm_parser.set_defaults(func=cmd_invoke_swarm)
+
+    # smoke — preflight and optional live MAT-2 checks (see docs/adr/0005-smoke-cli-verification.md)
+    smoke_parser = subparsers.add_parser(
+        "smoke",
+        help="Preflight local CLI toolchains; optional --real with MAT_SMOKE_REAL_CLI=1",
+    )
+    smoke_parser.add_argument(
+        "--real",
+        action="store_true",
+        help="Run live MAT-2 invocations (requires MAT_SMOKE_REAL_CLI=1)",
+    )
+    smoke_parser.add_argument(
+        "--per-cli",
+        action="store_true",
+        help="With --real: one representative agent per unique CLI (codex, gemini, claude, …)",
+    )
+    smoke_parser.add_argument(
+        "--agent",
+        "-a",
+        help="With --real: single agent to invoke (e.g. reviewer)",
+    )
+    smoke_parser.add_argument(
+        "--instruction",
+        "-i",
+        help="Override default tiny smoke instruction (still keep it minimal)",
+    )
+    smoke_parser.add_argument(
+        "--timeout-ms",
+        "-t",
+        type=int,
+        default=120_000,
+        help="Timeout for each real invoke (default: 120000)",
+    )
+    smoke_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="On dry preflight, exit 1 if any adapter CLI is missing or broken",
+    )
+    smoke_parser.add_argument(
+        "--json",
+        "-j",
+        action="store_true",
+        help="Machine-readable output (JSON rows)",
+    )
+    smoke_parser.set_defaults(func=cmd_smoke)
 
     args = parser.parse_args()
 
