@@ -7,6 +7,7 @@ from mat_runtime.swarm.definition import (
     SwarmDefinition,
     load_swarm_definition,
 )
+from mat_runtime.swarm.swarm import Swarm
 
 __all__ = [
     # Types
@@ -17,4 +18,6 @@ __all__ = [
     "ConstraintsConfig",
     "SwarmDefinition",
     "load_swarm_definition",
+    # Swarm
+    "Swarm",
 ]
