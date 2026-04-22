@@ -30,7 +30,7 @@ def sample_agents() -> dict[str, AgentDefinition]:
             name="reviewer",
             description="Code review agent",
             role="worker",
-            cli="claude",
+            cli="codex-review",
             allowed_mat_ops=["codex.review"],
             system_prompt="You are a code review agent.",
         ),

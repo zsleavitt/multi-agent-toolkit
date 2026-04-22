@@ -16,10 +16,14 @@ class CodexAdapter(CLIAdapter):
     Adapter for OpenAI Codex CLI.
 
     Invokes `codex exec` for non-interactive code implementation, testing, and refactoring.
+    Uses `npx --yes @openai/codex` so the CLI runs when the global `codex` binary is not
+    on PATH (e.g. mise lists codex but `mise install` has not been run yet).
     """
 
-    command: str = "codex"
-    flags: list[str] = field(default_factory=lambda: ["--full-auto"])
+    command: str = "npx"
+    flags: list[str] = field(
+        default_factory=lambda: ["--yes", "@openai/codex", "exec", "--full-auto"]
+    )
 
     def build_command(
         self,
@@ -27,16 +31,14 @@ class CodexAdapter(CLIAdapter):
         system_prompt: str | None = None,
         **kwargs: Any,
     ) -> list[str]:
-        """Build codex CLI command."""
-        # Use 'codex exec' for non-interactive execution
-        cmd = [self.command, "exec", *self.flags]
+        """Build codex CLI command: npx --yes @openai/codex exec --full-auto <prompt>."""
+        cmd = [self.command, *self.flags]
 
         # Combine system prompt with the task prompt
         full_prompt = prompt
         if system_prompt:
             full_prompt = f"{system_prompt}\n\n---\n\nTask: {prompt}"
 
-        # Add the prompt as the main argument
         cmd.append(full_prompt)
 
         return cmd

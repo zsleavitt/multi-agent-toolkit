@@ -32,7 +32,7 @@
     },
     "cli": {
       "type": "string",
-      "enum": ["claude", "codex", "gemini", "cursor", "aider", "continue", "custom"],
+      "enum": ["claude", "codex", "codex-review", "gemini", "cursor", "aider", "continue", "custom"],
       "description": "CLI tool binding (must match MAT-16 agent config)."
     },
     "variant_of": {
