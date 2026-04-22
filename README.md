@@ -55,12 +55,36 @@ python -m mat_runtime invoke --agent coder --instruction "Add a hello world func
 python -m mat_runtime invoke --request request.json
 ```
 
+### Verifying local CLI toolchains (Codex, Gemini, …)
+
+1. **Dry preflight (no API usage)** — `PATH` + `--version` for each adapter CLI used in `agents/`:
+
+   ```bash
+   python -m mat_runtime smoke
+   ```
+
+2. **Strict** — exit with failure if any expected CLI is missing (for images that should have every tool):
+
+   ```bash
+   python -m mat_runtime smoke --strict
+   ```
+
+3. **End-to-end (opt-in, billable)** — requires `MAT_SMOKE_REAL_CLI=1` and runs a minimal `AgentRouter.invoke` (e.g. single reviewer or one agent per tool):
+
+   ```bash
+   export MAT_SMOKE_REAL_CLI=1
+   python -m mat_runtime smoke --real --agent reviewer
+   # or:  python -m mat_runtime smoke --real --per-cli
+   ```
+
+Details: [docs/adr/0005-smoke-cli-verification.md](docs/adr/0005-smoke-cli-verification.md).
+
 ## Layout
 
 | Path | Purpose |
 |------|---------|
 | `bin/setup` | Setup script — creates venv, installs deps, checks CLI tools |
-| `mat_runtime/` | **MAT-18** — Runtime adapter layer with `AgentRouter` class |
+| `mat_runtime/` | **MAT-18** — Runtime adapter layer with `AgentRouter` class; `python -m mat_runtime smoke` for CLI preflight |
 | `agents/` | **MAT-17** — Core agent definitions (orchestrator, coder, researcher, reviewer, security, tester) |
 | `crews/` | **MAT-42** — Crew definitions (named agent collections with routing) |
 | `swarms/` | **MAT-45** — Swarm definitions (parallel dispatch with consensus) |
