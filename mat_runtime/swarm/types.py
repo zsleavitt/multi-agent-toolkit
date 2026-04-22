@@ -22,13 +22,18 @@ class SwarmTask:
 
 @dataclass
 class CandidateResult:
-    """Result from a single candidate in the swarm."""
+    """Result from a single candidate in the swarm.
 
-    candidate: str  # CLI adapter name (e.g., "claude", "codex")
+    For parallel_model mode: response contains InvocationResult from CLI adapter.
+    For variant mode: variant_output contains the MAT2Response result dict.
+    """
+
+    candidate: str  # CLI adapter name or agent variant name
     ok: bool
-    response: InvocationResult | None
+    response: InvocationResult | None  # Used in parallel_model mode
     duration_ms: int
     error: str | None = None
+    variant_output: dict[str, Any] | None = None  # Used in variant mode
 
 
 @dataclass

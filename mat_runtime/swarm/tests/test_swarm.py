@@ -224,3 +224,22 @@ class TestSwarmDispatch:
         result = asyncio.run(swarm.dispatch(task))
 
         assert result.correlation_id == "my-correlation-123"
+
+
+class TestCandidateResultVariant:
+    """Tests for CandidateResult with variant mode output."""
+
+    def test_candidate_result_stores_variant_output(self):
+        """CandidateResult can store variant-specific output dict."""
+        from mat_runtime.swarm.types import CandidateResult
+
+        result = CandidateResult(
+            candidate="python-engineer",
+            ok=True,
+            response=None,
+            duration_ms=1500,
+            variant_output={"files_modified": ["src/main.py"], "output": "Done"},
+        )
+
+        assert result.variant_output is not None
+        assert result.variant_output["output"] == "Done"
