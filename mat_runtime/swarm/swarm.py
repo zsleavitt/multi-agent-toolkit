@@ -169,7 +169,24 @@ class Swarm:
         task: SwarmTask,
     ) -> CandidateResult:
         """
-        Invoke a single candidate adapter.
+        Invoke a single candidate.
+
+        Routes to appropriate method based on dispatch_mode.
+        Never raises - catches all exceptions and returns CandidateResult
+        with ok=False and error message.
+        """
+        if self._definition.dispatch_mode == "parallel_model":
+            return await self._invoke_adapter(candidate, task)
+        else:
+            return await self._invoke_variant(candidate, task)
+
+    async def _invoke_adapter(
+        self,
+        candidate: str,
+        task: SwarmTask,
+    ) -> CandidateResult:
+        """
+        Invoke a CLI adapter candidate (parallel_model mode).
 
         Never raises - catches all exceptions and returns CandidateResult
         with ok=False and error message.
@@ -204,6 +221,59 @@ class Swarm:
                 error=str(e),
             )
 
+    async def _invoke_variant(
+        self,
+        candidate: str,
+        task: SwarmTask,
+    ) -> CandidateResult:
+        """
+        Invoke an agent variant candidate (variant mode).
+
+        Never raises - catches all exceptions and returns CandidateResult
+        with ok=False and error message.
+        """
+        start = time.monotonic()
+        try:
+            timeout = (
+                task.timeout_ms
+                if task.timeout_ms is not None
+                else self._definition.constraints.timeout_ms
+            )
+
+            request = MAT2Request(
+                schema_version="1.0.0",
+                correlation_id=task.correlation_id,
+                idempotency_key=task.correlation_id,
+                op=task.op,
+                repo_root=str(self._repo_root),
+                instruction=task.instruction,
+                timeout_ms=timeout,
+            )
+
+            response = await asyncio.to_thread(
+                self._router.invoke,
+                agent_name=candidate,
+                request=request,
+            )
+
+            return CandidateResult(
+                candidate=candidate,
+                ok=response.ok,
+                response=None,
+                duration_ms=int((time.monotonic() - start) * 1000),
+                error=response.error.get("message") if response.error else None,
+                variant_output=response.result if response.ok else None,
+            )
+        except Exception as e:
+            return CandidateResult(
+                candidate=candidate,
+                ok=False,
+                response=None,
+                duration_ms=int((time.monotonic() - start) * 1000),
+                error=str(e),
+                variant_output=None,
+            )
+
     def _apply_consensus(
         self,
         results: list[CandidateResult],
@@ -213,7 +283,22 @@ class Swarm:
         """
         Apply consensus strategy to candidate results.
 
-        For first-complete:
+        Routes to appropriate method based on consensus_strategy.
+        """
+        if self._definition.consensus_strategy == "return-all":
+            return self._apply_return_all_consensus(results, task, total_duration_ms)
+        else:
+            return self._apply_first_complete_consensus(results, task, total_duration_ms)
+
+    def _apply_first_complete_consensus(
+        self,
+        results: list[CandidateResult],
+        task: SwarmTask,
+        total_duration_ms: int,
+    ) -> SwarmResult:
+        """
+        Apply first-complete consensus (parallel_model mode).
+
         - Sort by duration_ms (completion order)
         - Return first where ok == True
         - If all failed, aggregate errors
@@ -256,5 +341,51 @@ class Swarm:
                 "code": "all_candidates_failed",
                 "message": "All candidates failed",
                 "details": errors,
+            },
+        )
+
+    def _apply_return_all_consensus(
+        self,
+        results: list[CandidateResult],
+        task: SwarmTask,
+        total_duration_ms: int,
+    ) -> SwarmResult:
+        """
+        Apply return-all consensus (variant mode).
+
+        Collects ALL variant outputs into a dict keyed by candidate name.
+        - ok=True if ANY candidate succeeded
+        - winning_candidate=None (no winner in return-all mode)
+        - output is dict of all results: {candidate: {"ok": bool, "output": ..., "duration_ms": int}}
+        """
+        outputs: dict[str, Any] = {}
+        any_ok = False
+
+        for result in results:
+            if result.ok:
+                any_ok = True
+                outputs[result.candidate] = {
+                    "ok": True,
+                    "output": result.variant_output,
+                    "duration_ms": result.duration_ms,
+                }
+            else:
+                outputs[result.candidate] = {
+                    "ok": False,
+                    "error": result.error,
+                    "duration_ms": result.duration_ms,
+                }
+
+        return SwarmResult(
+            ok=any_ok,
+            consensus_strategy=self._definition.consensus_strategy,
+            winning_candidate=None,
+            output=outputs,
+            correlation_id=task.correlation_id,
+            duration_ms=total_duration_ms,
+            candidate_results=results,
+            error=None if any_ok else {
+                "code": "all_variants_failed",
+                "message": "All agent variants failed",
             },
         )
