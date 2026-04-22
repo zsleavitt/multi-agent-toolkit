@@ -62,19 +62,23 @@ python -m mat_runtime invoke --request request.json
 | `bin/setup` | Setup script — creates venv, installs deps, checks CLI tools |
 | `mat_runtime/` | **MAT-18** — Runtime adapter layer with `AgentRouter` class |
 | `agents/` | **MAT-17** — Core agent definitions (orchestrator, coder, researcher, reviewer, security, tester) |
+| `crews/` | **MAT-42** — Crew definitions (named agent collections with routing) |
+| `swarms/` | **MAT-45** — Swarm definitions (parallel dispatch with consensus) |
 | `skills/` | **MAT-19+** — Slash command skills (/develop, /diagnose, /plan, /review-pr, /test, /ticket) |
 | `adapters/` | Tool-specific discovery manifests (Claude Code, Cursor) |
 | `schemas/gemini-git-ops/v1/` | **MAT-1** — Git operations request/response schemas |
 | `schemas/codex-code-exec/v1/` | **MAT-2** — Code execution request/response schemas |
 | `schemas/provider-config/v1/` | **MAT-16** — CLI-based agent configuration |
 | `schemas/agent-definition/v1/` | **MAT-17** — Agent definition frontmatter schema |
+| `schemas/crew/v1/` | **MAT-42** — Crew definition schema |
+| `schemas/swarm/v1/` | **MAT-45** — Swarm definition schema |
 | `schemas/ai-team-repo-profile/v1/` | **MAT-9** — Portable repo profile + work-item adapters |
 | `schemas/orchestrator-state/v1/` | **MAT-4/10** — Orchestrator state (queue, artifacts, checkpoints) |
 | `schemas/hitl-asana-approval/v1/` | **MAT-6** — Asana HITL trigger and callback JSON |
 | `config/schema-registry.json` | Schema bundle paths and env overrides |
 | `docs/adr/` | Architecture decision records |
 | `docs/agent-definition-format.md` | Agent definition specification |
-| `scripts/validate_*.py` | Schema validators (8 total) |
+| `scripts/validate_*.py` | Schema validators (10 total) |
 | `CLAUDE.md` | Orchestrator context for Claude Code sessions |
 | `CURSOR_HANDOFF.md` | Editor handoff documentation |
 
@@ -91,6 +95,8 @@ python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
 python scripts/validate_provider_config.py
 python scripts/validate_agent_definitions.py
+python scripts/validate_crew.py
+python scripts/validate_swarm.py
 python scripts/validate_gumloop_examples.py
 python -m pytest mat_runtime/tests/ -v
 ```
@@ -143,6 +149,8 @@ Each arrow represents a **wire format** (MAT-1/MAT-2 JSON). CLI tools translate 
 | MAT-16 | CLI-based agent config | Done |
 | MAT-17 | Agent definitions | Done |
 | MAT-18 | Runtime adapter | Done |
+| MAT-42 | Crew schema (agent collections) | Done |
+| MAT-45 | Swarm schema (parallel dispatch) | Done |
 
 See `CURSOR_HANDOFF.md` for full ticket status.
 
