@@ -105,7 +105,7 @@ class TestLoadSwarmDefinition:
             "name": "invalid-consensus",
             "dispatch_mode": "parallel_model",
             "candidates": ["claude", "codex"],
-            "consensus_strategy": "return-all",
+            "consensus_strategy": "unknown-strategy",
         })
 
         with pytest.raises(ValueError, match="not valid for parallel_model"):
@@ -220,17 +220,19 @@ class TestVariantDispatchMode:
 
         path.unlink()
 
-    def test_reject_parallel_model_with_return_all(self):
-        """Reject parallel_model mode with return-all consensus."""
+    def test_accept_parallel_model_with_return_all(self):
+        """Accept parallel_model mode with return-all consensus (for multi-model review)."""
         path = _write_definition({
             "schema_version": "1.0.0",
-            "name": "bad-swarm",
+            "name": "return-all-swarm",
             "dispatch_mode": "parallel_model",
             "candidates": ["claude", "codex"],
             "consensus_strategy": "return-all",
         })
 
-        with pytest.raises(ValueError, match="first-complete"):
-            load_swarm_definition(path)
+        definition = load_swarm_definition(path)
+
+        assert definition.dispatch_mode == "parallel_model"
+        assert definition.consensus_strategy == "return-all"
 
         path.unlink()

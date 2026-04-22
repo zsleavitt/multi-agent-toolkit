@@ -245,6 +245,101 @@ class TestCandidateResultVariant:
         assert result.variant_output["output"] == "Done"
 
 
+class TestReturnAllParallelModel:
+    """Tests for return-all consensus with parallel_model dispatch."""
+
+    @pytest.fixture
+    def return_all_swarm_path(self) -> Path:
+        """Create a return-all parallel_model swarm definition."""
+        path = _write_definition({
+            "name": "return-all-swarm",
+            "dispatch_mode": "parallel_model",
+            "candidates": ["claude", "codex"],
+            "consensus_strategy": "return-all",
+        })
+        yield path
+        path.unlink()
+
+    def test_return_all_collects_all_successes(self, return_all_swarm_path: Path):
+        """Return-all collects outputs from all successful candidates."""
+        swarm = Swarm(definition_path=return_all_swarm_path)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="claude review output"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="codex review output"
+        )
+
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        task = SwarmTask(instruction="review this code")
+        result = asyncio.run(swarm.dispatch(task))
+
+        assert result.ok is True
+        assert result.consensus_strategy == "return-all"
+        assert result.winning_candidate is None  # No winner in return-all
+        assert "claude" in result.output
+        assert "codex" in result.output
+        assert result.output["claude"]["ok"] is True
+        assert result.output["claude"]["output"] == "claude review output"
+        assert result.output["codex"]["ok"] is True
+        assert result.output["codex"]["output"] == "codex review output"
+
+    def test_return_all_partial_success(self, return_all_swarm_path: Path):
+        """Return-all succeeds if at least one candidate succeeds."""
+        swarm = Swarm(definition_path=return_all_swarm_path)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="claude success"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=False, stderr="codex failed"
+        )
+
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        task = SwarmTask(instruction="review")
+        result = asyncio.run(swarm.dispatch(task))
+
+        assert result.ok is True
+        assert result.output["claude"]["ok"] is True
+        assert result.output["claude"]["output"] == "claude success"
+        assert result.output["codex"]["ok"] is False
+        assert "error" in result.output["codex"]
+
+    def test_return_all_all_fail(self, return_all_swarm_path: Path):
+        """Return-all fails only if all candidates fail."""
+        swarm = Swarm(definition_path=return_all_swarm_path)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=False, stderr="claude error"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=False, stderr="codex error"
+        )
+
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        task = SwarmTask(instruction="review")
+        result = asyncio.run(swarm.dispatch(task))
+
+        assert result.ok is False
+        assert result.error is not None
+        assert result.error["code"] == "all_candidates_failed"
+        assert result.output["claude"]["ok"] is False
+        assert result.output["codex"]["ok"] is False
+
+
 class TestSwarmVariantInit:
     """Tests for Swarm initialization with variant dispatch_mode."""
 

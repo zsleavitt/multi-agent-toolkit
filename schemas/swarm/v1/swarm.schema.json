@@ -58,13 +58,16 @@
     "properties": { "consensus_strategy": { "enum": ["return-all"] } }
   },
   "else": {
-    "properties": { "consensus_strategy": { "enum": ["first-complete", "majority-vote"] } }
+    "properties": { "consensus_strategy": { "enum": ["first-complete", "majority-vote", "return-all"] } }
   },
   "$defs": {
     "schema_version": {
       "type": "string",
       "const": "1.0.0",
       "description": "Schema version. Bump when swarm definition shape changes."
+    },
+    "consensus_strategy_notes": {
+      "description": "Notes on consensus strategies: return-all for parallel_model returns all candidate outputs without picking a winner, intended for use cases where an external step (e.g. an orchestrator or synthesis skill) will process all outputs."
     }
   }
 }

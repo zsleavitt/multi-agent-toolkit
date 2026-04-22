@@ -351,22 +351,32 @@ class Swarm:
         total_duration_ms: int,
     ) -> SwarmResult:
         """
-        Apply return-all consensus (variant mode).
+        Apply return-all consensus (variant or parallel_model mode).
 
-        Collects ALL variant outputs into a dict keyed by candidate name.
+        Collects ALL outputs into a dict keyed by candidate name.
         - ok=True if ANY candidate succeeded
         - winning_candidate=None (no winner in return-all mode)
         - output is dict of all results: {candidate: {"ok": bool, "output": ..., "duration_ms": int}}
+
+        For variant mode, output comes from variant_output.
+        For parallel_model mode, output comes from response.stdout.
         """
         outputs: dict[str, Any] = {}
         any_ok = False
+        is_variant_mode = self._definition.dispatch_mode == "variant"
 
         for result in results:
             if result.ok:
                 any_ok = True
+                # Extract output based on dispatch mode
+                if is_variant_mode:
+                    output_value = result.variant_output
+                else:
+                    # parallel_model: use response stdout
+                    output_value = result.response.stdout if result.response else None
                 outputs[result.candidate] = {
                     "ok": True,
-                    "output": result.variant_output,
+                    "output": output_value,
                     "duration_ms": result.duration_ms,
                 }
             else:
@@ -375,6 +385,9 @@ class Swarm:
                     "error": result.error,
                     "duration_ms": result.duration_ms,
                 }
+
+        error_code = "all_variants_failed" if is_variant_mode else "all_candidates_failed"
+        error_message = "All agent variants failed" if is_variant_mode else "All candidates failed"
 
         return SwarmResult(
             ok=any_ok,
@@ -385,7 +398,7 @@ class Swarm:
             duration_ms=total_duration_ms,
             candidate_results=results,
             error=None if any_ok else {
-                "code": "all_variants_failed",
-                "message": "All agent variants failed",
+                "code": error_code,
+                "message": error_message,
             },
         )

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "name": "multi-model-review",
+  "description": "Review the same PR with Claude, Codex, and Gemini simultaneously. Outputs collected for orchestrator consolidation.",
+  "dispatch_mode": "parallel_model",
+  "candidates": ["claude", "codex-review", "gemini"],
+  "consensus_strategy": "return-all",
+  "constraints": {
+    "timeout_ms": 300000
+  }
+}
