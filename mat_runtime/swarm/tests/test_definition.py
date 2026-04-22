@@ -71,16 +71,16 @@ class TestLoadSwarmDefinition:
 
         path.unlink()
 
-    def test_reject_variant_mode(self):
-        """Reject variant dispatch mode (not supported in MAT-46)."""
+    def test_reject_unknown_dispatch_mode(self):
+        """Reject unknown dispatch mode."""
         path = _write_definition({
-            "name": "variant-swarm",
-            "dispatch_mode": "variant",
-            "candidates": ["python-engineer", "ruby-engineer"],
-            "consensus_strategy": "return-all",
+            "name": "bad-swarm",
+            "dispatch_mode": "unknown_mode",
+            "candidates": ["claude", "codex"],
+            "consensus_strategy": "first-complete",
         })
 
-        with pytest.raises(ValueError, match="dispatch_mode 'variant' not supported"):
+        with pytest.raises(ValueError, match="dispatch_mode 'unknown_mode' not valid"):
             load_swarm_definition(path)
 
         path.unlink()
@@ -179,6 +179,58 @@ class TestLoadSwarmDefinition:
         path = Path(f.name)
 
         with pytest.raises(json.JSONDecodeError):
+            load_swarm_definition(path)
+
+        path.unlink()
+
+
+class TestVariantDispatchMode:
+    """Tests for dispatch_mode: variant."""
+
+    def test_accept_variant_dispatch_mode(self):
+        """Accept variant dispatch_mode with return-all consensus."""
+        path = _write_definition({
+            "schema_version": "1.0.0",
+            "name": "variant-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["python-engineer", "ruby-engineer"],
+            "consensus_strategy": "return-all",
+        })
+
+        definition = load_swarm_definition(path)
+
+        assert definition.dispatch_mode == "variant"
+        assert definition.consensus_strategy == "return-all"
+        assert definition.candidates == ["python-engineer", "ruby-engineer"]
+
+        path.unlink()
+
+    def test_reject_variant_with_first_complete(self):
+        """Reject variant mode with first-complete consensus."""
+        path = _write_definition({
+            "schema_version": "1.0.0",
+            "name": "bad-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["python-engineer", "ruby-engineer"],
+            "consensus_strategy": "first-complete",
+        })
+
+        with pytest.raises(ValueError, match="return-all"):
+            load_swarm_definition(path)
+
+        path.unlink()
+
+    def test_reject_parallel_model_with_return_all(self):
+        """Reject parallel_model mode with return-all consensus."""
+        path = _write_definition({
+            "schema_version": "1.0.0",
+            "name": "bad-swarm",
+            "dispatch_mode": "parallel_model",
+            "candidates": ["claude", "codex"],
+            "consensus_strategy": "return-all",
+        })
+
+        with pytest.raises(ValueError, match="first-complete"):
             load_swarm_definition(path)
 
         path.unlink()
