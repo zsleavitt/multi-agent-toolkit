@@ -72,7 +72,7 @@ class CandidateResult:
     
     candidate: str          # CLI adapter name (e.g., "claude", "codex")
     ok: bool
-    response: MAT2Response | None
+    response: InvocationResult | None  # CLIAdapter.invoke() return type
     duration_ms: int
     error: str | None = None
 ```
@@ -198,10 +198,11 @@ async def _invoke_candidate(
     """
     start = time.monotonic()
     try:
+        timeout = task.timeout_ms if task.timeout_ms is not None else self._definition.constraints.timeout_ms
         response = await asyncio.to_thread(
             self._adapters[candidate].invoke,
             prompt=task.instruction,
-            timeout_ms=task.timeout_ms or self._definition.constraints.timeout_ms,
+            timeout_ms=timeout,
             correlation_id=task.correlation_id,
         )
         return CandidateResult(
@@ -237,7 +238,7 @@ def _apply_consensus(
 
 ## Consensus: first-complete
 
-**Definition:** Return the first response where `MAT2Response.ok == True`.
+**Definition:** Return the first response where `InvocationResult.ok == True`.
 
 **Algorithm:**
 1. Sort `candidate_results` by `duration_ms` ascending
@@ -263,8 +264,7 @@ def _apply_consensus(
 
 | Integration | Description |
 |-------------|-------------|
-| `mat_runtime/adapters/` | Uses `ADAPTER_REGISTRY` and `get_adapter()` for CLI invocation |
-| `mat_runtime/router.py` | Reuses `MAT2Request`, `MAT2Response` types |
+| `mat_runtime/adapters/` | Uses `ADAPTER_REGISTRY`, `get_adapter()`, and `InvocationResult` for CLI invocation |
 | `schemas/swarm/v1/` | Definition files validated against swarm schema |
 | MAT-47 | Will add `variant` mode support to same module |
 | MAT-48 | Will add `majority-vote` and `synthesis` consensus |
@@ -300,6 +300,7 @@ If CLI tools available, test with real `claude` adapter against a simple prompt.
 6. Create `mat_runtime/swarm/tests/test_definition.py`
 7. Create `mat_runtime/swarm/tests/test_swarm.py`
 8. Update `mat_runtime/__init__.py` to export swarm module
+9. Update `mat_runtime/__main__.py` — add `invoke-swarm` command with async entry point
 
 ## References
 
