@@ -86,16 +86,20 @@ class TestSwarmDispatch:
 
     def test_first_complete_selects_fastest_success(self, swarm_path: Path):
         """First-complete consensus returns fastest successful response."""
+        import time
+
         swarm = Swarm(definition_path=swarm_path)
 
-        # Mock adapters - codex succeeds faster
+        # Mock adapters - codex succeeds faster than claude
         mock_claude = MagicMock()
         mock_codex = MagicMock()
 
         def claude_invoke(**kwargs):
+            time.sleep(0.05)  # Claude takes 50ms
             return _make_invocation_result(ok=True, stdout="claude output")
 
         def codex_invoke(**kwargs):
+            # Codex returns immediately (faster)
             return _make_invocation_result(ok=True, stdout="codex output")
 
         mock_claude.invoke = claude_invoke
@@ -107,8 +111,9 @@ class TestSwarmDispatch:
         result = asyncio.run(swarm.dispatch(task))
 
         assert result.ok is True
-        assert result.winning_candidate in ["claude", "codex"]
-        assert result.output in ["claude output", "codex output"]
+        # Codex should win because it completed faster
+        assert result.winning_candidate == "codex"
+        assert result.output == "codex output"
         assert len(result.candidate_results) == 2
 
     def test_first_complete_skips_failures(self, swarm_path: Path):

@@ -13,6 +13,28 @@ from mat_runtime.swarm.definition import SwarmDefinition, load_swarm_definition
 from mat_runtime.swarm.types import CandidateResult, SwarmResult, SwarmTask
 
 
+def _find_repo_root(start_path: Path) -> Path:
+    """
+    Find the repository root by walking up from start_path.
+
+    Looks for common repo markers: .git, CLAUDE.md, pyproject.toml, setup.py.
+    Falls back to start_path if no marker found.
+    """
+    markers = {".git", "CLAUDE.md", "pyproject.toml", "setup.py", "ai-team.repo.json"}
+    current = start_path.resolve()
+
+    for _ in range(20):  # Limit search depth
+        for marker in markers:
+            if (current / marker).exists():
+                return current
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+
+    return start_path.resolve()
+
+
 class Swarm:
     """
     Dispatches tasks to multiple CLI adapters in parallel.
@@ -32,13 +54,18 @@ class Swarm:
         Args:
             definition_path: Path to swarm definition JSON.
             repo_root: Repository root for CLI invocations.
+                Defaults to definition file's parent (auto-detects repo root).
 
         Raises:
             ValueError: If dispatch_mode is not "parallel_model".
             ValueError: If any candidate is not a registered CLI adapter.
         """
         self._definition = load_swarm_definition(definition_path)
-        self._repo_root = Path(repo_root) if repo_root else Path.cwd()
+        if repo_root:
+            self._repo_root = Path(repo_root).resolve()
+        else:
+            # Auto-detect repo root by walking up from definition file
+            self._repo_root = _find_repo_root(Path(definition_path).parent)
 
         # Validate all candidates are registered adapters
         for candidate in self._definition.candidates:
@@ -125,9 +152,11 @@ class Swarm:
                 if task.timeout_ms is not None
                 else self._definition.constraints.timeout_ms
             )
+            # Include op in prompt for operation-aware dispatch
+            prompt = f"[op: {task.op}]\n\n{task.instruction}"
             response = await asyncio.to_thread(
                 self._adapters[candidate].invoke,
-                prompt=task.instruction,
+                prompt=prompt,
                 timeout_ms=timeout,
                 correlation_id=task.correlation_id,
             )
