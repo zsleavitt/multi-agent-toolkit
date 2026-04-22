@@ -243,3 +243,72 @@ class TestCandidateResultVariant:
 
         assert result.variant_output is not None
         assert result.variant_output["output"] == "Done"
+
+
+class TestSwarmVariantInit:
+    """Tests for Swarm initialization with variant dispatch_mode."""
+
+    def test_accept_variant_candidates_with_router(self):
+        """Accept variant swarm when all candidates exist as agents."""
+        from mat_runtime.config import AgentDefinition
+
+        path = _write_definition({
+            "name": "variant-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["python-engineer", "ruby-engineer"],
+            "consensus_strategy": "return-all",
+        })
+
+        mock_agents = {
+            "python-engineer": AgentDefinition(
+                name="python-engineer",
+                description="Python specialist",
+                role="worker",
+                cli="codex",
+                variant_of="coder",
+            ),
+            "ruby-engineer": AgentDefinition(
+                name="ruby-engineer",
+                description="Ruby specialist",
+                role="worker",
+                cli="codex",
+                variant_of="coder",
+            ),
+        }
+
+        with patch("mat_runtime.swarm.swarm.load_agent_definitions", return_value=mock_agents):
+            swarm = Swarm(definition_path=path)
+
+        assert swarm.name == "variant-swarm"
+        assert swarm.definition.dispatch_mode == "variant"
+        assert swarm._router is not None
+        assert "python-engineer" in swarm._agents
+        assert "ruby-engineer" in swarm._agents
+
+        path.unlink()
+
+    def test_reject_unknown_variant_candidate(self):
+        """Reject swarm with unknown agent variant."""
+        from mat_runtime.config import AgentDefinition
+
+        path = _write_definition({
+            "name": "bad-variant-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["python-engineer", "unknown-agent"],
+            "consensus_strategy": "return-all",
+        })
+
+        mock_agents = {
+            "python-engineer": AgentDefinition(
+                name="python-engineer",
+                description="Python specialist",
+                role="worker",
+                cli="codex",
+            ),
+        }
+
+        with patch("mat_runtime.swarm.swarm.load_agent_definitions", return_value=mock_agents):
+            with pytest.raises(ValueError, match="Unknown agent variant 'unknown-agent'"):
+                Swarm(definition_path=path)
+
+        path.unlink()

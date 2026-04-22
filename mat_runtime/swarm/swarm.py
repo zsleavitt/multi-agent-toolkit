@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from mat_runtime.adapters import ADAPTER_REGISTRY, CLIAdapter, get_adapter
+from mat_runtime.config import AgentDefinition, load_agent_definitions
+from mat_runtime.router import AgentRouter, MAT2Request
 from mat_runtime.swarm.definition import SwarmDefinition, load_swarm_definition
 from mat_runtime.swarm.types import CandidateResult, SwarmResult, SwarmTask
 
@@ -57,8 +59,9 @@ class Swarm:
                 Defaults to definition file's parent (auto-detects repo root).
 
         Raises:
-            ValueError: If dispatch_mode is not "parallel_model".
-            ValueError: If any candidate is not a registered CLI adapter.
+            ValueError: If any candidate is not valid for the dispatch mode.
+                - parallel_model: candidates must be registered CLI adapters.
+                - variant: candidates must be known agent definitions.
         """
         self._definition = load_swarm_definition(definition_path)
         if repo_root:
@@ -67,6 +70,18 @@ class Swarm:
             # Auto-detect repo root by walking up from definition file
             self._repo_root = _find_repo_root(Path(definition_path).parent)
 
+        # Initialize based on dispatch mode
+        self._adapters: dict[str, CLIAdapter] = {}
+        self._agents: dict[str, AgentDefinition] = {}
+        self._router: AgentRouter | None = None
+
+        if self._definition.dispatch_mode == "parallel_model":
+            self._init_parallel_model()
+        elif self._definition.dispatch_mode == "variant":
+            self._init_variant()
+
+    def _init_parallel_model(self) -> None:
+        """Initialize for parallel_model dispatch mode."""
         # Validate all candidates are registered adapters
         for candidate in self._definition.candidates:
             if candidate not in ADAPTER_REGISTRY:
@@ -76,12 +91,26 @@ class Swarm:
                 )
 
         # Create adapters
-        self._adapters: dict[str, CLIAdapter] = {}
         for candidate in self._definition.candidates:
             self._adapters[candidate] = get_adapter(
                 cli=candidate,
                 working_dir=str(self._repo_root),
             )
+
+    def _init_variant(self) -> None:
+        """Initialize for variant dispatch mode."""
+        self._agents = load_agent_definitions(repo_root=self._repo_root)
+
+        # Validate all candidates are known agents
+        for candidate in self._definition.candidates:
+            if candidate not in self._agents:
+                available = ", ".join(sorted(self._agents.keys()))
+                raise ValueError(
+                    f"Unknown agent variant '{candidate}'. "
+                    f"Available agents: {available if available else '(none found)'}"
+                )
+
+        self._router = AgentRouter(repo_root=self._repo_root, agents=self._agents)
 
     @property
     def name(self) -> str:
