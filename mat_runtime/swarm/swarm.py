@@ -101,13 +101,20 @@ class Swarm:
         """Initialize for variant dispatch mode."""
         self._agents = load_agent_definitions(repo_root=self._repo_root)
 
-        # Validate all candidates are known agents
+        # Validate all candidates are known agents AND are actual variants
         for candidate in self._definition.candidates:
             if candidate not in self._agents:
                 available = ", ".join(sorted(self._agents.keys()))
                 raise ValueError(
                     f"Unknown agent variant '{candidate}'. "
                     f"Available agents: {available if available else '(none found)'}"
+                )
+            agent_def = self._agents[candidate]
+            if not agent_def.variant_of:
+                raise ValueError(
+                    f"Candidate '{candidate}' is not a variant agent (missing variant_of). "
+                    f"dispatch_mode 'variant' requires all candidates to be agent variants. "
+                    f"Found base agent. Use a variant like 'python-engineer' instead of 'coder'."
                 )
 
         self._router = AgentRouter(repo_root=self._repo_root, agents=self._agents)
@@ -234,11 +241,12 @@ class Swarm:
         """
         start = time.monotonic()
         try:
-            timeout = (
+            timeout_ms = (
                 task.timeout_ms
                 if task.timeout_ms is not None
                 else self._definition.constraints.timeout_ms
             )
+            timeout_s = (timeout_ms / 1000) if timeout_ms else None
 
             request = MAT2Request(
                 schema_version="1.0.0",
@@ -247,13 +255,17 @@ class Swarm:
                 op=task.op,
                 repo_root=str(self._repo_root),
                 instruction=task.instruction,
-                timeout_ms=timeout,
+                timeout_ms=timeout_ms,
             )
 
-            response = await asyncio.to_thread(
-                self._router.invoke,
-                agent_name=candidate,
-                request=request,
+            # Wrap with asyncio.wait_for to enforce hard timeout ceiling
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._router.invoke,
+                    agent_name=candidate,
+                    request=request,
+                ),
+                timeout=timeout_s,
             )
 
             return CandidateResult(
@@ -261,8 +273,17 @@ class Swarm:
                 ok=response.ok,
                 response=None,
                 duration_ms=int((time.monotonic() - start) * 1000),
-                error=response.error.get("message") if response.error else None,
+                error=response.error if isinstance(response.error, dict) else {"message": str(response.error)} if response.error else None,
                 variant_output=response.result if response.ok else None,
+            )
+        except asyncio.TimeoutError:
+            return CandidateResult(
+                candidate=candidate,
+                ok=False,
+                response=None,
+                duration_ms=int((time.monotonic() - start) * 1000),
+                error={"code": "timeout", "message": f"Candidate '{candidate}' exceeded timeout"},
+                variant_output=None,
             )
         except Exception as e:
             return CandidateResult(
@@ -270,7 +291,7 @@ class Swarm:
                 ok=False,
                 response=None,
                 duration_ms=int((time.monotonic() - start) * 1000),
-                error=str(e),
+                error={"code": "exception", "message": str(e)},
                 variant_output=None,
             )
 

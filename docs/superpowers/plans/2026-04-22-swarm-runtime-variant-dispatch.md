@@ -1,3 +1,5 @@
+> **Note:** Planning document — implementation may differ from the steps described here. See mat_runtime/swarm/ for authoritative code.
+
 # Swarm Runtime: Variant Dispatch Implementation Plan (MAT-47)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

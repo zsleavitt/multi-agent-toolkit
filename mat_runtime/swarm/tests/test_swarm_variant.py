@@ -24,6 +24,43 @@ def _write_definition(data: dict) -> Path:
     return Path(f.name)
 
 
+class TestVariantValidation:
+    """Tests for variant mode candidate validation."""
+
+    def test_reject_base_agent_as_variant_candidate(self):
+        """Reject swarm with base agent (no variant_of) as candidate."""
+        path = _write_definition({
+            "name": "bad-variant-swarm",
+            "dispatch_mode": "variant",
+            "candidates": ["coder", "python-engineer"],
+            "consensus_strategy": "return-all",
+        })
+
+        # coder is a base agent (no variant_of), python-engineer is a variant
+        mock_agents = {
+            "coder": AgentDefinition(
+                name="coder",
+                description="Base coder agent",
+                role="worker",
+                cli="codex",
+                # No variant_of - this is a base agent
+            ),
+            "python-engineer": AgentDefinition(
+                name="python-engineer",
+                description="Python specialist",
+                role="worker",
+                cli="codex",
+                variant_of="coder",
+            ),
+        }
+
+        with patch("mat_runtime.swarm.swarm.load_agent_definitions", return_value=mock_agents):
+            with pytest.raises(ValueError, match="not a variant agent"):
+                Swarm(definition_path=path)
+
+        path.unlink()
+
+
 class TestVariantDispatch:
     """Tests for variant mode dispatch."""
 
@@ -54,8 +91,11 @@ class TestVariantDispatch:
             "candidates": ["python-engineer", "ruby-engineer"],
             "consensus_strategy": "return-all",
         })
-        yield path
-        path.unlink()
+        try:
+            yield path
+        finally:
+            if path.exists():
+                path.unlink()
 
     def test_variant_dispatch_invokes_all_agents(
         self,
@@ -187,4 +227,5 @@ class TestVariantDispatch:
             cr for cr in result.candidate_results if cr.candidate == "python-engineer"
         )
         assert python_result.ok is False
-        assert "Connection failed" in python_result.error
+        assert python_result.error["code"] == "exception"
+        assert "Connection failed" in python_result.error["message"]

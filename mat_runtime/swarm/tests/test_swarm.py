@@ -399,6 +399,7 @@ class TestSwarmVariantInit:
                 description="Python specialist",
                 role="worker",
                 cli="codex",
+                variant_of="coder",
             ),
         }
 
