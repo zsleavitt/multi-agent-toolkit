@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "name": "language-variants",
+  "description": "Get Python, Ruby, and TypeScript implementations",
+  "dispatch_mode": "variant",
+  "candidates": ["python-engineer", "ruby-engineer", "frontend-engineer"],
+  "consensus_strategy": "return-all",
+  "constraints": {
+    "timeout_ms": 180000
+  }
+}

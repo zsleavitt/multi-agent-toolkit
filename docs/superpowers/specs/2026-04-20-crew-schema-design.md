@@ -332,6 +332,18 @@ python scripts/validate_crew.py
 6. Update `config/schema-registry.json`
 7. Update CLAUDE.md with crew validation command
 
+## V1 Runtime Trade-offs
+
+The following schema fields are parsed but not fully enforced in the v1 runtime (MAT-43):
+
+1. **`allow_reassignment` parsed but not enforced** — Reassignment on failure requires agent selection logic in the retry loop; currently retries the same agent. Deferred to v2.
+
+2. **`communication.message_passing.mode` parsed but not enforced** — `direct`/`broadcast` modes require persistent agent processes (Non-Goal for v1). The field is accepted for schema validity but has no runtime effect.
+
+3. **`constraints.timeout_ms` parsed but not enforced** — Crew-level timeout enforcement deferred to v2. Per-agent timeouts via `AgentRef.timeout_ms` are enforced.
+
+4. **`shared_context.type = "file"` removed from schema** — File-backed context storage deferred to v2; only `memory` and `none` are supported.
+
 ## References
 
 - [MAT-42](https://github.com/zsleavitt/multi-agent-toolkit/issues/39) — This issue

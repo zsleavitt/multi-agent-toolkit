@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mat.dev/schemas/swarm/v1/swarm.schema.json",
+  "title": "Swarm definition (MAT-45)",
+  "description": "Schema for defining parallel dispatch to multiple candidates with consensus strategies.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "dispatch_mode", "candidates", "consensus_strategy"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique swarm identifier (lowercase alphanumeric with hyphens)"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Human-readable description of the swarm's purpose"
+    },
+    "dispatch_mode": {
+      "type": "string",
+      "enum": ["parallel_model", "variant"],
+      "description": "Dispatch mode: parallel_model (multiple CLI adapters) or variant (multiple agent variants)"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+      "description": "For parallel_model: CLI adapter identifiers (claude, codex, gemini) registered in MAT-16. For variant: agent names from the agents/ directory."
+    },
+    "consensus_strategy": {
+      "type": "string",
+      "description": "Strategy for combining candidate responses. Valid values depend on dispatch_mode."
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 600000,
+          "description": "Overall swarm timeout in milliseconds (1s–10min)"
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": { "dispatch_mode": { "const": "variant" } },
+    "required": ["dispatch_mode"]
+  },
+  "then": {
+    "properties": { "consensus_strategy": { "enum": ["return-all"] } }
+  },
+  "else": {
+    "properties": { "consensus_strategy": { "enum": ["first-complete", "majority-vote"] } }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version. Bump when swarm definition shape changes."
+    }
+  }
+}

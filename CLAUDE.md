@@ -21,6 +21,7 @@ Use this file in the **Claude Code** session that **orchestrates** work across w
 - **MAT-16** — `schemas/provider-config/v1/` — **CLI-based agent configuration**: which CLI tool (`claude`, `codex`, `gemini`, etc.) handles which role (`orchestrator`, `worker`, `git-executor`). No API keys — each CLI uses its own license. See ADR 0002.
 - **MAT-17** — `schemas/agent-definition/v1/` — **Agent definition frontmatter schema**: validates `agents/*.md` files (YAML frontmatter + system prompt). Defines 5 core agents: orchestrator, coder, researcher, reviewer, tester.
 - **MAT-42** — `schemas/crew/v1/` — **Crew definition schema**: named agent collections with routing, constraints, hooks, and communication. Crews are defined in `crews/*.json`.
+- **MAT-45** — `schemas/swarm/v1/` — **Swarm definition schema**: parallel dispatch to multiple candidates with consensus strategies. Swarms are defined in `swarms/*.json`.
 - **Registry** — `config/schema-registry.json` — on-disk bundle paths; env overrides documented in each bundle’s README.
 
 Validation:
@@ -35,6 +36,7 @@ python scripts/validate_hitl_asana_approval.py
 python scripts/validate_provider_config.py
 python scripts/validate_agent_definitions.py
 python scripts/validate_crew.py
+python scripts/validate_swarm.py
 python scripts/validate_gumloop_examples.py
 ```
 

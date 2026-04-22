@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "name": "invalid-swarm",
+  "dispatch_mode": "variant",
+  "candidates": ["python-engineer", "ruby-engineer"],
+  "consensus_strategy": "majority-vote"
+}

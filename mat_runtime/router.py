@@ -255,6 +255,11 @@ class AgentRouter:
             else:
                 # No output = infrastructure failure
                 error_code = "execution_error"
+            # Preserve refusal reason from stdout for agent_refused errors
+            if error_code == "agent_refused":
+                error_message = result.stdout.strip()
+            else:
+                error_message = result.stderr or f"CLI returned code {result.return_code}"
             return MAT2Response(
                 schema_version=req.schema_version,
                 correlation_id=req.correlation_id,
@@ -262,7 +267,7 @@ class AgentRouter:
                 ok=False,
                 error={
                     "code": error_code,
-                    "message": result.stderr or f"CLI returned code {result.return_code}",
+                    "message": error_message,
                 },
             )
 
