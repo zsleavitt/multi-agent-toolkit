@@ -53,6 +53,25 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
+# Check if a CLI tool actually works (not just shim exists)
+# This handles mise shims that exist but have no version activated
+cli_works() {
+    local cli="$1"
+    # Try running --version and check for mise errors
+    local output
+    output=$("$cli" --version 2>&1)
+    local exit_code=$?
+
+    # Check for mise "not active" error
+    if [[ "$output" == *"mise"*"not currently active"* ]] || \
+       [[ "$output" == *"mise ERROR"* ]] || \
+       [[ "$output" == *"No version is set for shim"* ]]; then
+        return 1
+    fi
+
+    return $exit_code
+}
+
 # Get version of a command (first line of --version output)
 get_version() {
     "$1" --version 2>/dev/null | head -1 || echo "unknown"
@@ -188,7 +207,7 @@ check_cli_tools() {
     echo ""
 
     # Claude Code CLI
-    if command_exists claude; then
+    if command_exists claude && cli_works claude; then
         local claude_ver
         claude_ver=$(claude --version 2>&1 | head -1 || echo "installed")
         if check_cli_auth claude; then
@@ -200,6 +219,9 @@ check_cli_tools() {
                 prompt_cli_auth claude
             fi
         fi
+    elif command_exists claude; then
+        print_warning "claude: shim exists but not activated (mise)"
+        print_info "   Fix: mise use claude@latest"
     else
         print_warning "claude CLI not found (Claude Code)"
         print_info "Install: npm install -g @anthropic-ai/claude-code"
@@ -208,7 +230,7 @@ check_cli_tools() {
     fi
 
     # Codex CLI
-    if command_exists codex; then
+    if command_exists codex && cli_works codex; then
         local codex_ver
         codex_ver=$(codex --version 2>&1 | head -1 || echo "installed")
         if check_cli_auth codex; then
@@ -220,14 +242,19 @@ check_cli_tools() {
                 prompt_cli_auth codex
             fi
         fi
+    elif command_exists codex; then
+        print_warning "codex: shim exists but not activated (mise)"
+        print_info "   Fix: mise install  (uses .mise.toml)"
+        print_info "    or: npm install -g @openai/codex"
     else
         print_warning "codex CLI not found (OpenAI Codex)"
-        print_info "Install: npm install -g @openai/codex"
+        print_info "Install: mise install  (uses .mise.toml)"
+        print_info "    or:  npm install -g @openai/codex"
         print_info "   Docs: https://github.com/openai/codex-cli"
     fi
 
     # Gemini CLI
-    if command_exists gemini; then
+    if command_exists gemini && cli_works gemini; then
         local gemini_ver
         gemini_ver=$(gemini --version 2>&1 | head -1 || echo "installed")
         if check_cli_auth gemini; then
@@ -239,6 +266,9 @@ check_cli_tools() {
                 prompt_cli_auth gemini
             fi
         fi
+    elif command_exists gemini; then
+        print_warning "gemini: shim exists but not activated (mise)"
+        print_info "   Fix: mise use gemini@latest"
     else
         print_warning "gemini CLI not found (Google Gemini)"
         print_info "Install: npm install -g @google/gemini-cli"
