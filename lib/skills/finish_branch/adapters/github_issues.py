@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 import subprocess
+from subprocess import TimeoutExpired
 from typing import Any
 
 from lib.skills.finish_branch.adapters.base import CloseResult
+
+GH_TIMEOUT_SECONDS = 30
 
 
 class GitHubIssuesCloseAdapter:
@@ -32,6 +35,7 @@ class GitHubIssuesCloseAdapter:
             capture_output=True,
             text=True,
             check=False,
+            timeout=GH_TIMEOUT_SECONDS,
         )
 
     def _find_issue_number(self, work_item_ref: str) -> tuple[int | None, str | None, str | None]:
@@ -123,6 +127,12 @@ class GitHubIssuesCloseAdapter:
                 ok=False,
                 message="",
                 error="gh CLI not found. Install from https://cli.github.com/",
+            )
+        except TimeoutExpired:
+            return CloseResult(
+                ok=False,
+                message="",
+                error=f"gh CLI timed out after {GH_TIMEOUT_SECONDS} seconds",
             )
         except Exception as e:
             return CloseResult(

@@ -90,3 +90,15 @@ class TestGitHubIssuesCloseAdapter:
 
         assert not result.ok
         assert "gh" in result.error.lower()
+
+    def test_close_gh_timeout(self, adapter: GitHubIssuesCloseAdapter) -> None:
+        """Handle gh command timeout."""
+        from subprocess import TimeoutExpired
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.side_effect = TimeoutExpired(cmd="gh", timeout=30)
+
+            result = adapter.close("MAT-42")
+
+        assert not result.ok
+        assert "timed out" in result.error.lower()
