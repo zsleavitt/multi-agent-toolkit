@@ -102,8 +102,8 @@ class TestGetCloseAdapter:
         assert isinstance(adapter, NoopCloseAdapter)
         assert adapter.source_type == "file"
 
-    def test_returns_noop_for_unknown_adapter(self, tmp_path: Path) -> None:
-        """Return NoopCloseAdapter for unknown adapter type."""
+    def test_raises_for_unknown_adapter(self, tmp_path: Path) -> None:
+        """Raise ValueError for unknown/unsupported adapter type."""
         config = {
             "work_item_source": {
                 "adapter": "unknown_system",
@@ -111,10 +111,20 @@ class TestGetCloseAdapter:
         }
         (tmp_path / "ai-team.repo.json").write_text(json.dumps(config))
 
-        adapter = get_close_adapter(tmp_path)
+        with pytest.raises(ValueError, match="Unsupported work_item_source adapter"):
+            get_close_adapter(tmp_path)
 
-        assert isinstance(adapter, NoopCloseAdapter)
-        assert adapter.source_type == "none"
+    def test_raises_for_linear_adapter(self, tmp_path: Path) -> None:
+        """Raise ValueError for linear adapter (valid in MAT-9 but not implemented)."""
+        config = {
+            "work_item_source": {
+                "adapter": "linear",
+            },
+        }
+        (tmp_path / "ai-team.repo.json").write_text(json.dumps(config))
+
+        with pytest.raises(ValueError, match="Unsupported work_item_source adapter: 'linear'"):
+            get_close_adapter(tmp_path)
 
     def test_returns_noop_for_missing_work_item_source(self, tmp_path: Path) -> None:
         """Return NoopCloseAdapter when work_item_source is missing."""

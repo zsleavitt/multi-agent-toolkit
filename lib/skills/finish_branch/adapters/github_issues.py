@@ -66,9 +66,8 @@ class GitHubIssuesCloseAdapter:
                 if work_item_ref.upper() in issue.get("title", "").upper():
                     return issue["number"], issue["title"], issue.get("url")
 
-            # If no exact match, return first result
-            first = issues[0]
-            return first["number"], first["title"], first.get("url")
+            # No title match found - don't guess, require explicit match
+            return None, None, None
 
         except (json.JSONDecodeError, KeyError):
             return None, None, None

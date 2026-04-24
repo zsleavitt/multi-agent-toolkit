@@ -37,10 +37,37 @@ def get_current_branch() -> str | None:
             capture_output=True,
             text=True,
             check=True,
+            timeout=10,
         )
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
+
+
+def is_branch_merged(branch: str, base_branch: str = "main") -> bool:
+    """
+    Check if a branch has been merged into the base branch.
+
+    Args:
+        branch: Branch name to check.
+        base_branch: Base branch to check against (default: main).
+
+    Returns:
+        True if branch is merged, False otherwise.
+    """
+    try:
+        # Check if branch is in the list of merged branches
+        result = subprocess.run(
+            ["git", "branch", "--merged", base_branch],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        )
+        merged_branches = [b.strip().lstrip("* ") for b in result.stdout.splitlines()]
+        return branch in merged_branches
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return False
 
 
 def main() -> int:
@@ -69,6 +96,17 @@ def main() -> int:
         "-n",
         action="store_true",
         help="Show what would be done without actually closing",
+    )
+    parser.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        help="Close work item even if branch is not merged",
+    )
+    parser.add_argument(
+        "--base-branch",
+        default="main",
+        help="Base branch to check merge status against (default: main)",
     )
 
     args = parser.parse_args()
@@ -102,6 +140,26 @@ def main() -> int:
             "ok": False,
             "error": str(e),
             "suggestion": "Create ai-team.repo.json or run setup wizard.",
+        }
+        print(json.dumps(result, indent=2))
+        return 1
+    except ValueError as e:
+        result = {
+            "ok": False,
+            "error": str(e),
+        }
+        print(json.dumps(result, indent=2))
+        return 1
+
+    # Check if branch is merged (unless --force is used)
+    if not args.force and not is_branch_merged(branch, args.base_branch):
+        result = {
+            "ok": False,
+            "error": f"Branch '{branch}' is not merged into '{args.base_branch}'. "
+                     f"Use --force to close anyway, or merge the branch first.",
+            "branch": branch,
+            "work_item_ref": work_item_ref,
+            "base_branch": args.base_branch,
         }
         print(json.dumps(result, indent=2))
         return 1

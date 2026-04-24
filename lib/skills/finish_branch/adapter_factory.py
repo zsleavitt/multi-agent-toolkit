@@ -52,5 +52,9 @@ def get_close_adapter(repo_root: Path | str) -> CloseAdapter:
         return NoopCloseAdapter({}, source_type=adapter_type)
 
     else:
-        # Unknown adapter type - return noop with warning
-        return NoopCloseAdapter({}, source_type="none")
+        # Unknown/unsupported adapter type - raise error instead of silently succeeding
+        supported = ["github_issues", "jira", "notion", "file", "none"]
+        raise ValueError(
+            f"Unsupported work_item_source adapter: '{adapter_type}'. "
+            f"Supported adapters: {', '.join(supported)}"
+        )

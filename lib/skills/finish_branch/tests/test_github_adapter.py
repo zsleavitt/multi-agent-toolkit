@@ -102,3 +102,19 @@ class TestGitHubIssuesCloseAdapter:
 
         assert not result.ok
         assert "timed out" in result.error.lower()
+
+    def test_close_no_title_match_returns_not_found(self, adapter: GitHubIssuesCloseAdapter) -> None:
+        """Return not found when search results don't contain work item ref in title."""
+        with patch("subprocess.run") as mock_run:
+            # Search returns issues that mention MAT-42 in body/comments but not in title
+            mock_list = MagicMock()
+            mock_list.returncode = 0
+            mock_list.stdout = '[{"number": 99, "title": "Unrelated issue", "url": "https://example.com/99"}, {"number": 100, "title": "Another issue", "url": "https://example.com/100"}]'
+
+            mock_run.return_value = mock_list
+
+            result = adapter.close("MAT-42")
+
+        assert not result.ok
+        assert "not found" in result.error.lower()
+        # Should NOT have closed issue 99 (the first result)
