@@ -50,3 +50,17 @@ python scripts/validate_gumloop_examples.py
 ## Handoff
 
 For Cursor-specific pickup steps and the Notion ticket board, read **`CURSOR_HANDOFF.md`**. For running MAT contracts behind **Gumloop** flows (HTTP runner prototype), read **`docs/prototypes/mat-5-gumloop.md`**.
+
+## PR Creation
+
+When creating a PR that implements a MAT-XX ticket:
+
+1. Look up the GitHub issue number — the MAT-XX number in the branch name does NOT match the GitHub issue number. Always resolve it dynamically:
+   ```
+   gh issue list --search "MAT-XX" --json number,title,url --limit 5
+   ```
+2. Confirm the returned issue matches the ticket by title
+3. Add `Closes #<number>` to the PR body so GitHub auto-closes the issue on merge
+4. If no matching issue is found, note it explicitly in the PR body: "Note: No corresponding GitHub issue found for MAT-XX"
+
+Never guess the issue number. Never assume MAT-42 = #42.
