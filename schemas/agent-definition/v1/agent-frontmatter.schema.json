@@ -32,8 +32,8 @@
     },
     "cli": {
       "type": "string",
-      "enum": ["claude", "codex", "gemini", "cursor", "aider", "continue", "custom"],
-      "description": "CLI tool binding (must match MAT-16 agent config)."
+      "enum": ["claude", "codex", "codex-review", "gemini", "cursor", "aider", "continue", "custom"],
+      "description": "CLI tool binding (must match MAT-16 agent config). Use codex-review for review-only Codex invocations (mat_runtime CodexReviewAdapter)."
     },
     "variant_of": {
       "type": "string",

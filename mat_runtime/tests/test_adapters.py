@@ -6,11 +6,11 @@ from __future__ import annotations
 from mat_runtime.adapters import CodexAdapter, CodexReviewAdapter, get_adapter
 
 
-def test_codex_adapter_invokes_npx_exec() -> None:
+def test_codex_adapter_invokes_codex_exec() -> None:
     a = CodexAdapter()
     cmd = a.build_command("do the thing", system_prompt="sys")
-    assert cmd[0] == "npx"
-    assert cmd[:5] == ["npx", "--yes", "@openai/codex", "exec", "--full-auto"]
+    assert cmd[0] == "codex"
+    assert cmd[:3] == ["codex", "exec", "--full-auto"]
     assert "do the thing" in cmd[-1]
     assert "sys" in cmd[-1]
 

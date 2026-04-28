@@ -33,7 +33,7 @@ You are a code implementation agent...
 | `name` | Yes | Unique agent identifier (lowercase, hyphens allowed) |
 | `description` | Yes | Human-readable description of the agent's purpose |
 | `role` | Yes | `orchestrator` (plan/route), `worker` (execute tasks), or `executor` (constrained ops) |
-| `cli` | Yes | CLI tool binding: `claude`, `codex`, `gemini`, `cursor`, `aider`, `continue`, `custom` |
+| `cli` | Yes | CLI tool binding: `claude`, `codex`, `codex-review`, `gemini`, `cursor`, `aider`, `continue`, `custom` |
 | `allowed_mat_ops` | No | MAT-2 operations allowed (e.g., `codex.implement`, `codex.test`) |
 | `tools` | No | Tools the agent can use: `read`, `write`, `edit`, `bash`, `glob`, `grep`, `agent`, `mcp`, `web` |
 | `timeout_ms` | No | Default timeout in milliseconds (1s–1h) |
@@ -46,7 +46,7 @@ You are a code implementation agent...
 | `orchestrator` | orchestrator | claude | Plan, decompose, route, synthesize |
 | `coder` | worker | codex | Implement code, fix bugs, refactor |
 | `researcher` | executor | gemini | Gather information, explore codebases |
-| `reviewer` | worker | claude | Code review, quality analysis |
+| `reviewer` | worker | codex-review | Code review, quality analysis |
 | `security` | worker | claude | Security analysis, vulnerability scanning |
 | `tester` | worker | codex | Write and run tests |
 

@@ -72,6 +72,7 @@ One of:
 References a CLI tool from MAT-16:
 - `claude` — Claude Code CLI
 - `codex` — OpenAI Codex CLI
+- `codex-review` — Codex in review-only mode (`mat_runtime` `CodexReviewAdapter`)
 - `gemini` — Google Gemini CLI
 - `cursor`, `aider`, `continue`, `custom`
 
@@ -135,7 +136,7 @@ The toolkit provides 6 core agent definitions:
 | `orchestrator` | orchestrator | claude | Planning, routing, synthesis |
 | `coder` | worker | codex | Code implementation |
 | `researcher` | executor | gemini | Information gathering, research |
-| `reviewer` | worker | claude | Code review, analysis |
+| `reviewer` | worker | codex-review | Code review, analysis (review-only Codex; see `mat_runtime/adapters`) |
 | `security` | worker | claude | Security analysis, vulnerability scanning |
 | `tester` | worker | codex | Test writing and execution |
 

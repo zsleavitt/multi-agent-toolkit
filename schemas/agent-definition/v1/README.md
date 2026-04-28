@@ -53,7 +53,7 @@ You are a code implementation agent...
 | `name` | string | Yes | Unique agent identifier |
 | `description` | string | Yes | Human-readable description |
 | `role` | enum | Yes | `orchestrator`, `worker`, or `executor` |
-| `cli` | enum | Yes | CLI tool binding |
+| `cli` | enum | Yes | CLI tool binding (`claude`, `codex`, `codex-review`, …) |
 | `allowed_mat_ops` | string[] | No | MAT-2 operations allowed |
 | `tools` | string[] | No | Tools the agent can use |
 | `timeout_ms` | integer | No | Default timeout |
@@ -66,7 +66,7 @@ You are a code implementation agent...
 | `orchestrator` | orchestrator | claude | Plan, route, synthesize |
 | `coder` | worker | codex | Implement code |
 | `researcher` | executor | gemini | Gather information |
-| `reviewer` | worker | claude | Code review |
+| `reviewer` | worker | codex-review | Code review (review-only Codex) |
 | `security` | worker | claude | Security analysis |
 | `tester` | worker | codex | Write and run tests |
 

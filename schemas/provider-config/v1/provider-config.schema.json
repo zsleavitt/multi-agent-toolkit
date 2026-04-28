@@ -32,8 +32,8 @@
     },
     "cli_tool": {
       "type": "string",
-      "enum": ["claude", "codex", "gemini", "cursor", "aider", "continue", "custom"],
-      "description": "CLI tool identifier. 'custom' requires explicit command configuration."
+      "enum": ["claude", "codex", "codex-review", "gemini", "cursor", "aider", "continue", "custom"],
+      "description": "CLI tool identifier. codex-review is review-only Codex (distinct from codex). 'custom' requires explicit command configuration."
     },
     "agent_config": {
       "type": "object",

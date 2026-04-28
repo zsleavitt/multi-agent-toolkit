@@ -88,7 +88,7 @@ Details: [docs/adr/0005-smoke-cli-verification.md](docs/adr/0005-smoke-cli-verif
 | `agents/` | **MAT-17** — Core agent definitions (orchestrator, coder, researcher, reviewer, security, tester) |
 | `crews/` | **MAT-42** — Crew definitions (named agent collections with routing) |
 | `swarms/` | **MAT-45** — Swarm definitions (parallel dispatch with consensus) |
-| `skills/` | **MAT-19+** — Slash command skills (/develop, /diagnose, /plan, /review-pr, /test, /ticket) |
+| `lib/skills/` | **MAT-19+** — Shared skill implementations; `.claude/skills/` and `.cursor/skills/` hold platform stubs (see `lib/skills/README.md`) |
 | `adapters/` | Tool-specific discovery manifests (Claude Code, Cursor) |
 | `schemas/gemini-git-ops/v1/` | **MAT-1** — Git operations request/response schemas |
 | `schemas/codex-code-exec/v1/` | **MAT-2** — Code execution request/response schemas |
