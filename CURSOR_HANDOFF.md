@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **22 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–19, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **Remaining backlog:** MAT-7, MAT-20–21, MAT-24.
+- **22 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–19, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **Notable backlog** (see [GitHub Issues](https://github.com/zsleavitt/multi-agent-toolkit/issues) for the full open list): MAT-7, MAT-20–21, MAT-24, plus roadmap items (Hive/Crew/Swarm, etc.).
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -80,15 +80,13 @@ multi-agent-toolkit/
 │   ├── config.py                     # Config loading
 │   ├── adapters/                     # CLI tool adapters
 │   └── tests/
-├── skills/
-│   ├── lib/                          # Shared skill utilities
-│   │   └── formatting.py             # Response formatting
-│   ├── develop/                      # MAT-19: /develop — orchestrated workflow
-│   ├── review-pr/                    # MAT-27: /review-pr — code review
-│   ├── test/                         # MAT-28: /test — testing
-│   ├── diagnose/                     # MAT-29: /diagnose — debugging
-│   ├── plan/                         # MAT-30: /plan — planning only
-│   └── ticket/                       # MAT-34: /ticket — work item management
+├── lib/skills/                       # Shared skill source (instructions + *.py); see lib/skills/README.md
+├── .claude/skills/                   # Claude Code SKILL.md stubs → lib/skills
+├── .cursor/skills/                   # Cursor SKILL.md stubs → lib/skills
+├── schemas/crew/v1/                  # MAT-42: crew definition schema + manifest + examples
+├── schemas/swarm/v1/                 # MAT-45: swarm definition schema + manifest + examples
+├── crews/                            # Crew JSON (optional; validator skips if empty)
+├── swarms/                           # Swarm JSON definitions
 ├── adapters/                         # Tool-specific discovery manifests
 │   ├── claude-code/plugin.json       # Claude Code plugin manifest
 │   └── cursor/.cursorrules           # Cursor rules file
@@ -97,9 +95,11 @@ multi-agent-toolkit/
 ├── scripts/validate_ai_team_repo_profile.py
 ├── scripts/validate_orchestrator_state.py
 ├── scripts/validate_hitl_asana_approval.py
-├── scripts/validate_gumloop_examples.py  # MAT-5: examples/gumloop + embedded MAT-2
+├── scripts/validate_gumloop_examples.py  # MAT-5: examples/gumloop + embedded MAT-2 (not in schema-registry)
 ├── scripts/validate_provider_config.py   # MAT-16: provider configuration
 ├── scripts/validate_agent_definitions.py # MAT-17: agent definitions + frontmatter
+├── scripts/validate_crew.py              # MAT-42: crew bundle + crews/*.json
+├── scripts/validate_swarm.py             # MAT-45: swarm bundle + swarms/*.json
 ├── scripts/gumloop_start_pipeline.py     # MAT-5: optional start_pipeline POST
 ├── docs/prototypes/                  # MAT-5: Gumloop handoff (non-schema)
 ├── examples/gumloop/                 # MAT-5: Gumloop API / input conventions
@@ -109,7 +109,7 @@ multi-agent-toolkit/
 
 ## Schema status (merged on `main`)
 
-MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` with `manifest.json` allowlists (where applicable), `examples/`, and **eight** `scripts/validate_*.py` bundle validators. Historical bootstrap: **PR #1** (MAT-1 git contracts + registry + validators).
+MAT-1 through MAT-17 (plus MAT-22, MAT-23, MAT-42, MAT-45) are represented in `schemas/*/v1/` with `manifest.json` allowlists (where applicable), `examples/`, and **nine** Python validators tied to [`config/schema-registry.json`](config/schema-registry.json) bundles, plus **`scripts/validate_gumloop_examples.py`** for MAT-5 (`examples/gumloop/`, not a registry entry). **Ten** `scripts/validate_*.py` files total. Historical bootstrap: **PR #1** (MAT-1 git contracts + registry + validators).
 
 ## Ticket board (GitHub Issues)
 
@@ -149,6 +149,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23) are represented in `schemas/*/v1/` wi
 | MAT-33 | Runtime: work item adapter classes | **Done** |
 | MAT-34 | Skill: /ticket (orchestrator-level) | **Done** |
 | MAT-35 | Setup wizard: MCP + ticket config | Backlog (P2) |
+| MAT-41+ | Crew / Swarm / Hive roadmap | See [GitHub Issues](https://github.com/zsleavitt/multi-agent-toolkit/issues) |
 
 ## Installing MAT skills
 
@@ -195,7 +196,7 @@ python lib/skills/develop/develop.py "your task" --repo-root "$(pwd)"
 
 6. **Gumloop runner (MAT-5)**: Gumloop’s **`start_pipeline`** API can kick off flows whose **HTTP** nodes forward bodies validated against MAT-1/MAT-2 schemas; use shared **`correlation_id`** across steps. See **`docs/prototypes/mat-5-gumloop.md`** and **`examples/gumloop/`**.
 
-7. **CLI delegation (ADR 0002)**: Agents are invoked via CLI tools (`claude`, `codex`, `gemini`), not direct API calls. No API keys required — each CLI uses its own license/subscription. MAT-16 defines which CLI handles which role.
+7. **CLI delegation (ADR 0002)**: Agents are invoked via CLI tools (`claude`, `codex`, `codex-review`, `gemini`, …), not direct API calls. No API keys required — each CLI uses its own license/subscription. MAT-16 defines which CLI handles which role.
 
 8. **Agent definitions (MAT-17)**: Agents are defined as Markdown files in `agents/` with YAML frontmatter. The frontmatter specifies identity (`name`, `description`), role (`orchestrator` / `worker` / `executor`), CLI binding, allowed MAT-2 ops, and optional tools. The Markdown body is the system prompt. See `docs/agent-definition-format.md`.
 
@@ -213,9 +214,9 @@ python lib/skills/develop/develop.py "your task" --repo-root "$(pwd)"
 ## Suggested next steps (in order)
 
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
-2. **Run all eight validation scripts** (see **Validation** below) and confirm green.
-3. When prioritized, pick up **MAT-20** (consumer repo documentation) or **MAT-7** (audit checklist).
-4. **Remaining backlog:** MAT-7, MAT-20, MAT-21, MAT-24.
+2. **Run all ten `scripts/validate_*.py` validators** (see **Validation** below) and confirm green.
+3. When prioritized, pick up **MAT-20** (consumer repo documentation) or the next item from the [issue list](https://github.com/zsleavitt/multi-agent-toolkit/issues).
+4. **Sample backlog:** MAT-20, MAT-21, MAT-24 — use GitHub for the authoritative open set.
 
 ## Validation
 
@@ -230,11 +231,13 @@ python scripts/validate_orchestrator_state.py
 python scripts/validate_hitl_asana_approval.py
 python scripts/validate_provider_config.py
 python scripts/validate_agent_definitions.py
+python scripts/validate_crew.py
+python scripts/validate_swarm.py
 python scripts/validate_gumloop_examples.py
 python -m pytest mat_runtime/tests/ -v   # MAT-18 runtime tests
 ```
 
-Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1`, `export MAT_ORCHESTRATOR_STATE_V1=/path/to/schemas/orchestrator-state/v1`, `export MAT_HITL_ASANA_APPROVAL_V1=/path/to/schemas/hitl-asana-approval/v1`, `export MAT_PROVIDER_CONFIG_V1=/path/to/schemas/provider-config/v1`, or `export MAT_AGENT_DEFINITION_V1=/path/to/schemas/agent-definition/v1` if a bundle is not at the default `root_relative` path.
+Optional: `export MAT_GEMINI_GIT_OPS_V1=/path/to/schemas/gemini-git-ops/v1`, `export MAT_CODEX_CODE_EXEC_V1=/path/to/schemas/codex-code-exec/v1`, `export MAT_AI_TEAM_REPO_PROFILE_V1=/path/to/schemas/ai-team-repo-profile/v1`, `export MAT_ORCHESTRATOR_STATE_V1=/path/to/schemas/orchestrator-state/v1`, `export MAT_HITL_ASANA_APPROVAL_V1=/path/to/schemas/hitl-asana-approval/v1`, `export MAT_PROVIDER_CONFIG_V1=/path/to/schemas/provider-config/v1`, `export MAT_AGENT_DEFINITION_V1=/path/to/schemas/agent-definition/v1`, `export MAT_CREW_V1=/path/to/schemas/crew/v1`, or `export MAT_SWARM_V1=/path/to/schemas/swarm/v1` if a bundle is not at the default `root_relative` path.
 
 ## References
 

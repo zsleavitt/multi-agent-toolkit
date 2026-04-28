@@ -76,7 +76,8 @@ Each agent binds a semantic role to a CLI tool:
 
 **Supported CLI tools:**
 - `claude` — Claude Code CLI
-- `codex` — OpenAI Codex CLI
+- `codex` — OpenAI Codex CLI (`codex exec`, implement/test/refactor/diagnose)
+- `codex-review` — Codex review-only path (`codex review`, used by reviewer agent in `mat_runtime`)
 - `gemini` — Google Gemini CLI
 - `cursor` — Cursor editor CLI
 - `aider` — Aider CLI
@@ -92,7 +93,7 @@ Capabilities describe what an agent can do:
 | `planning` | Break down complex tasks | claude |
 | `routing` | Decide which agent handles what | claude |
 | `synthesis` | Combine results from multiple agents | claude |
-| `review` | Code review and analysis | claude, codex |
+| `review` | Code review and analysis | claude, codex, codex-review |
 | `implement` | Write/modify code | codex |
 | `test` | Write and run tests | codex |
 | `refactor` | Restructure existing code | codex |

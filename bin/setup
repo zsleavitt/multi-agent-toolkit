@@ -293,6 +293,8 @@ run_validators() {
         "scripts/validate_hitl_asana_approval.py"
         "scripts/validate_provider_config.py"
         "scripts/validate_agent_definitions.py"
+        "scripts/validate_crew.py"
+        "scripts/validate_swarm.py"
         "scripts/validate_gumloop_examples.py"
     )
 
