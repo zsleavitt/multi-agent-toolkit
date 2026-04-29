@@ -8,7 +8,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from mat_runtime.adapters import ADAPTER_REGISTRY, CLIAdapter, get_adapter
+from mat_runtime.adapters import ADAPTER_REGISTRY, get_adapter
+from mat_runtime.providers import AgentInvocationProvider
 from mat_runtime.config import AgentDefinition, load_agent_definitions
 from mat_runtime.router import AgentRouter, MAT2Request
 from mat_runtime.swarm.definition import SwarmDefinition, load_swarm_definition
@@ -71,7 +72,7 @@ class Swarm:
             self._repo_root = _find_repo_root(Path(definition_path).parent)
 
         # Initialize based on dispatch mode
-        self._adapters: dict[str, CLIAdapter] = {}
+        self._adapters: dict[str, AgentInvocationProvider] = {}
         self._agents: dict[str, AgentDefinition] = {}
         self._router: AgentRouter | None = None
 

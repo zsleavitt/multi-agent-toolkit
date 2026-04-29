@@ -7,6 +7,7 @@ No direct API calls — each CLI tool manages its own authentication.
 
 from mat_runtime.router import AgentRouter
 from mat_runtime.config import load_provider_config, load_agent_definitions
+from mat_runtime.providers import AgentInvocationProvider
 from mat_runtime.crew import (
     Crew,
     CrewTask,
@@ -25,6 +26,7 @@ from mat_runtime.swarm import (
 
 __all__ = [
     "AgentRouter",
+    "AgentInvocationProvider",
     "load_provider_config",
     "load_agent_definitions",
     # Crew
