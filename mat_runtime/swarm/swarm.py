@@ -208,11 +208,16 @@ class Swarm:
             )
             # Include op in prompt for operation-aware dispatch
             prompt = f"[op: {task.op}]\n\n{task.instruction}"
+            invoke_kw: dict[str, Any] = {}
+            model_hint = self._definition.model_matrix.get(candidate)
+            if model_hint:
+                invoke_kw["model"] = model_hint
             response = await asyncio.to_thread(
                 self._adapters[candidate].invoke,
                 prompt=prompt,
                 timeout_ms=timeout,
                 correlation_id=task.correlation_id,
+                **invoke_kw,
             )
             return CandidateResult(
                 candidate=candidate,

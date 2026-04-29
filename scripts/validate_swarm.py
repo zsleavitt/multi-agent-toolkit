@@ -97,6 +97,21 @@ def _semantic_validation(instance: dict, path: Path, known_agents: set[str]) -> 
                     f"Valid agents: {sorted(known_agents)}"
                 )
 
+    # MAT-54: model_matrix keys must be swarm candidates; non-empty matrix needs 1.1.0
+    model_matrix = instance.get("model_matrix")
+    if isinstance(model_matrix, dict) and model_matrix:
+        schema_version = instance.get("schema_version", "1.0.0")
+        if schema_version != "1.1.0":
+            raise ValueError(
+                f"model_matrix is set but schema_version is '{schema_version}' — "
+                f"use '1.1.0' when supplying model_matrix. ({path})"
+            )
+        for key in model_matrix:
+            if key not in candidates:
+                raise ValueError(
+                    f"model_matrix key '{key}' is not in candidates {list(candidates)}. ({path})"
+                )
+
 
 def _build_registry():
     try:

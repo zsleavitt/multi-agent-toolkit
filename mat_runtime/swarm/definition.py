@@ -26,6 +26,7 @@ class SwarmDefinition:
     schema_version: str = "1.0.0"
     description: str | None = None
     constraints: ConstraintsConfig = field(default_factory=ConstraintsConfig)
+    model_matrix: dict[str, str] = field(default_factory=dict)
     source_path: Path | None = None
 
 
@@ -114,13 +115,41 @@ def load_swarm_definition(path: Path | str) -> SwarmDefinition:
                 f"Use one of: {', '.join(sorted(valid_strategies))}"
             )
 
+    schema_version = data.get("schema_version", "1.0.0")
+    if schema_version not in {"1.0.0", "1.1.0"}:
+        raise ValueError(
+            f"Unsupported schema_version '{schema_version}'. Use '1.0.0' or '1.1.0'."
+        )
+
+    raw_matrix = data.get("model_matrix")
+    model_matrix: dict[str, str] = {}
+    if raw_matrix is not None:
+        if not isinstance(raw_matrix, dict):
+            raise ValueError("model_matrix must be an object mapping candidate names to model strings")
+        for key, value in raw_matrix.items():
+            if not isinstance(key, str) or not isinstance(value, str):
+                raise ValueError("model_matrix keys and values must be strings")
+            if key not in candidates:
+                raise ValueError(
+                    f"model_matrix key '{key}' is not a swarm candidate. "
+                    f"Valid keys: {', '.join(sorted(candidates))}"
+                )
+            if not value.strip():
+                raise ValueError(f"model_matrix value for '{key}' must be a non-empty string")
+            model_matrix[key] = value
+        if model_matrix and schema_version != "1.1.0":
+            raise ValueError(
+                "model_matrix requires schema_version '1.1.0' (MAT-54 per-candidate model hints)."
+            )
+
     return SwarmDefinition(
         name=name,
         dispatch_mode=dispatch_mode,
         candidates=candidates,
         consensus_strategy=consensus_strategy,
-        schema_version=data.get("schema_version", "1.0.0"),
+        schema_version=schema_version,
         description=data.get("description"),
         constraints=_parse_constraints(data.get("constraints")),
+        model_matrix=model_matrix,
         source_path=path,
     )

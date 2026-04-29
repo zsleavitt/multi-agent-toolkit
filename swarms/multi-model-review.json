@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "name": "multi-model-review",
   "description": "Review the same PR with Claude, Codex, and Gemini simultaneously. Outputs collected for orchestrator consolidation.",
   "dispatch_mode": "parallel_model",
@@ -7,5 +7,10 @@
   "consensus_strategy": "return-all",
   "constraints": {
     "timeout_ms": 300000
+  },
+  "model_matrix": {
+    "claude": "claude-3-5-sonnet-latest",
+    "codex-review": "gpt-4.1",
+    "gemini": "gemini-2.0-flash"
   }
 }

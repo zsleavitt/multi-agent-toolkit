@@ -48,6 +48,18 @@
           "description": "Overall swarm timeout in milliseconds (1s–10min)"
         }
       }
+    },
+    "model_matrix": {
+      "type": "object",
+      "description": "Optional per-candidate model identifier (MAT-54). Keys must match entries in candidates; values are opaque strings passed to invocation as a model hint (e.g. CLI-specific model flags). Requires schema_version 1.1.0.",
+      "minProperties": 1,
+      "maxProperties": 10,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
     }
   },
   "if": {
@@ -63,8 +75,8 @@
   "$defs": {
     "schema_version": {
       "type": "string",
-      "const": "1.0.0",
-      "description": "Schema version. Bump when swarm definition shape changes."
+      "enum": ["1.0.0", "1.1.0"],
+      "description": "Document version. 1.1.0 adds optional model_matrix (per-candidate model hints)."
     },
     "consensus_strategy_notes": {
       "description": "Notes on consensus strategies: return-all for parallel_model returns all candidate outputs without picking a winner, intended for use cases where an external step (e.g. an orchestrator or synthesis skill) will process all outputs."

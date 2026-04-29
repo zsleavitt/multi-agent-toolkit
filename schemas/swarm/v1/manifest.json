@@ -9,6 +9,7 @@
     "dispatch_mode determines candidate semantics: CLI adapters (parallel_model) or agent names (variant).",
     "candidates are dispatched as concurrent MAT-2 requests.",
     "consensus_strategy is constrained by dispatch_mode (schema-enforced + Python belt-and-suspenders).",
-    "v1 does not include synthesis consensus — deferred to v2 (requires meta-agent invocation)."
+    "v1 does not include synthesis consensus — deferred to v2 (requires meta-agent invocation).",
+    "MAT-54: optional model_matrix (schema_version 1.1.0) maps each candidate to an opaque model hint string for parallel_model invocations."
   ]
 }
