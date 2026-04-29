@@ -1,6 +1,9 @@
 """CLI adapters for invoking AI tools."""
 
+from __future__ import annotations
+
 from mat_runtime.adapters.base import CLIAdapter, InvocationResult
+from mat_runtime.providers import AgentInvocationProvider
 from mat_runtime.adapters.claude import ClaudeAdapter
 from mat_runtime.adapters.codex import CodexAdapter
 from mat_runtime.adapters.codex_review import CodexReviewAdapter
@@ -23,7 +26,7 @@ ADAPTER_REGISTRY: dict[str, type["CLIAdapter"]] = {
 }
 
 
-def get_adapter(cli: str, **kwargs) -> "CLIAdapter":
+def get_adapter(cli: str, **kwargs) -> AgentInvocationProvider:
     """Get adapter instance for a CLI tool."""
     if cli == "custom":
         return CLIAdapter(**kwargs)
