@@ -86,26 +86,30 @@ python lib/skills/ticket/ticket.py <action> [args] --repo-root "$(pwd)"
 
 ## Configuration
 
-MAT uses `agents.json` (MAT-16 schema) to determine which CLI tool handles each role:
+`mat_runtime` loads **MAT-16** provider config from **`mat-config.json`** or **`.mat/config.json`** at the repo root (searched upward from cwd). Example:
 
 ```json
 {
+  "schema_version": "1.0.0",
   "agents": {
-    "orchestrator": { "cli": "cursor", "capabilities": ["planning", "routing"] },
-    "worker": { "cli": "cursor", "capabilities": ["implement", "test", "review"] }
+    "orchestrator": { "cli": "claude", "capabilities": ["planning", "routing", "synthesis"] },
+    "worker": { "cli": "codex", "capabilities": ["implement", "test", "refactor", "diagnose"] },
+    "git-executor": { "cli": "gemini", "capabilities": ["git-ops", "research"] }
   }
 }
 ```
+
+See `schemas/provider-config/v1/README.md` for the full schema.
 
 ## Prerequisites
 
 1. Python 3.10+ installed
 2. Run `bin/setup` from the multi-agent-toolkit root to install dependencies
-3. Configure `agents.json` for your preferred CLI tools
+3. Configure `mat-config.json` (or `.mat/config.json`) for your preferred CLI tools
 
 ## Error Handling
 
 If a skill fails:
 1. Check that `mat_runtime` is installed: `python -c "import mat_runtime"`
 2. Verify the repo root is correct
-3. Check `agents.json` configuration
+3. Check `mat-config.json` / `.mat/config.json` configuration

@@ -10,6 +10,10 @@ cd multi-agent-toolkit
 bin/setup
 ```
 
+## Adopting MAT in your own repository
+
+If you are **not** developing the toolkit itself, start here: **[docs/consumer/README.md](docs/consumer/README.md)** — getting started, `ai-team.repo.json`, installing skills in Claude Code / Cursor, workflows, troubleshooting, and migration notes.
+
 The setup script will:
 1. Create a Python virtual environment
 2. Install dependencies
@@ -105,6 +109,7 @@ Details: [docs/adr/0005-smoke-cli-verification.md](docs/adr/0005-smoke-cli-verif
 | `scripts/validate_*.py` | Schema validators (10 total) |
 | `CLAUDE.md` | Orchestrator context for Claude Code sessions |
 | `CURSOR_HANDOFF.md` | Editor handoff documentation |
+| `docs/consumer/` | **MAT-20** — guides for consumer repositories |
 
 ## Validation
 
