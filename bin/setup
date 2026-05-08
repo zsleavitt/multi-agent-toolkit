@@ -121,8 +121,12 @@ install_deps() {
 
     if [[ -f "$req_file" ]]; then
         print_info "Installing from requirements-dev.txt..."
-        pip install -q -r "$req_file"
-        print_success "Installed Python dependencies"
+        if ! pip install -q -r "$req_file"; then
+            print_error "pip install failed"
+            MAT_SETUP_DEPS_FAILED=1
+        else
+            print_success "Installed Python dependencies"
+        fi
     else
         print_warning "requirements-dev.txt not found"
     fi
@@ -322,6 +326,46 @@ run_tests() {
 }
 
 # ============================================================================
+# Claude Code plugin registration (global)
+# ============================================================================
+
+register_claude_plugin_and_agents() {
+    print_header "Claude Code plugin + agents"
+
+    local plugins_json="${HOME}/.claude/plugins/installed_plugins.json"
+    if python "$REPO_ROOT/scripts/merge_installed_plugins_json.py" \
+        --plugins-json "$plugins_json" \
+        --repo-root "$REPO_ROOT"; then
+        print_success "Registered plugin at $plugins_json"
+    else
+        print_error "Could not update installed_plugins.json"
+    fi
+
+    local agents_dest="${HOME}/.claude/agents"
+    mkdir -p "$agents_dest"
+    local md
+    local copied_any=false
+    shopt -s nullglob
+    for md in "$REPO_ROOT/agents"/*.md; do
+        [[ "$(basename "$md")" == "README.md" ]] && continue
+        cp "$md" "$agents_dest/"
+        copied_any=true
+    done
+    for md in "$REPO_ROOT/agents/variants"/*.md; do
+        [[ -e "$md" ]] || continue
+        cp "$md" "$agents_dest/"
+        copied_any=true
+    done
+    shopt -u nullglob
+
+    if [[ "$copied_any" == true ]]; then
+        print_success "Copied agent definitions to $agents_dest"
+    else
+        print_warning "No agent .md files copied (expected under agents/*.md or agents/variants/*.md)"
+    fi
+}
+
+# ============================================================================
 # Summary
 # ============================================================================
 
@@ -342,6 +386,7 @@ print_summary() {
     echo "Next steps:"
     echo "  source .venv/bin/activate"
     echo "  python -m mat_runtime list-agents"
+    echo "  Restart Claude Code so the plugin and copied agents are picked up."
     echo ""
 }
 
@@ -365,6 +410,8 @@ main() {
     # Always check Python
     check_python || exit 1
 
+    MAT_SETUP_DEPS_FAILED=0
+
     if [[ "$check_only" == false ]]; then
         setup_venv
         install_deps
@@ -373,8 +420,14 @@ main() {
     check_cli_tools
 
     if [[ "$check_only" == false ]]; then
-        run_validators
-        run_tests
+        if [[ "${MAT_SETUP_DEPS_FAILED:-0}" -eq 1 ]]; then
+            print_header "Schema Validators"
+            print_info "Skipped validators, tests, and Claude registration (pip install failed)."
+        else
+            run_validators
+            run_tests
+            register_claude_plugin_and_agents
+        fi
     fi
 
     print_summary
