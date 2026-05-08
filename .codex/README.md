@@ -4,14 +4,20 @@ This directory contains [Codex](https://openai.com/codex) configuration for the 
 
 ## Prerequisites
 
-Enable hooks in your user config (`~/.codex/config.toml`):
+1. **Enable hooks** in your user config (`~/.codex/config.toml`):
+
+   See `config.toml.example` in this directory for a copy-paste snippet.
+
+2. **Windows users**: Hooks use `bash -c` for git-root resolution. Install [Git for Windows](https://git-scm.com/download/win) (includes Git Bash) or use WSL.
+
+### User Config
+
+Enable hooks in `~/.codex/config.toml`:
 
 ```toml
 [features]
 codex_hooks = true
 ```
-
-See `config.toml.example` in this directory for a copy-paste snippet.
 
 ## Trust Model
 
@@ -50,5 +56,4 @@ All adapters point to shared content in `lib/skills/` and follow MAT-16 provider
 
 - [Codex Hooks Documentation](https://developers.openai.com/codex/hooks)
 - [Codex AGENTS.md Guide](https://developers.openai.com/codex/guides/agents-md)
-- `adapters/codex/README.md` (adapter documentation)
 - `CLAUDE.md` (orchestrator contract — Codex is a MAT-2 worker, not orchestrator)
