@@ -379,6 +379,29 @@ install_cursor_personal_skills() {
 }
 
 # ============================================================================
+# Codex user ~/.codex (hooks feature flag)
+# ============================================================================
+
+run_setup_codex_user_config() {
+    local check_only_flag="$1"
+    print_header "Codex (user hooks)"
+
+    local py="$REPO_ROOT/.venv/bin/python"
+    if [[ ! -x "$py" ]]; then
+        py="python3"
+    fi
+
+    local args=(--repo-root "$REPO_ROOT")
+    if [[ "$check_only_flag" != "true" ]] && [[ "${INTERACTIVE:-true}" == "true" ]] && [[ "${MAT_SETUP_DEPS_FAILED:-0}" -eq 0 ]]; then
+        args+=(--apply)
+    fi
+
+    if ! "$py" "$REPO_ROOT/scripts/setup_codex_user_config.py" "${args[@]}"; then
+        print_error "Codex user config helper failed"
+    fi
+}
+
+# ============================================================================
 # Summary
 # ============================================================================
 
@@ -401,6 +424,7 @@ print_summary() {
     echo "  python -m mat_runtime list-agents"
     echo "  Restart Claude Code (or /reload-plugins) so the plugin, agents, and enabledPlugins take effect."
     echo "  Restart Cursor so personal skills (multi-agent-toolkit-*) reload."
+    echo "  Codex: follow \"Codex (user hooks)\" above — ~/.codex/config.toml + trust .codex/"
     echo ""
 }
 
@@ -444,6 +468,8 @@ main() {
             install_cursor_personal_skills
         fi
     fi
+
+    run_setup_codex_user_config "$check_only"
 
     print_summary
 

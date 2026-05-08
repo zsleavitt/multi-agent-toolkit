@@ -352,6 +352,19 @@ if (-not $Check) {
     }
 }
 
+# --- Codex user hooks (~/.codex) ---
+Write-Header 'Codex (user hooks)'
+$codexScript = Join-Path $RepoRoot 'scripts\setup_codex_user_config.py'
+$codexPy = if (Test-Path -LiteralPath $venvPython) { $venvPython } else { 'python' }
+$codexArgs = @('--repo-root', $RepoRoot)
+if (-not $Check -and -not $script:PipInstallFailed) {
+    $codexArgs += '--apply'
+}
+& $codexPy $codexScript @codexArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-FailLine 'Codex user config helper failed'
+}
+
 # --- Summary ---
 Write-Host ""
 Write-Host "======================================================================"
@@ -374,6 +387,7 @@ if (-not $Check) {
     Write-Host "Restart Claude Code or run /reload-plugins so plugin, agents, and enabledPlugins take effect."
     Write-Host "Restart Cursor so personal skills (multi-agent-toolkit-*) reload."
 }
+Write-Host "Codex: follow the Codex (user hooks) section above - %USERPROFILE%\.codex\config.toml and trust .codex\"
 Write-Host ""
 
 if ($script:Errors -gt 0) {

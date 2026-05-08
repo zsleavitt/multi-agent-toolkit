@@ -4,9 +4,9 @@ This directory contains [Codex](https://openai.com/codex) configuration for the 
 
 ## Prerequisites
 
-1. **Enable hooks** in your user config (`~/.codex/config.toml`):
+1. **Enable hooks** in your user config (`~/.codex/config.toml` on Unix, `%USERPROFILE%\.codex\config.toml` on Windows):
 
-   See `config.toml.example` in this directory for a copy-paste snippet.
+   See `config.toml.example` in this directory for a copy-paste snippet. Running **`bin/setup`** (macOS/Linux) or **`bin/setup.ps1`** (Windows) prints a **Codex (user hooks)** section with next steps and, on a full interactive setup, can **merge** `codex_hooks = true` idempotently via `scripts/setup_codex_user_config.py --apply`.
 
 2. **Windows users**: Hooks use `bash -c` for git-root resolution. Install [Git for Windows](https://git-scm.com/download/win) (includes Git Bash) or use WSL.
 
