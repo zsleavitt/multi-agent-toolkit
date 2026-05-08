@@ -6,7 +6,7 @@
       "command": [
         "bash",
         "-c",
-        "python \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_context.py\""
+        "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_context.py\""
       ],
       "timeout": 10
     }

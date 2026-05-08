@@ -64,6 +64,7 @@ def main() -> None:
         "continue": True,
         "systemMessage": context_message,
         "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
             "additionalContext": context_message
         }
     }
