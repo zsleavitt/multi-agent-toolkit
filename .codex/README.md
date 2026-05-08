@@ -33,8 +33,25 @@ If you cloned this repo and see "untrusted project" warnings:
 |------|---------|---------|
 | SessionStart | `hooks/mat_context.py` | Injects MAT context (MAT-1 vs MAT-2, schemas, `CLAUDE.md`) |
 | UserPromptSubmit | `hooks/mat_context.py` | Light per-turn reminders and links to skills (no large file dumps) |
+| PreToolUse | `hooks/mat_guardrails.py` | Optional Bash guardrails (`off` / `warn` / `enforce`) — see below |
+| PostToolUse | `hooks/mat_guardrails.py` | Optional Bash non-zero exit hint (`warn` only) |
 
-Both events run the same Python entrypoint; Codex sets `hook_event_name` on **stdin** so the script can branch.
+`mat_context.py` branches on `hook_event_name` from stdin. `mat_guardrails.py` is **off by default** (exit `0`, empty stdout) so there is no behavior change until you configure it.
+
+### Optional guardrails (PreToolUse / PostToolUse)
+
+**Configuration** (first match wins):
+
+1. `MAT_CODEX_GUARDRAILS_MODE` — `off` (default), `warn`, or `enforce`
+2. `.codex/guardrails.toml` — copy from `guardrails.toml.example` and set `[guardrails] mode`
+
+`enforce` uses **PreToolUse** `permissionDecision: deny` only for obviously destructive **Bash** patterns (e.g. `rm` against `/`, `mkfs`, `dd of=/dev/`, fork-bomb idiom, `curl|sh`-style pipes). It does **not** try to block normal `git` read-only use or file edits via `apply_patch` — those remain governed by `CLAUDE.md` / MAT-1 vs MAT-2 guidance from SessionStart.
+
+**PostToolUse** only adds a **systemMessage** when `mode = warn` and the last **Bash** command reports a non-zero exit code.
+
+**Limitations (OpenAI / Codex):** hooks are **not a full sandbox** — they cannot intercept every tool path, and behavior can evolve with Codex releases. Treat guardrails as a safety net, not authorization. See [Codex Hooks — PreToolUse](https://developers.openai.com/codex/hooks#pretooluse).
+
+**Matchers:** `hooks.json` registers `PreToolUse` / `PostToolUse` with matchers `Bash` and `apply_patch` (Codex treats `Edit` / `Write` as `apply_patch` for matching). The Python script only evaluates **Bash** for guardrail logic; `apply_patch` entries satisfy matcher wiring with minimal overhead when mode is `off`. To add **MCP** matchers (e.g. `mcp__server__tool`), duplicate a hook block and set `matcher` per [Codex matcher patterns](https://developers.openai.com/codex/hooks#matcher-patterns); extend `mat_guardrails.py` if you need MCP-specific checks.
 
 ## Hook JSON contract
 
@@ -84,11 +101,13 @@ Malformed stdin is treated as empty input; the handler still exits **0** and ret
 
 ```
 .codex/
-├── README.md              # This file
-├── hooks.json             # Hook event → command mappings
-├── config.toml.example    # User config snippet for enabling hooks
+├── README.md                  # This file
+├── hooks.json                 # Hook event → command mappings
+├── config.toml.example        # User config snippet for enabling hooks
+├── guardrails.toml.example    # Optional guardrails mode (copy to guardrails.toml)
 └── hooks/
-    └── mat_context.py     # SessionStart + UserPromptSubmit handler
+    ├── mat_context.py         # SessionStart + UserPromptSubmit
+    └── mat_guardrails.py      # Optional PreToolUse / PostToolUse guardrails
 ```
 
 ## Relationship to Other Adapters
