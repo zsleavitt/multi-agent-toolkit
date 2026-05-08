@@ -284,7 +284,7 @@ else {
 if (-not $Check) {
     if ($script:PipInstallFailed) {
         Write-Header "Schema Validators"
-        Write-InfoLine "Skipped validators, tests, and Claude registration (pip install failed)."
+        Write-InfoLine "Skipped validators, tests, Claude registration, and Cursor skills (pip install failed)."
     }
     else {
         Write-Header "Schema Validators"
@@ -337,6 +337,20 @@ if (-not $Check) {
         catch {
             Write-FailLine ("Could not copy agents: {0}" -f $_)
         }
+
+        Write-Header "Cursor personal skills"
+        try {
+            $cursorSkillsScript = Join-Path $RepoRoot 'scripts\install_cursor_personal_skills.py'
+            & $venvPython $cursorSkillsScript --repo-root $RepoRoot
+            if ($LASTEXITCODE -ne 0) {
+                throw "install_cursor_personal_skills.py exited $LASTEXITCODE"
+            }
+            $cursorSkillsRoot = Join-Path $env:USERPROFILE '.cursor\skills'
+            Write-Success ("Installed MAT Cursor skills under {0}\multi-agent-toolkit-*" -f $cursorSkillsRoot)
+        }
+        catch {
+            Write-FailLine ("Could not install Cursor personal skills: {0}" -f $_)
+        }
     }
 }
 
@@ -360,6 +374,7 @@ Write-Host ("  {0}\Scripts\Activate.ps1" -f (Join-Path $RepoRoot '.venv'))
 Write-Host "  python -m mat_runtime list-agents"
 if (-not $Check) {
     Write-Host "Restart Claude Code so the plugin and copied agents are picked up."
+    Write-Host "Restart Cursor so personal skills (multi-agent-toolkit-*) reload."
 }
 Write-Host ""
 
