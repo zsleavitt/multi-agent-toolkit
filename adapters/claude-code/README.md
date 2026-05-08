@@ -35,9 +35,9 @@ bin/setup --check
 The setup scripts:
 
 - Ensure Python 3.10+ and a `.venv` with hash-pinned dev dependencies (`requirements-dev.txt`).
-- Run every `scripts/validate_*.py` validator and the `mat_runtime` unit tests.
-- Register this repository in Claude Code’s user plugin list by merging `multi-agent-toolkit@local` into `installed_plugins.json` (`%USERPROFILE%\.claude\plugins\` on Windows, `~/.claude/plugins/` on macOS/Linux).
-- Copy top-level agent markdown files from `agents/*.md` into your user `.claude/agents/` directory (excluding `README.md`).
+- Run every `scripts/validate_*.py` validator and the `mat_runtime` unit tests (skipped automatically if `pip install` failed mid-setup).
+- Register this repository in Claude Code's user plugin list by merging `multi-agent-toolkit@local` into `installed_plugins.json` (`%USERPROFILE%\.claude\plugins\` on Windows, `~/.claude/plugins/` on macOS/Linux). The merge step uses the same interpreter as the validators—the `.venv` `python` after `bin/setup` / `setup.ps1`—not whatever bare `python` happens to be on your PATH if you run pieces manually.
+- Copy agent markdown from `agents/*.md` and `agents/variants/*.md` into your user `~/.claude/agents/` directory (excluding `README.md`, flattened into one folder).
 
 After setup, restart Claude Code so the plugin and copied agents reload.
 
@@ -55,29 +55,30 @@ multi-agent-toolkit/
 
 ## Available Skills
 
-After installation, these slash commands become available (namespaced by the plugin id, e.g. `multi-agent-toolkit:develop`):
+When this repo is loaded as an **installed plugin**, Claude Code namespaces slash commands by plugin id. Invoke them as **`/multi-agent-toolkit:<skill>`** (example: `/multi-agent-toolkit:develop`).
+
+Short forms like `/develop` apply only to skills living in **that project's** `.claude/skills/` tree—not to marketplace/plugin-loaded skills.
 
 | Command | Description |
 |---------|-------------|
-| `/develop <task>` | Orchestrated development workflow |
-| `/diagnose <issue>` | Debug and investigate issues |
-| `/plan <goal>` | Plan and decompose tasks |
-| `/review-pr <target>` | Code review for pull requests |
-| `/test <task>` | Write and run tests |
-| `/ticket <action>` | Create, list, update tickets |
+| `/multi-agent-toolkit:develop <task>` | Orchestrated development workflow |
+| `/multi-agent-toolkit:diagnose <issue>` | Debug and investigate issues |
+| `/multi-agent-toolkit:plan <goal>` | Plan and decompose tasks |
+| `/multi-agent-toolkit:review-pr <target>` | Code review for pull requests |
+| `/multi-agent-toolkit:test <task>` | Write and run tests |
+| `/multi-agent-toolkit:ticket <action>` | Create, list, update tickets |
 
 ## Verification
 
 After restarting Claude Code, check for the skills:
 
 ```bash
-# The skills should appear as:
+# Examples:
 # multi-agent-toolkit:develop
 # multi-agent-toolkit:diagnose
-# etc.
 ```
 
-Or type `/develop` and see if it autocompletes.
+Or type `/multi-agent-toolkit:` and let autocomplete list skills under this plugin.
 
 ## Troubleshooting
 
@@ -106,7 +107,7 @@ Or type `/develop` and see if it autocompletes.
 
 1. Ensure Python 3.10+ is installed
 2. Run `.\bin\setup.ps1` (Windows) or `bin/setup` (macOS/Linux) from the toolkit root to install dependencies
-3. Check that `mat_runtime` is importable: `python -c "import mat_runtime"`
+3. Activate `.venv` and check that `mat_runtime` is importable: `python -c "import mat_runtime"`
 
 ## See Also
 

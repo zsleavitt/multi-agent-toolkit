@@ -121,8 +121,12 @@ install_deps() {
 
     if [[ -f "$req_file" ]]; then
         print_info "Installing from requirements-dev.txt..."
-        pip install -q -r "$req_file"
-        print_success "Installed Python dependencies"
+        if ! pip install -q -r "$req_file"; then
+            print_error "pip install failed"
+            MAT_SETUP_DEPS_FAILED=1
+        else
+            print_success "Installed Python dependencies"
+        fi
     else
         print_warning "requirements-dev.txt not found"
     fi
@@ -347,12 +351,17 @@ register_claude_plugin_and_agents() {
         cp "$md" "$agents_dest/"
         copied_any=true
     done
+    for md in "$REPO_ROOT/agents/variants"/*.md; do
+        [[ -e "$md" ]] || continue
+        cp "$md" "$agents_dest/"
+        copied_any=true
+    done
     shopt -u nullglob
 
     if [[ "$copied_any" == true ]]; then
         print_success "Copied agent definitions to $agents_dest"
     else
-        print_warning "No agent .md files copied (expected under agents/*.md)"
+        print_warning "No agent .md files copied (expected under agents/*.md or agents/variants/*.md)"
     fi
 }
 
@@ -401,6 +410,8 @@ main() {
     # Always check Python
     check_python || exit 1
 
+    MAT_SETUP_DEPS_FAILED=0
+
     if [[ "$check_only" == false ]]; then
         setup_venv
         install_deps
@@ -409,9 +420,14 @@ main() {
     check_cli_tools
 
     if [[ "$check_only" == false ]]; then
-        run_validators
-        run_tests
-        register_claude_plugin_and_agents
+        if [[ "${MAT_SETUP_DEPS_FAILED:-0}" -eq 1 ]]; then
+            print_header "Schema Validators"
+            print_info "Skipped validators, tests, and Claude registration (pip install failed)."
+        else
+            run_validators
+            run_tests
+            register_claude_plugin_and_agents
+        fi
     fi
 
     print_summary

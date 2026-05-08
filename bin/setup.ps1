@@ -31,6 +31,7 @@ $RepoRoot = Split-Path -Parent $ScriptDir
 
 $script:Errors = 0
 $script:Warnings = 0
+$script:PipInstallFailed = $false
 
 function Write-Header {
     param([string]$Message)
@@ -131,8 +132,16 @@ function Copy-AgentDefinitions {
     )
     $src = Join-Path $RepoRootPath 'agents'
     New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
-    Get-ChildItem -LiteralPath $src -Filter '*.md' -File | Where-Object { $_.Name -ne 'README.md' } | ForEach-Object {
-        Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $DestDir $_.Name) -Force
+    if (Test-Path -LiteralPath $src) {
+        Get-ChildItem -LiteralPath $src -Filter '*.md' -File | Where-Object { $_.Name -ne 'README.md' } | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $DestDir $_.Name) -Force
+        }
+        $variants = Join-Path $src 'variants'
+        if (Test-Path -LiteralPath $variants) {
+            Get-ChildItem -LiteralPath $variants -Filter '*.md' -File | ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $DestDir $_.Name) -Force
+            }
+        }
     }
 }
 
@@ -190,6 +199,7 @@ if (-not $Check) {
         & $venvPython -m pip install --require-hashes -r $reqFile
         if ($LASTEXITCODE -ne 0) {
             Write-FailLine "pip install failed"
+            $script:PipInstallFailed = $true
         }
         else {
             Write-Success "Installed Python dependencies"
@@ -272,55 +282,61 @@ else {
 }
 
 if (-not $Check) {
-    Write-Header "Schema Validators"
-    Set-Location $RepoRoot
-    $validators = Get-ChildItem -Path (Join-Path $RepoRoot 'scripts') -Filter 'validate_*.py' -File | Sort-Object Name
-    foreach ($v in $validators) {
-        $short = $v.BaseName
-        $vout = & $venvPython $v.FullName 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            Write-Success $short
-        }
-        else {
-            Write-FailLine "$short failed"
-            $vout | Write-Host
-        }
-    }
-
-    Write-Header "Unit Tests"
-    Set-Location $RepoRoot
-    $testsRoot = Join-Path $RepoRoot 'mat_runtime\tests'
-    $testout = & $venvPython -m pytest $testsRoot -v 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Success "mat_runtime tests passed"
+    if ($script:PipInstallFailed) {
+        Write-Header "Schema Validators"
+        Write-InfoLine "Skipped validators, tests, and Claude registration (pip install failed)."
     }
     else {
-        Write-FailLine "mat_runtime tests failed"
-        $testout | Write-Host
-    }
-
-    Write-Header "Claude Code plugin + agents"
-    try {
-        $pluginsDir = Join-Path $env:USERPROFILE '.claude\plugins'
-        $pluginsJson = Join-Path $pluginsDir 'installed_plugins.json'
-        $mergeScript = Join-Path $RepoRoot 'scripts\merge_installed_plugins_json.py'
-        & $venvPython $mergeScript --plugins-json $pluginsJson --repo-root $RepoRoot
-        if ($LASTEXITCODE -ne 0) {
-            throw "merge_installed_plugins_json.py exited $LASTEXITCODE"
+        Write-Header "Schema Validators"
+        Set-Location $RepoRoot
+        $validators = Get-ChildItem -Path (Join-Path $RepoRoot 'scripts') -Filter 'validate_*.py' -File | Sort-Object Name
+        foreach ($v in $validators) {
+            $short = $v.BaseName
+            $vout = & $venvPython $v.FullName 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Success $short
+            }
+            else {
+                Write-FailLine "$short failed"
+                $vout | Write-Host
+            }
         }
-        Write-Success ("Registered plugin at {0}" -f $pluginsJson)
-    }
-    catch {
-        Write-FailLine ("Could not update installed_plugins.json: {0}" -f $_)
-    }
 
-    try {
-        $agentsDest = Join-Path $env:USERPROFILE '.claude\agents'
-        Copy-AgentDefinitions -RepoRootPath $RepoRoot -DestDir $agentsDest
-        Write-Success ("Copied agent definitions to {0}" -f $agentsDest)
-    }
-    catch {
-        Write-FailLine ("Could not copy agents: {0}" -f $_)
+        Write-Header "Unit Tests"
+        Set-Location $RepoRoot
+        $testsRoot = Join-Path $RepoRoot 'mat_runtime\tests'
+        $testout = & $venvPython -m pytest $testsRoot -v 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "mat_runtime tests passed"
+        }
+        else {
+            Write-FailLine "mat_runtime tests failed"
+            $testout | Write-Host
+        }
+
+        Write-Header "Claude Code plugin + agents"
+        try {
+            $pluginsDir = Join-Path $env:USERPROFILE '.claude\plugins'
+            $pluginsJson = Join-Path $pluginsDir 'installed_plugins.json'
+            $mergeScript = Join-Path $RepoRoot 'scripts\merge_installed_plugins_json.py'
+            & $venvPython $mergeScript --plugins-json $pluginsJson --repo-root $RepoRoot
+            if ($LASTEXITCODE -ne 0) {
+                throw "merge_installed_plugins_json.py exited $LASTEXITCODE"
+            }
+            Write-Success ("Registered plugin at {0}" -f $pluginsJson)
+        }
+        catch {
+            Write-FailLine ("Could not update installed_plugins.json: {0}" -f $_)
+        }
+
+        try {
+            $agentsDest = Join-Path $env:USERPROFILE '.claude\agents'
+            Copy-AgentDefinitions -RepoRootPath $RepoRoot -DestDir $agentsDest
+            Write-Success ("Copied agent definitions to {0}" -f $agentsDest)
+        }
+        catch {
+            Write-FailLine ("Could not copy agents: {0}" -f $_)
+        }
     }
 }
 
