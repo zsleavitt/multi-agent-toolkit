@@ -71,9 +71,31 @@ Prefer personal skills + setup when you want MAT everywhere.
 
 ## Configuration
 
-### Agent routing
+### Agent routing (`mat_runtime`)
 
-Use MAT-16 (`agents.json` / provider config) in the **workspace** you are working on so routing matches your tooling. See `schemas/provider-config/v1/README.md`.
+Create **`mat-config.json`** or **`.mat/config.json`** in the **workspace** you are working on so `mat_runtime` knows which CLIs handle each role (MAT-16). Example:
+
+```json
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "orchestrator": {
+      "cli": "claude",
+      "capabilities": ["planning", "routing", "synthesis"]
+    },
+    "worker": {
+      "cli": "codex",
+      "capabilities": ["implement", "test", "refactor", "diagnose"]
+    },
+    "git-executor": {
+      "cli": "gemini",
+      "capabilities": ["git-ops", "research"]
+    }
+  }
+}
+```
+
+See `schemas/provider-config/v1/README.md` for routing fields and other configurations.
 
 ### Work items (`/multi-agent-toolkit-ticket`)
 
@@ -102,6 +124,12 @@ Requires `ai-team.repo.json` in the repo root and the MCP/server wiring document
 
 - Re-run setup after moving the toolkit clone (paths inside installed `SKILL.md` are absolute).
 - Pass `--repo-root` pointing at the live checkout when running `install_cursor_personal_skills.py` manually.
+- Confirm Python is on PATH (`which python` on macOS/Linux, `where python` on Windows).
+- If skill scripts import `mat_runtime`, verify from the toolkit root: `python -c "from mat_runtime import router"`.
+
+### Agent not found
+
+Add `mat-config.json` (or `.mat/config.json`) with `agents` entries that match the roles your `agents/*.md` definitions use (`orchestrator`, `worker`, `git-executor`, etc.).
 
 ## Differences from Claude Code
 

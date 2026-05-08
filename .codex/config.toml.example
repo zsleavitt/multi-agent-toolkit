@@ -1,0 +1,13 @@
+# Codex user configuration snippet
+# Merge this into ~/.codex/config.toml to enable project hooks.
+#
+# On Windows: %USERPROFILE%\.codex\config.toml
+# On macOS/Linux: ~/.codex/config.toml
+
+[features]
+# Required: enables hooks from .codex/hooks.json
+codex_hooks = true
+
+# Optional: increase hook timeout if mat_context.py needs more time
+# [hooks]
+# timeout = 30

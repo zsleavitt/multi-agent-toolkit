@@ -7,7 +7,7 @@ Read this file first when picking up work in **Cursor** (or any editor). It comp
 - **Claude Code** = orchestrator (plan, route, synthesize; no direct git/shell per architecture).
 - **Codex** = code worker (implement, test, refactor, diagnose, review; optional **`timeout_ms`**).
 - **Gemini** (or equivalent) = git/CLI executor (allowlisted operations only).
-- **22 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–19, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **Notable backlog** (see [GitHub Issues](https://github.com/zsleavitt/multi-agent-toolkit/issues) for the full open list): MAT-7, MAT-20–21, MAT-24, plus roadmap items (Hive/Crew/Swarm, etc.).
+- **22 schema-track tickets are Done** on `main` — MAT-1 through MAT-14, MAT-16–19, MAT-22, MAT-23, MAT-25, MAT-26 merged. **MAT-5 (Gumloop prototype)** is merged. **MAT-7** (audit) is merged. **MAT-20** consumer documentation lives under `docs/consumer/` (close [GitHub #28](https://github.com/zsleavitt/multi-agent-toolkit/issues/28) when the change is on `main`). **Notable backlog:** MAT-21, MAT-24, plus roadmap items (Hive/Crew/Swarm, etc.) — confirm in [GitHub Issues](https://github.com/zsleavitt/multi-agent-toolkit/issues).
 - **Wire formats in this repo (complete):**
   - **MAT-1** — Git executor: fetch / pull / push / branch / worktree + **`git.add`** / **`git.commit`** / **`git.diff`**; optional **`timeout_ms`** (MAT-11).
   - **MAT-2** — Code worker: **`codex.implement`** / **`codex.test`** / **`codex.refactor`** / **`codex.diagnose`** / **`codex.review`**; optional **`timeout_ms`** (MAT-14); MAT-13 uses **`schema_version`** **1.2.0** for diagnose/review.
@@ -121,7 +121,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23, MAT-42, MAT-45) are represented in `s
 | MAT-4 | State: queue, artifacts, checkpoints | **Done** |
 | MAT-5 | Gumloop workflow prototype | **Done** |
 | MAT-6 | HITL: Asana approval triggers | **Done** |
-| MAT-7 | Audit repo vs architecture checklist | Backlog (P2) |
+| MAT-7 | Audit repo vs architecture checklist | **Done** |
 | MAT-8 | ADR: Claude Code vs Cursor orchestrator | **Done** |
 | MAT-9 | Portable repo profile + work-item adapter | **Done** |
 | MAT-10 | Orchestrator sessions + fluency signals | **Done** |
@@ -133,7 +133,7 @@ MAT-1 through MAT-17 (plus MAT-22, MAT-23, MAT-42, MAT-45) are represented in `s
 | MAT-17 | Agent definition format | **Done** |
 | MAT-18 | Runtime adapter layer | **Done** |
 | MAT-19 | Orchestrator skill integration | **Done** |
-| MAT-20 | Consumer repo documentation | Backlog (P1) |
+| MAT-20 | Consumer repo documentation | **Ready to close** when merged — [docs/consumer/README.md](docs/consumer/README.md) |
 | MAT-21 | Optional LangChain integration | Backlog (P2) |
 | MAT-22 | Security: .gitignore + deps | **Done** |
 | MAT-23 | Schema: repo_root validation | **Done** |
@@ -215,8 +215,8 @@ python lib/skills/develop/develop.py "your task" --repo-root "$(pwd)"
 
 1. **`git checkout main`**, **`git pull origin main`** (see **Sync the repo** above).
 2. **Run all ten `scripts/validate_*.py` validators** (see **Validation** below) and confirm green.
-3. When prioritized, pick up **MAT-20** (consumer repo documentation) or the next item from the [issue list](https://github.com/zsleavitt/multi-agent-toolkit/issues).
-4. **Sample backlog:** MAT-20, MAT-21, MAT-24 — use GitHub for the authoritative open set.
+3. When prioritized, pick up **MAT-24** (schema `maxLength` on instructions), **MAT-21** (optional LangChain), or the next item from the [issue list](https://github.com/zsleavitt/multi-agent-toolkit/issues) (after MAT-20 lands, close [issue #28](https://github.com/zsleavitt/multi-agent-toolkit/issues/28)).
+4. **Sample backlog:** MAT-21, MAT-24 — use GitHub for the authoritative open set; reconcile issue close state after merges.
 
 ## Validation
 
