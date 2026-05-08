@@ -324,9 +324,16 @@ if (-not $Check) {
                 throw "merge_installed_plugins_json.py exited $LASTEXITCODE"
             }
             Write-Success ("Registered plugin at {0}" -f $pluginsJson)
+            $settingsJson = Join-Path $env:USERPROFILE '.claude\settings.json'
+            $enableScript = Join-Path $RepoRoot 'scripts\enable_claude_plugin_in_user_settings.py'
+            & $venvPython $enableScript --settings-json $settingsJson --repo-root $RepoRoot
+            if ($LASTEXITCODE -ne 0) {
+                throw "enable_claude_plugin_in_user_settings.py exited $LASTEXITCODE"
+            }
+            Write-Success ("Enabled plugin in {0} (enabledPlugins)" -f $settingsJson)
         }
         catch {
-            Write-FailLine ("Could not update installed_plugins.json: {0}" -f $_)
+            Write-FailLine ("Could not update Claude plugin registry or enabledPlugins: {0}" -f $_)
         }
 
         try {
@@ -373,7 +380,7 @@ Write-Host "Next steps:"
 Write-Host ("  {0}\Scripts\Activate.ps1" -f (Join-Path $RepoRoot '.venv'))
 Write-Host "  python -m mat_runtime list-agents"
 if (-not $Check) {
-    Write-Host "Restart Claude Code so the plugin and copied agents are picked up."
+    Write-Host "Restart Claude Code or run /reload-plugins so plugin, agents, and enabledPlugins take effect."
     Write-Host "Restart Cursor so personal skills (multi-agent-toolkit-*) reload."
 }
 Write-Host ""

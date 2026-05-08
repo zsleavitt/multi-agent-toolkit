@@ -36,11 +36,11 @@ The setup scripts:
 
 - Ensure Python 3.10+ and a `.venv` with hash-pinned dev dependencies (`requirements-dev.txt`).
 - Run every `scripts/validate_*.py` validator and the `mat_runtime` unit tests (skipped automatically if `pip install` failed mid-setup).
-- Register this repository in Claude Code's user plugin list by merging `multi-agent-toolkit@local` into `installed_plugins.json` (`%USERPROFILE%\.claude\plugins\` on Windows, `~/.claude/plugins/` on macOS/Linux). The merge step uses the same interpreter as the validators—the `.venv` `python` after `bin/setup` / `setup.ps1`—not whatever bare `python` happens to be on your PATH if you run pieces manually.
+- Register this repository in Claude Code's user registry: merge `multi-agent-toolkit@local` into `installed_plugins.json`, and set matching keys under `enabledPlugins` in `~/.claude/settings.json` (via `scripts/enable_claude_plugin_in_user_settings.py`). **Installed ≠ enabled**: Claude Code usually requires both; see [Plugin settings](https://code.claude.com/docs/en/settings#plugin-settings).
 - Copy agent markdown from `agents/*.md` and `agents/variants/*.md` into your user `~/.claude/agents/` directory (excluding `README.md`, flattened into one folder).
 - Install Cursor Agent Skills under `~/.cursor/skills/multi-agent-toolkit-*` with absolute paths to this checkout (see `../cursor/README.md`).
 
-After setup, restart Claude Code so the plugin and copied agents reload. Restart Cursor if you use the MAT skills there too.
+After setup, restart Claude Code **or run `/reload-plugins`** so the plugin, agents, and `enabledPlugins` take effect. Restart Cursor if you use the MAT skills there too.
 
 ### Plugin layout
 
@@ -81,7 +81,27 @@ After restarting Claude Code, check for the skills:
 
 Or type `/multi-agent-toolkit:` and let autocomplete list skills under this plugin.
 
+**Note:** Third-party advice to use bare `/develop`, `/plan`, etc. after a plugin install is often wrong. Namespaced plugins expose **`/multi-agent-toolkit:<skill>`** (colon between plugin id and skill name), not the same short paths as project-local `.claude/skills/`.
+
 ## Troubleshooting
+
+### installed_plugins.json looks correct but skills still do not load
+
+Claude Code separates **installation** (`~/.claude/plugins/installed_plugins.json`) from **enabling** (`enabledPlugins` in `~/.claude/settings.json`). Setup updates both. Verify:
+
+```bash
+grep -A2 enabledPlugins ~/.claude/settings.json | head
+```
+
+You should see `multi-agent-toolkit@local` and a second key `multi-agent-toolkit@/absolute/path/to/clone` set to `true`. Then run `/reload-plugins`.
+
+**Official alternative:** install from a terminal (also updates enablement in supported versions):
+
+```bash
+claude plugin install /absolute/path/to/multi-agent-toolkit
+```
+
+(or `claude plugin install` with your platform’s path). Afterward run `/reload-plugins`.
 
 ### Skills not appearing after restart
 
@@ -115,7 +135,7 @@ Or type `/multi-agent-toolkit:` and let autocomplete list skills under this plug
 Claude Code only loads plugins from **your user plugin registry**, not from the repo you opened—but slash commands are **namespaced**:
 
 1. **Use the plugin prefix:** invoke `/multi-agent-toolkit:develop` (or type `/multi-agent-toolkit:` and use autocomplete), not bare `/develop`. Bare `/develop` is for skills defined inside **that project’s** `.claude/skills/`, not for installed plugins.
-2. **Confirm registration:** `installed_plugins.json` must list `multi-agent-toolkit@local` with `installPath` pointing at your **actual toolkit clone** (rerun `bin/setup` / `setup.ps1` from that clone after moving it).
+2. **Confirm `enabledPlugins`:** see *installed_plugins.json looks correct but skills still do not load* above.
 3. **Reload:** restart Claude Code or run `/reload-plugins` after changing registration or plugin files.
 4. **Managed installs:** if your team uses managed Claude Code settings, ensure this marketplace/local plugin is **allowed/enabled** in Settings → Plugins (wording varies by version).
 

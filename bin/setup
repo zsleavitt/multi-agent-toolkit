@@ -341,6 +341,15 @@ register_claude_plugin_and_agents() {
         print_error "Could not update installed_plugins.json"
     fi
 
+    local settings_json="${HOME}/.claude/settings.json"
+    if python "$REPO_ROOT/scripts/enable_claude_plugin_in_user_settings.py" \
+        --settings-json "$settings_json" \
+        --repo-root "$REPO_ROOT"; then
+        print_success "Enabled plugin in $settings_json (enabledPlugins)"
+    else
+        print_error "Could not update enabledPlugins in settings.json"
+    fi
+
     local agents_dest="${HOME}/.claude/agents"
     mkdir -p "$agents_dest"
     local md
@@ -401,7 +410,7 @@ print_summary() {
     echo "Next steps:"
     echo "  source .venv/bin/activate"
     echo "  python -m mat_runtime list-agents"
-    echo "  Restart Claude Code so the plugin and copied agents are picked up."
+    echo "  Restart Claude Code (or /reload-plugins) so the plugin, agents, and enabledPlugins take effect."
     echo "  Restart Cursor so personal skills (multi-agent-toolkit-*) reload."
     echo ""
 }
