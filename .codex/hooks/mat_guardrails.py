@@ -64,19 +64,25 @@ def _bash_command(data: dict[str, Any]) -> str:
 
 
 def destructive_bash_reason(command: str) -> str | None:
-    """Return a short reason if the command matches an obviously destructive pattern."""
+    """Return a short reason if the command matches an obviously destructive pattern.
+
+    Known limitations (by design — this is not a security sandbox):
+    - Command substitution bypasses: rm -rf $(echo /)
+    - Variable expansion: rm -rf $HOME/../../
+    - Encoded/obfuscated commands
+    """
     if not command.strip():
         return None
     c = command.strip()
 
-    # rm targeting filesystem root: bare `/` as a path token (not `/tmp`, `./`).
+    # rm targeting filesystem root: /, //, /./, /../ variants
     if re.search(
-        r"(?is)\brm(?:\s+-[a-zA-Z0-9]+)*\s+(?:--\s+)?/\s*(?:$|[;&|'\"#\n])",
+        r"(?is)\brm(?:\s+-[a-zA-Z0-9]+)*\s+(?:--\s+)?/+(?:\.\.?/)*\s*(?:$|[;&|'\"#\n])",
         c,
     ):
         return "rm targeting filesystem root (/)"
     if re.search(
-        r"(?is)\brm(?:\s+-[a-zA-Z0-9]+)*\s+(?:--\s+)?/\*\s*(?:$|[;&|'\"#\n])",
+        r"(?is)\brm(?:\s+-[a-zA-Z0-9]+)*\s+(?:--\s+)?/+(?:\.\.?/)*\*\s*(?:$|[;&|'\"#\n])",
         c,
     ):
         return "rm with root-level glob (/*)"
@@ -85,15 +91,17 @@ def destructive_bash_reason(command: str) -> str | None:
         return "disk formatting (mkfs)"
     if re.search(r"(?i)\bdd\b[^\n;|&]*\bof=/dev/", c):
         return "dd writing to a device under /dev/"
-    if re.search(r"(?i):\(\)\s*\{\s*:\s*\|:\s*&\s*\}\s*;", c):
+    # Fork bomb: classic :(){ :|:& };: and variants like f(){ f|f& };f
+    # Use [:\w]+ to match both : and word chars as function names
+    if re.search(r"([:\w]+)\(\)\s*\{\s*\1\s*\|\s*\1\s*&\s*\}\s*;\s*\1", c):
         return "fork bomb shell idiom"
-    if re.search(r"(?i)\bchmod\b[^\n;|&]*\b777\b[^\n;|&]*/\s", c):
+    # chmod 777 on paths starting with / (system paths)
+    if re.search(r"(?i)\bchmod\b[^\n;|&]*\b777\b[^\n;|&]*/(?:\w|(?:\s|$))", c):
         return "chmod 777 on system paths"
     if re.search(r"(?i)[\s;|&]>\s*/dev/sd[a-z]", c):
         return "redirect to raw block device"
-    if re.search(r"(?i)\bwget\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh\b", c):
-        return "piping remote content into a shell"
-    if re.search(r"(?i)\bcurl\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh\b", c):
+    # Piping remote content into shell (curl/wget)
+    if re.search(r"(?i)\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh\b", c):
         return "piping remote content into a shell"
     return None
 
@@ -143,7 +151,7 @@ def handle_pre_tool_use(data: dict[str, Any], mode: str) -> dict[str, Any] | Non
 
 
 def handle_post_tool_use(data: dict[str, Any], mode: str) -> dict[str, Any] | None:
-    if mode != "warn":
+    if mode not in ("warn", "enforce"):
         return None
     if data.get("tool_name") != "Bash":
         return None
