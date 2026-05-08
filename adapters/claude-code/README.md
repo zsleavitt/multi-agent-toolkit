@@ -36,7 +36,7 @@ The setup scripts:
 
 - Ensure Python 3.10+ and a `.venv` with hash-pinned dev dependencies (`requirements-dev.txt`).
 - Run every `scripts/validate_*.py` validator and the `mat_runtime` unit tests (skipped automatically if `pip install` failed mid-setup).
-- Register this repository in Claude Code's user registry: merge `multi-agent-toolkit@local` into `installed_plugins.json`, and set matching keys under `enabledPlugins` in `~/.claude/settings.json` (via `scripts/enable_claude_plugin_in_user_settings.py`). **Installed ≠ enabled**: Claude Code usually requires both; see [Plugin settings](https://code.claude.com/docs/en/settings#plugin-settings).
+- Register the **mat-toolkit** marketplace and install **multi-agent-toolkit@mat-toolkit** via the Claude CLI (`scripts/register_mat_claude_plugin.py`, called from setup). Plugins are always **name@marketplace** ([Discover and install plugins](https://code.claude.com/docs/en/discover-plugins)); there is no special `@local` install channel—`local` is just another marketplace id, so older `multi-agent-toolkit@local` registry keys do not load the plugin.
 - Copy agent markdown from `agents/*.md` and `agents/variants/*.md` into your user `~/.claude/agents/` directory (excluding `README.md`, flattened into one folder).
 - Install Cursor Agent Skills under `~/.cursor/skills/multi-agent-toolkit-*` with absolute paths to this checkout (see `../cursor/README.md`).
 
@@ -47,6 +47,7 @@ After setup, restart Claude Code **or run `/reload-plugins`** so the plugin, age
 ```
 multi-agent-toolkit/
 ├── .claude-plugin/
+│   ├── marketplace.json  # Catalog id: mat-toolkit (required for Claude Code)
 │   └── plugin.json       # Plugin metadata (skill paths, name, version)
 └── .claude/skills/       # Claude Code SKILL.md stubs → lib/skills
     ├── develop/
@@ -85,45 +86,50 @@ Or type `/multi-agent-toolkit:` and let autocomplete list skills under this plug
 
 ## Troubleshooting
 
-### installed_plugins.json looks correct but skills still do not load
+### Manual Claude registration (if you skipped setup)
 
-Claude Code separates **installation** (`~/.claude/plugins/installed_plugins.json`) from **enabling** (`enabledPlugins` in `~/.claude/settings.json`). Setup updates both. Verify:
-
-```bash
-grep -A2 enabledPlugins ~/.claude/settings.json | head
-```
-
-You should see `multi-agent-toolkit@local` and path-scoped keys (forward slashes and, on Windows, the native drive path) set to `true`. Then run `/reload-plugins`.
-
-Registry **version 2** keeps installs under the top-level `"plugins"` object in `installed_plugins.json`. If `multi-agent-toolkit@local` only appears as a loose key next to `"version"` and not under `"plugins"`, Claude Code will not load the toolkit; re-run `bin/setup` / `bin/setup.ps1` from the clone so the merge script can fix it.
-
-**No symlink is required** for a local clone: `installPath` should point at your real checkout. Use `claude --debug` if you need plugin load traces ([Plugins reference — debugging](https://code.claude.com/docs/en/plugins-reference#debugging-and-development-tools)).
-
-**Official alternative:** install from a terminal (also updates enablement in supported versions):
+Requires `claude` on your PATH:
 
 ```bash
-claude plugin install /absolute/path/to/multi-agent-toolkit
+claude plugin marketplace add /absolute/path/to/multi-agent-toolkit --scope user
+claude plugin install multi-agent-toolkit@mat-toolkit --scope user
+/reload-plugins
 ```
 
-(or `claude plugin install` with your platform’s path). Afterward run `/reload-plugins`.
+### Debug log says “not found in marketplace local”
+
+That message means Claude is trying to resolve **multi-agent-toolkit@local**. There is no built-in **local** marketplace unless you define one. This repo ships **.claude-plugin/marketplace.json** with id **mat-toolkit**; the install id must be **multi-agent-toolkit@mat-toolkit**.
+
+1. Run `claude plugin marketplace list` and confirm **mat-toolkit** is present (add it with `claude plugin marketplace add <path-to-this-repo>` if not).
+2. Run `claude plugin install multi-agent-toolkit@mat-toolkit --scope user`.
+3. In `~/.claude/settings.json`, ensure `"multi-agent-toolkit@mat-toolkit": true` under `enabledPlugins`. Optional: `python scripts/enable_claude_plugin_in_user_settings.py`.
+4. Remove stale toggles if you added them by mistake: uninstall **`multi-agent-toolkit@local`** via `/plugin` → Installed, or `claude plugin uninstall multi-agent-toolkit@local`.
+5. Run **`claude --debug`** and check the log for plugin or MCP errors. A failing **GitHub** plugin MCP (missing `GITHUB_PERSONAL_ACCESS_TOKEN`) is separate from MAT skills but still counts as a load error in `/reload-plugins`.
+
+Installed copies live under **`~/.claude/plugins/cache/mat-toolkit/multi-agent-toolkit/<version>/`** after install; that is expected.
+
+**No symlink is required** for a normal clone. See [Plugins reference — debugging](https://code.claude.com/docs/en/plugins-reference#debugging-and-development-tools).
 
 ### Skills not appearing after restart
 
-1. Verify the plugin is registered (path is your actual clone, not a placeholder):
+1. Verify installation and enablement:
 
    ```bash
-   cat ~/.claude/plugins/installed_plugins.json | grep multi-agent-toolkit
+   grep multi-agent-toolkit ~/.claude/plugins/installed_plugins.json
+   grep mat-toolkit ~/.claude/settings.json
    ```
 
    On Windows PowerShell:
 
    ```powershell
    Select-String -Path "$env:USERPROFILE\.claude\plugins\installed_plugins.json" -Pattern "multi-agent-toolkit"
+   Select-String -Path "$env:USERPROFILE\.claude\settings.json" -Pattern "mat-toolkit"
    ```
 
-2. Verify the plugin metadata and skill folders exist under your clone:
+2. Verify manifests and skills exist in this repo:
 
    ```bash
+   ls path/to/multi-agent-toolkit/.claude-plugin/marketplace.json
    ls path/to/multi-agent-toolkit/.claude-plugin/plugin.json
    ls path/to/multi-agent-toolkit/.claude/skills/
    ```
@@ -139,7 +145,7 @@ claude plugin install /absolute/path/to/multi-agent-toolkit
 Claude Code only loads plugins from **your user plugin registry**, not from the repo you opened—but slash commands are **namespaced**:
 
 1. **Use the plugin prefix:** invoke `/multi-agent-toolkit:develop` (or type `/multi-agent-toolkit:` and use autocomplete), not bare `/develop`. Bare `/develop` is for skills defined inside **that project’s** `.claude/skills/`, not for installed plugins.
-2. **Confirm `enabledPlugins`:** see *installed_plugins.json looks correct but skills still do not load* above.
+2. **Confirm `enabledPlugins`:** `"multi-agent-toolkit@mat-toolkit": true`. See *Debug log says “not found in marketplace local”* above.
 3. **Reload:** restart Claude Code or run `/reload-plugins` after changing registration or plugin files.
 4. **Managed installs:** if your team uses managed Claude Code settings, ensure this marketplace/local plugin is **allowed/enabled** in Settings → Plugins (wording varies by version).
 

@@ -316,24 +316,15 @@ if (-not $Check) {
 
         Write-Header "Claude Code plugin + agents"
         try {
-            $pluginsDir = Join-Path $env:USERPROFILE '.claude\plugins'
-            $pluginsJson = Join-Path $pluginsDir 'installed_plugins.json'
-            $mergeScript = Join-Path $RepoRoot 'scripts\merge_installed_plugins_json.py'
-            & $venvPython $mergeScript --plugins-json $pluginsJson --repo-root $RepoRoot
+            $regScript = Join-Path $RepoRoot 'scripts\register_mat_claude_plugin.py'
+            & $venvPython $regScript --repo-root $RepoRoot
             if ($LASTEXITCODE -ne 0) {
-                throw "merge_installed_plugins_json.py exited $LASTEXITCODE"
+                throw "register_mat_claude_plugin.py exited $LASTEXITCODE"
             }
-            Write-Success ("Registered plugin at {0}" -f $pluginsJson)
-            $settingsJson = Join-Path $env:USERPROFILE '.claude\settings.json'
-            $enableScript = Join-Path $RepoRoot 'scripts\enable_claude_plugin_in_user_settings.py'
-            & $venvPython $enableScript --settings-json $settingsJson --repo-root $RepoRoot
-            if ($LASTEXITCODE -ne 0) {
-                throw "enable_claude_plugin_in_user_settings.py exited $LASTEXITCODE"
-            }
-            Write-Success ("Enabled plugin in {0} (enabledPlugins)" -f $settingsJson)
+            Write-Success 'Claude Code: mat-toolkit marketplace + multi-agent-toolkit@mat-toolkit (user scope)'
         }
         catch {
-            Write-FailLine ("Could not update Claude plugin registry or enabledPlugins: {0}" -f $_)
+            Write-FailLine ("Could not register Claude Code plugin: {0}" -f $_)
         }
 
         try {

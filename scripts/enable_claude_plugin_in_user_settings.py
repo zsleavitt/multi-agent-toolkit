@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-"""Enable multi-agent-toolkit in Claude Code user ``settings.json``.
+"""Optional: force ``multi-agent-toolkit@mat-toolkit`` on in Claude user ``settings.json``.
 
-Claude Code tracks installs in ``~/.claude/plugins/installed_plugins.json`` but only
-loads plugins that are also toggled on under ``enabledPlugins`` in
-``~/.claude/settings.json`` (user scope). Without this merge, skills stay invisible.
+``claude plugin install`` normally sets ``enabledPlugins``. Use this only if you
+need to toggle the plugin on by hand. Prefer ``scripts/register_mat_claude_plugin.py``.
 
-This script sets ``enabledPlugins`` keys that match common local-install conventions:
-
-- ``multi-agent-toolkit@local`` (pairs with ``merge_installed_plugins_json.py``)
-- ``multi-agent-toolkit@<absolute-repo-path>`` (some Claude Code builds / CLI flows)
-
-Other keys in ``enabledPlugins`` are preserved.
+Stale keys like ``multi-agent-toolkit@local`` are unreliable: Claude treats the
+suffix as a *marketplace id*, not \"install from disk\".
 """
 
 from __future__ import annotations
@@ -20,31 +15,10 @@ import json
 import sys
 from pathlib import Path
 
-_DEFAULT_INSTALL_KEY = "multi-agent-toolkit@local"
+_PLUGIN_ENABLE_KEY = "multi-agent-toolkit@mat-toolkit"
 
 
-def _enable_keys(repo_root: Path) -> list[str]:
-    repo = repo_root.resolve()
-    path_key = f"multi-agent-toolkit@{repo.as_posix()}"
-    keys = [_DEFAULT_INSTALL_KEY, path_key]
-    # Windows: enabledPlugins keys sometimes mirror the native installPath string.
-    native = str(repo)
-    if native != repo.as_posix():
-        keys.append(f"multi-agent-toolkit@{native}")
-    # Deduplicate while preserving order
-    seen: set[str] = set()
-    out: list[str] = []
-    for k in keys:
-        if k not in seen:
-            seen.add(k)
-            out.append(k)
-    return out
-
-
-def merge(settings_path: Path, repo_root: Path) -> None:
-    repo_root = repo_root.resolve()
-    keys = _enable_keys(repo_root)
-
+def merge(settings_path: Path) -> None:
     data: dict = {}
     if settings_path.exists() and settings_path.stat().st_size > 0:
         raw = settings_path.read_text(encoding="utf-8")
@@ -66,8 +40,7 @@ def merge(settings_path: Path, repo_root: Path) -> None:
         for k, v in existing.items():
             if isinstance(k, str):
                 merged[k] = bool(v)
-    for k in keys:
-        merged[k] = True
+    merged[_PLUGIN_ENABLE_KEY] = True
     data["enabledPlugins"] = merged
 
     settings_path.parent.mkdir(parents=True, exist_ok=True)
@@ -82,12 +55,6 @@ def main() -> None:
         default=None,
         help="Path to Claude user settings.json (default: ~/.claude/settings.json)",
     )
-    p.add_argument(
-        "--repo-root",
-        type=Path,
-        required=True,
-        help="Absolute path to multi-agent-toolkit checkout",
-    )
     args = p.parse_args()
 
     home = Path.home()
@@ -96,8 +63,8 @@ def main() -> None:
         if args.settings_json is not None
         else (home / ".claude" / "settings.json")
     )
-    merge(settings_path, args.repo_root.expanduser().resolve())
-    print(f"wrote enabledPlugins for multi-agent-toolkit in {settings_path}")
+    merge(settings_path)
+    print(f"set {_PLUGIN_ENABLE_KEY!r} true in {settings_path}")
 
 
 if __name__ == "__main__":

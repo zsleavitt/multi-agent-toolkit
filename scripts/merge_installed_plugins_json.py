@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Merge multi-agent-toolkit@local into Claude Code installed_plugins.json.
+"""Merge multi-agent-toolkit into ``installed_plugins.json`` (legacy).
 
-Reads plugin ``version`` from ``<repo-root>/.claude-plugin/plugin.json`` when present.
+**Deprecated.** Claude Code loads plugins that are installed as ``name@marketplace``.
+Use ``scripts/register_mat_claude_plugin.py`` (or ``claude plugin marketplace add`` +
+``claude plugin install multi-agent-toolkit@mat-toolkit``) instead. This helper only
+rewrites JSON and does not register a marketplace, so newer Claude Code builds
+still report "not found in marketplace local".
 """
 
 from __future__ import annotations

@@ -332,22 +332,11 @@ run_tests() {
 register_claude_plugin_and_agents() {
     print_header "Claude Code plugin + agents"
 
-    local plugins_json="${HOME}/.claude/plugins/installed_plugins.json"
-    if python "$REPO_ROOT/scripts/merge_installed_plugins_json.py" \
-        --plugins-json "$plugins_json" \
+    if python "$REPO_ROOT/scripts/register_mat_claude_plugin.py" \
         --repo-root "$REPO_ROOT"; then
-        print_success "Registered plugin at $plugins_json"
+        print_success "Claude Code marketplace mat-toolkit + plugin multi-agent-toolkit@mat-toolkit"
     else
-        print_error "Could not update installed_plugins.json"
-    fi
-
-    local settings_json="${HOME}/.claude/settings.json"
-    if python "$REPO_ROOT/scripts/enable_claude_plugin_in_user_settings.py" \
-        --settings-json "$settings_json" \
-        --repo-root "$REPO_ROOT"; then
-        print_success "Enabled plugin in $settings_json (enabledPlugins)"
-    else
-        print_error "Could not update enabledPlugins in settings.json"
+        print_error "Could not register Claude Code plugin (see messages above)"
     fi
 
     local agents_dest="${HOME}/.claude/agents"

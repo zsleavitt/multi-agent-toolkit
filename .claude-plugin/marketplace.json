@@ -1,0 +1,15 @@
+{
+  "name": "mat-toolkit",
+  "description": "Local marketplace bundling the multi-agent-toolkit Claude Code plugin from this repository.",
+  "owner": {
+    "name": "multi-agent-toolkit",
+    "url": "https://github.com/zsleavitt/multi-agent-toolkit"
+  },
+  "plugins": [
+    {
+      "name": "multi-agent-toolkit",
+      "source": "./",
+      "description": "Multi-agent orchestration via MAT skills: develop, plan, review-pr, test, diagnose, and ticket workflows."
+    }
+  ]
+}
