@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developers.openai.com/schemas/codex/hooks.json",
+  "hooks": [
+    {
+      "event": "SessionStart",
+      "command": [
+        "bash",
+        "-c",
+        "python \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_context.py\""
+      ],
+      "timeout": 10
+    }
+  ]
+}
