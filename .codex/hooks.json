@@ -18,6 +18,46 @@
         "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_context.py\""
       ],
       "timeout": 5
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "Bash",
+      "command": [
+        "bash",
+        "-c",
+        "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_guardrails.py\""
+      ],
+      "timeout": 10
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "apply_patch",
+      "command": [
+        "bash",
+        "-c",
+        "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_guardrails.py\""
+      ],
+      "timeout": 10
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Bash",
+      "command": [
+        "bash",
+        "-c",
+        "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_guardrails.py\""
+      ],
+      "timeout": 10
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "apply_patch",
+      "command": [
+        "bash",
+        "-c",
+        "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_guardrails.py\""
+      ],
+      "timeout": 10
     }
   ]
 }

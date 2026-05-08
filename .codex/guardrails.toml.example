@@ -1,0 +1,9 @@
+# Optional PreToolUse / PostToolUse guardrails (see hooks/mat_guardrails.py).
+# Copy to guardrails.toml in this directory to enable file-based config, or use
+# MAT_CODEX_GUARDRAILS_MODE in the environment (overrides this file).
+
+[guardrails]
+# off     — no stdout, exit 0 (default when this file is absent)
+# warn    — risky Bash → systemMessage; non-zero Bash exit → systemMessage
+# enforce — risky Bash → PreToolUse deny (PostToolUse stays warn-only)
+mode = "off"
