@@ -29,9 +29,56 @@ If you cloned this repo and see "untrusted project" warnings:
 
 ## Hooks Overview
 
-| Hook | File | Purpose |
-|------|------|---------|
-| SessionStart | `hooks/mat_context.py` | Injects MAT context (contracts, role boundaries) |
+| Hook | Handler | Purpose |
+|------|---------|---------|
+| SessionStart | `hooks/mat_context.py` | Injects MAT context (MAT-1 vs MAT-2, schemas, `CLAUDE.md`) |
+| UserPromptSubmit | `hooks/mat_context.py` | Light per-turn reminders and links to skills (no large file dumps) |
+
+Both events run the same Python entrypoint; Codex sets `hook_event_name` on **stdin** so the script can branch.
+
+## Hook JSON contract
+
+All command hooks receive **one JSON object on stdin** and should print **one JSON object on stdout**, then exit **0** on success. See [Codex Hooks](https://developers.openai.com/codex/hooks).
+
+### Common stdin fields (excerpt)
+
+| Field | Meaning |
+|-------|---------|
+| `session_id` | Session / thread id |
+| `cwd` | Session working directory |
+| `hook_event_name` | `SessionStart`, `UserPromptSubmit`, etc. |
+| `model` | Active model slug |
+
+### SessionStart — extra stdin
+
+| Field | Meaning |
+|-------|---------|
+| `source` | How the session started: `startup`, `resume`, or `clear` |
+
+### UserPromptSubmit — extra stdin
+
+| Field | Meaning |
+|-------|---------|
+| `turn_id` | Codex turn id |
+| `prompt` | User prompt about to be sent (do not log this from the hook) |
+
+### stdout shape (this repo)
+
+On success, `mat_context.py` emits JSON including:
+
+- `continue`: `true`
+- **SessionStart**: `systemMessage` plus `hookSpecificOutput` with `hookEventName: "SessionStart"` and `additionalContext` (same MAT summary text).
+- **UserPromptSubmit**: `hookSpecificOutput` with `hookEventName: "UserPromptSubmit"` and short `additionalContext` guardrails only.
+
+Malformed stdin is treated as empty input; the handler still exits **0** and returns **SessionStart**-style output so Codex does not stall.
+
+## Windows: Git Bash and `python3`
+
+`hooks.json` resolves the repo root with `git rev-parse --show-toplevel`, then runs **`python3`** under Bash (Git Bash on Windows, or your platform shell).
+
+- **Git for Windows**: ensure Python is on PATH for the same environment Codex uses when it launches hooks. The official installer option **“Add python.exe to PATH”** usually provides both `python` and `python3` in Git Bash.
+- If **`python3` is not found** but `python` works, copy `hooks.json` locally or adjust the command segment from `python3` to `python` (keep the `git rev-parse` wrapper so paths stay repo-root stable).
+- **WSL**: prefer running Codex from a WSL workspace if your Windows Python is not visible from Git Bash.
 
 ## Directory Layout
 
@@ -41,7 +88,7 @@ If you cloned this repo and see "untrusted project" warnings:
 ├── hooks.json             # Hook event → command mappings
 ├── config.toml.example    # User config snippet for enabling hooks
 └── hooks/
-    └── mat_context.py     # SessionStart handler
+    └── mat_context.py     # SessionStart + UserPromptSubmit handler
 ```
 
 ## Relationship to Other Adapters

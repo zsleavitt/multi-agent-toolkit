@@ -9,6 +9,15 @@
         "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_context.py\""
       ],
       "timeout": 10
+    },
+    {
+      "event": "UserPromptSubmit",
+      "command": [
+        "bash",
+        "-c",
+        "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/mat_context.py\""
+      ],
+      "timeout": 5
     }
   ]
 }
