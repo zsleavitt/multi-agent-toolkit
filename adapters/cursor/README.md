@@ -1,144 +1,118 @@
 # Cursor Adapter
 
-This adapter makes MAT skills available in Cursor as slash commands via `.cursorrules`.
+This adapter exposes MAT workflows in Cursor via **Agent Skills** (slash commands). Skills live under `.cursor/skills/` in this repository for contributors; **end users** typically install **personal** copies so the same commands work in **any** project you open in Cursor.
 
-## Installation
+## Global install (any repository)
 
-### Option 1: Copy to your project (recommended)
+Run the toolkit setup once from your clone (same as Claude Code registration):
 
-Copy the `.cursorrules` file to your project root:
+**Windows**
+
+```powershell
+.\bin\setup.ps1
+```
+
+**macOS / Linux**
+
+```bash
+bin/setup
+```
+
+Setup runs `scripts/install_cursor_personal_skills.py`, which writes into:
+
+| Platform | Personal skills directory |
+|----------|---------------------------|
+| Windows | `%USERPROFILE%\.cursor\skills\` |
+| macOS / Linux | `~/.cursor/skills/` |
+
+Each skill is installed as its **own folder** with a `multi-agent-toolkit-*` prefix (so your personal `develop` skill, if any, is not overwritten):
+
+- `multi-agent-toolkit-develop`
+- `multi-agent-toolkit-diagnose`
+- `multi-agent-toolkit-plan`
+- `multi-agent-toolkit-review-pr`
+- `multi-agent-toolkit-test`
+- `multi-agent-toolkit-ticket`
+
+Stubs are **rewritten** so Python invokes scripts under **your toolkit checkout** with `--repo-root` set to the **current workspace** (`pwd`). Keep one stable clone path on disk (same directory you register for Claude Code’s plugin `installPath`).
+
+Manual reinstall (after pulling toolkit updates):
+
+```bash
+python scripts/install_cursor_personal_skills.py --repo-root /path/to/multi-agent-toolkit
+```
+
+`--dry-run` prints destinations without writing.
+
+After installing or upgrading skills, **fully restart Cursor** (or reload the skills catalog when your Cursor version supports it) so new slash commands appear.
+
+## Slash commands (global / personal skills)
+
+Use the **prefixed** names Cursor discovers from folder + frontmatter:
+
+| Command | Description |
+|---------|-------------|
+| `/multi-agent-toolkit-develop <task>` | Orchestrated development workflow |
+| `/multi-agent-toolkit-diagnose <issue>` | Debug and investigate issues |
+| `/multi-agent-toolkit-plan <goal>` | Plan and decompose tasks |
+| `/multi-agent-toolkit-review-pr <target>` | Code review for PRs or paths |
+| `/multi-agent-toolkit-test <task>` | Write and run tests |
+| `/multi-agent-toolkit-ticket <action>` | Create / list / update tickets |
+
+## Project-only install (legacy)
+
+You can still copy rules into a single repo (does **not** carry to other checkouts):
 
 ```bash
 cp adapters/cursor/.cursorrules /path/to/your/project/.cursorrules
 ```
 
-Or append to an existing `.cursorrules`:
-
-```bash
-cat adapters/cursor/.cursorrules >> /path/to/your/project/.cursorrules
-```
-
-### Option 2: Symlink (for development)
-
-```bash
-ln -s /path/to/multi-agent-toolkit/adapters/cursor/.cursorrules /path/to/your/project/.cursorrules
-```
-
-### Option 3: Include via reference
-
-Add to your existing `.cursorrules`:
-
-```markdown
-# Include MAT skills
-@import /path/to/multi-agent-toolkit/adapters/cursor/.cursorrules
-```
-
-## Available Skills
-
-After installation, these commands become available:
-
-| Command | Description |
-|---------|-------------|
-| `/develop <task>` | Orchestrated development workflow |
-| `/diagnose <issue>` | Debug and investigate issues |
-| `/plan <goal>` | Plan and decompose tasks |
-| `/review-pr <target>` | Code review for pull requests |
-| `/test <task>` | Write and run tests |
-| `/ticket <action>` | Create, list, update tickets |
-
-## How It Works
-
-Cursor loads `.cursorrules` files from the project root. When you type a command like `/develop`, Cursor's AI:
-
-1. Reads the instructions from `.cursorrules`
-2. Executes the corresponding Python script
-3. Presents the results
+Prefer personal skills + setup when you want MAT everywhere.
 
 ## Configuration
 
-### Agent Routing
+### Agent routing
 
-Create `agents.json` in your project root to configure which CLI tools handle each role:
+Use MAT-16 (`agents.json` / provider config) in the **workspace** you are working on so routing matches your tooling. See `schemas/provider-config/v1/README.md`.
 
-```json
-{
-  "schema_version": "1.0.0",
-  "agents": {
-    "default": {
-      "cli": "cursor",
-      "capabilities": ["planning", "routing", "implement", "test", "review"]
-    }
-  }
-}
-```
+### Work items (`/multi-agent-toolkit-ticket`)
 
-This tells MAT to use Cursor for all agent roles. See `schemas/provider-config/v1/README.md` for other configurations.
+Requires `ai-team.repo.json` in the repo root and the MCP/server wiring documented for your adapter.
 
-### Work Item Integration
+### Prerequisites
 
-For `/ticket` commands, create `ai-team.repo.json`:
-
-```json
-{
-  "identity": { "name": "my-project" },
-  "work_item_source": {
-    "adapter": "github_issues"
-  }
-}
-```
-
-## Prerequisites
-
-1. Python 3.10+ in your PATH
-2. MAT dependencies installed: `pip install -r /path/to/multi-agent-toolkit/requirements-dev.txt`
-3. MAT in PYTHONPATH or installed
-
-### Quick Setup
-
-```bash
-# From your project directory
-export PYTHONPATH="/path/to/multi-agent-toolkit:$PYTHONPATH"
-
-# Or install MAT as editable
-pip install -e /path/to/multi-agent-toolkit
-```
+- Python on PATH when Cursor runs terminal/bash steps (skill stubs call `python "…/lib/skills/…/….py"` with an absolute path).
+- Toolkit `requirements-dev.txt` installed into `.venv` if those scripts import deps (`bin/setup` does this).
 
 ## Verification
 
-1. Open Cursor in your project
-2. Type `/develop` — Cursor should recognize it as a command
-3. Try `/develop Add a hello world function`
+1. Restart Cursor after setup.
+2. Open **any** repository as the workspace root.
+3. Try `/multi-agent-toolkit-plan` with a short goal; confirm it runs `plan.py` against that repo’s `--repo-root`.
 
 ## Troubleshooting
 
-### Commands not recognized
+### Slash command not found
 
-- Ensure `.cursorrules` is in the project root
-- Restart Cursor after adding the file
-- Check Cursor settings: File > Preferences > Settings > "cursorrules"
+- Confirm folders exist under `~/.cursor/skills/multi-agent-toolkit-*`.
+- Restart Cursor.
+- Do not place custom skills under `~/.cursor/skills-cursor/` (reserved for Cursor-built-ins).
 
-### Python script fails
+### Script fails with “no such file”
 
-1. Check Python is available: `which python`
-2. Verify mat_runtime: `python -c "from mat_runtime import router"`
-3. Check PYTHONPATH includes the toolkit
-
-### Agent not found
-
-Create `agents.json` with at least a `default` agent configuration.
+- Re-run setup after moving the toolkit clone (paths inside installed `SKILL.md` are absolute).
+- Pass `--repo-root` pointing at the live checkout when running `install_cursor_personal_skills.py` manually.
 
 ## Differences from Claude Code
 
 | Feature | Claude Code | Cursor |
 |---------|-------------|--------|
-| Skill discovery | Plugin system | `.cursorrules` file |
-| MCP tools | Full support | Limited/none |
-| Slash commands | Native | Via rules file |
-
-Note: Some features like `/ticket` rely on MCP tools that may not be available in Cursor. These commands will work if you configure `agents.json` to route to a CLI that has the required integrations.
+| Distribution | Plugin manifest + `installed_plugins.json` | Personal `~/.cursor/skills/` folders |
+| Slash naming | `/multi-agent-toolkit:skill` | `/multi-agent-toolkit-skill` |
+| Legacy project hook | — | `.cursorrules` in repo root |
 
 ## See Also
 
-- `../../skills/` — Canonical skill definitions
+- `../../.cursor/skills/` — Source stubs (repo-relative paths before install)
 - `../../mat_runtime/` — Runtime adapter layer
-- `../../schemas/provider-config/v1/` — Agent configuration schema
+- `../claude-code/README.md` — Claude plugin install (same setup scripts)

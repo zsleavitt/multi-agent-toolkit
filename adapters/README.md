@@ -23,7 +23,8 @@ adapters/                  ← Supplementary tool configuration
 ├── claude-code/
 │   └── README.md          ← Claude Code setup instructions
 ├── cursor/
-│   └── .cursorrules       ← Cursor rules (optional)
+│   ├── README.md          ← Cursor skills setup (global + optional .cursorrules)
+│   └── .cursorrules       ← Optional legacy project rules snippet
 └── README.md              ← This file
 ```
 
@@ -33,7 +34,7 @@ adapters/                  ← Supplementary tool configuration
 
 2. **Platform stubs in native locations** — `.claude/skills/` and `.cursor/skills/` contain SKILL.md files that reference the shared content.
 
-3. **Adapters provide extras** — Additional configuration like `.cursorrules` for Cursor or plugin manifests for Claude Code.
+3. **Adapters provide extras** — Claude Code plugin metadata under `.claude-plugin/`; Cursor defaults to personal skills installed via `bin/setup` (see `adapters/cursor/README.md`) with optional `.cursorrules`.
 
 4. **Execution is unified** — All tools run `python lib/skills/*/skill.py`, which uses `mat_runtime` to route to the configured CLI tool.
 
@@ -42,7 +43,7 @@ adapters/                  ← Supplementary tool configuration
 | Tool | Adapter | Installation |
 |------|---------|--------------|
 | Claude Code | `.claude-plugin/plugin.json` (repo root) | See `claude-code/README.md` |
-| Cursor | `cursor/.cursorrules` | See `cursor/README.md` |
+| Cursor | `scripts/install_cursor_personal_skills.py` + personal `~/.cursor/skills/` (wired by `bin/setup`; optional `.cursorrules`) | See `cursor/README.md` |
 | Direct CLI | None needed | Run `python lib/skills/*/*.py` directly |
 
 ## Adding New Tool Adapters

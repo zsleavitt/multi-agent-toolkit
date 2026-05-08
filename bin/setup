@@ -366,6 +366,21 @@ register_claude_plugin_and_agents() {
 }
 
 # ============================================================================
+# Cursor personal skills (global / any workspace)
+# ============================================================================
+
+install_cursor_personal_skills() {
+    print_header "Cursor personal skills"
+
+    if python "$REPO_ROOT/scripts/install_cursor_personal_skills.py" \
+        --repo-root "$REPO_ROOT"; then
+        print_success "Installed MAT Cursor skills under ~/.cursor/skills/multi-agent-toolkit-*"
+    else
+        print_error "Could not install Cursor personal skills"
+    fi
+}
+
+# ============================================================================
 # Summary
 # ============================================================================
 
@@ -387,6 +402,7 @@ print_summary() {
     echo "  source .venv/bin/activate"
     echo "  python -m mat_runtime list-agents"
     echo "  Restart Claude Code so the plugin and copied agents are picked up."
+    echo "  Restart Cursor so personal skills (multi-agent-toolkit-*) reload."
     echo ""
 }
 
@@ -422,11 +438,12 @@ main() {
     if [[ "$check_only" == false ]]; then
         if [[ "${MAT_SETUP_DEPS_FAILED:-0}" -eq 1 ]]; then
             print_header "Schema Validators"
-            print_info "Skipped validators, tests, and Claude registration (pip install failed)."
+            print_info "Skipped validators, tests, Claude registration, and Cursor skills (pip install failed)."
         else
             run_validators
             run_tests
             register_claude_plugin_and_agents
+            install_cursor_personal_skills
         fi
     fi
 
