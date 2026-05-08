@@ -4,45 +4,58 @@ This adapter makes MAT skills available in Claude Code as slash commands.
 
 ## Installation
 
-The multi-agent-toolkit is designed to be installed as a local Claude Code plugin.
+The multi-agent-toolkit is designed to be installed as a local Claude Code plugin. Run the setup script once from the repository root so Python dependencies, schema validators, tests, plugin registration, and agent copies are applied automatically.
 
-### Step 1: Create the plugin metadata
+### Automated setup
 
-The plugin needs a `.claude-plugin/plugin.json` file at the repository root (already created):
+**Windows (PowerShell)**
+
+```powershell
+.\bin\setup.ps1
+```
+
+Optional dry run (Python + CLI checks only, no venv install, validators, tests, or plugin registration):
+
+```powershell
+.\bin\setup.ps1 --check
+```
+
+**macOS / Linux**
+
+```bash
+bin/setup
+```
+
+Optional checks only:
+
+```bash
+bin/setup --check
+```
+
+The setup scripts:
+
+- Ensure Python 3.10+ and a `.venv` with hash-pinned dev dependencies (`requirements-dev.txt`).
+- Run every `scripts/validate_*.py` validator and the `mat_runtime` unit tests.
+- Register this repository in Claude Code’s user plugin list by merging `multi-agent-toolkit@local` into `installed_plugins.json` (`%USERPROFILE%\.claude\plugins\` on Windows, `~/.claude/plugins/` on macOS/Linux).
+- Copy top-level agent markdown files from `agents/*.md` into your user `.claude/agents/` directory (excluding `README.md`).
+
+After setup, restart Claude Code so the plugin and copied agents reload.
+
+### Plugin layout
 
 ```
 multi-agent-toolkit/
 ├── .claude-plugin/
-│   └── plugin.json    # Plugin metadata
-└── skills/            # Skill definitions
+│   └── plugin.json       # Plugin metadata (skill paths, name, version)
+└── .claude/skills/       # Claude Code SKILL.md stubs → lib/skills
     ├── develop/
-    │   └── SKILL.md
-    ...
+    ├── diagnose/
+    └── ...
 ```
-
-### Step 2: Register in installed_plugins.json
-
-Add the following entry to `~/.claude/plugins/installed_plugins.json`:
-
-```json
-"multi-agent-toolkit@local": [
-  {
-    "scope": "user",
-    "installPath": "/Users/<your-username>/.claude/multi-agent-toolkit",
-    "version": "1.0.0",
-    "installedAt": "2026-04-17T10:00:00.000Z",
-    "lastUpdated": "2026-04-17T10:00:00.000Z"
-  }
-]
-```
-
-### Step 3: Restart Claude Code
-
-Exit and restart Claude Code to pick up the new plugin. After restart, the skills should appear in autocomplete when typing `/`.
 
 ## Available Skills
 
-After installation, these slash commands become available:
+After installation, these slash commands become available (namespaced by the plugin id, e.g. `multi-agent-toolkit:develop`):
 
 | Command | Description |
 |---------|-------------|
@@ -70,27 +83,33 @@ Or type `/develop` and see if it autocompletes.
 
 ### Skills not appearing after restart
 
-1. Verify the plugin is registered:
+1. Verify the plugin is registered (path is your actual clone, not a placeholder):
+
    ```bash
    cat ~/.claude/plugins/installed_plugins.json | grep multi-agent-toolkit
    ```
 
-2. Verify the plugin structure:
-   ```bash
-   ls ~/.claude/multi-agent-toolkit/.claude-plugin/plugin.json
-   ls ~/.claude/multi-agent-toolkit/skills/
+   On Windows PowerShell:
+
+   ```powershell
+   Select-String -Path "$env:USERPROFILE\.claude\plugins\installed_plugins.json" -Pattern "multi-agent-toolkit"
    ```
 
-3. Check that each skill has a `SKILL.md` file with valid frontmatter
+2. Verify the plugin metadata and skill folders exist under your clone:
+
+   ```bash
+   ls path/to/multi-agent-toolkit/.claude-plugin/plugin.json
+   ls path/to/multi-agent-toolkit/.claude/skills/
+   ```
 
 ### Skill invocation fails
 
 1. Ensure Python 3.10+ is installed
-2. Run `bin/setup` from the toolkit root to install dependencies
+2. Run `.\bin\setup.ps1` (Windows) or `bin/setup` (macOS/Linux) from the toolkit root to install dependencies
 3. Check that `mat_runtime` is importable: `python -c "import mat_runtime"`
 
 ## See Also
 
-- `../../skills/` — Canonical skill definitions
+- `../../.claude/skills/` — Canonical Claude Code skill stubs
 - `../../mat_runtime/` — Runtime adapter layer
 - `../../docs/adr/0003-skill-naming-and-fluency-alignment.md` — Naming conventions

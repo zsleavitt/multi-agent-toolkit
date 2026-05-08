@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "multi-agent-toolkit",
+  "version": "1.0.0",
+  "description": "Multi-agent orchestration via MAT skills: develop, plan, review-pr, test, diagnose, and ticket workflows with schema-validated contracts and mat_runtime routing.",
+  "keywords": [
+    "multi-agent-toolkit",
+    "mat",
+    "orchestration",
+    "develop",
+    "plan",
+    "review-pr",
+    "test",
+    "diagnose",
+    "ticket",
+    "agents",
+    "schemas"
+  ],
+  "repository": "https://github.com/zsleavitt/multi-agent-toolkit",
+  "skills": [
+    "./.claude/skills/develop",
+    "./.claude/skills/diagnose",
+    "./.claude/skills/plan",
+    "./.claude/skills/review-pr",
+    "./.claude/skills/test",
+    "./.claude/skills/ticket"
+  ]
+}

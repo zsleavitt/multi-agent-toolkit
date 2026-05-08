@@ -1,0 +1,6 @@
+# Top-level dev dependencies. Regenerate the lockfile with:
+#   pip-compile --generate-hashes requirements-dev.in -o requirements-dev.txt
+jsonschema==4.26.0
+referencing==0.37.0
+pytest==8.3.5
+PyYAML==6.0.2
