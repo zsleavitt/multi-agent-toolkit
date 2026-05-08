@@ -27,6 +27,10 @@ def _enable_keys(repo_root: Path) -> list[str]:
     repo = repo_root.resolve()
     path_key = f"multi-agent-toolkit@{repo.as_posix()}"
     keys = [_DEFAULT_INSTALL_KEY, path_key]
+    # Windows: enabledPlugins keys sometimes mirror the native installPath string.
+    native = str(repo)
+    if native != repo.as_posix():
+        keys.append(f"multi-agent-toolkit@{native}")
     # Deduplicate while preserving order
     seen: set[str] = set()
     out: list[str] = []

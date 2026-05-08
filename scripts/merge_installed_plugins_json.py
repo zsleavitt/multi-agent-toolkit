@@ -38,6 +38,24 @@ def _plugin_version(repo_root: Path, *, default: str = "1.0.0") -> str:
     return default
 
 
+def _plugins_bucket(data: dict) -> dict:
+    """Return the dict that holds ``pluginId@source -> [entries]`` for this file format.
+
+    Claude Code uses ``{"version": 2, "plugins": {...}}``. Older flat files store plugin
+    keys at the top level. Setup must merge into the same bucket Claude reads.
+    """
+
+    plugins_obj = data.get("plugins")
+    if isinstance(plugins_obj, dict):
+        if data.get("version") != 2:
+            data["version"] = 2
+        return plugins_obj
+    if data.get("version") == 2:
+        data["plugins"] = {}
+        return data["plugins"]
+    return data
+
+
 def merge(path: Path, repo_root: Path, *, plugin_key: str = "multi-agent-toolkit@local") -> None:
     repo = repo_root.resolve()
     target = _norm(str(repo))
@@ -52,9 +70,18 @@ def merge(path: Path, repo_root: Path, *, plugin_key: str = "multi-agent-toolkit
         except json.JSONDecodeError:
             data = {}
 
+    # New or empty file: match current Claude Code registry shape.
+    if not data:
+        data = {"version": 2, "plugins": {}}
+
+    bucket = _plugins_bucket(data)
+    # Fix mistaken top-level keys from older setup (v2 + duplicate at root).
+    if bucket is not data and isinstance(data.get(plugin_key), list):
+        del data[plugin_key]
+
     now = _utc_stamp()
     prior_installed: str | None = None
-    existing = data.get(plugin_key)
+    existing = bucket.get(plugin_key)
     if isinstance(existing, list):
         for item in existing:
             if _norm(str(item.get("installPath", ""))) == target:
@@ -77,11 +104,11 @@ def merge(path: Path, repo_root: Path, *, plugin_key: str = "multi-agent-toolkit
     }
 
     if existing is None:
-        data[plugin_key] = [entry]
+        bucket[plugin_key] = [entry]
     else:
         kept = [e for e in existing if _norm(str(e.get("installPath", ""))) != target]
         kept.append(entry)
-        data[plugin_key] = kept
+        bucket[plugin_key] = kept
 
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

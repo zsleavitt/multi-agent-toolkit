@@ -93,7 +93,11 @@ Claude Code separates **installation** (`~/.claude/plugins/installed_plugins.jso
 grep -A2 enabledPlugins ~/.claude/settings.json | head
 ```
 
-You should see `multi-agent-toolkit@local` and a second key `multi-agent-toolkit@/absolute/path/to/clone` set to `true`. Then run `/reload-plugins`.
+You should see `multi-agent-toolkit@local` and path-scoped keys (forward slashes and, on Windows, the native drive path) set to `true`. Then run `/reload-plugins`.
+
+Registry **version 2** keeps installs under the top-level `"plugins"` object in `installed_plugins.json`. If `multi-agent-toolkit@local` only appears as a loose key next to `"version"` and not under `"plugins"`, Claude Code will not load the toolkit; re-run `bin/setup` / `bin/setup.ps1` from the clone so the merge script can fix it.
+
+**No symlink is required** for a local clone: `installPath` should point at your real checkout. Use `claude --debug` if you need plugin load traces ([Plugins reference — debugging](https://code.claude.com/docs/en/plugins-reference#debugging-and-development-tools)).
 
 **Official alternative:** install from a terminal (also updates enablement in supported versions):
 
