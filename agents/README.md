@@ -46,7 +46,7 @@ You are a code implementation agent...
 | `orchestrator` | orchestrator | claude | Plan, decompose, route, synthesize |
 | `coder` | worker | codex | Implement code, fix bugs, refactor |
 | `researcher` | executor | gemini | Gather information, explore codebases |
-| `reviewer` | worker | codex-review | Code review, quality analysis |
+| `reviewer` | worker | claude | Code review and fixes (Claude Code CLI) |
 | `security` | worker | claude | Security analysis, vulnerability scanning |
 | `tester` | worker | codex | Write and run tests |
 

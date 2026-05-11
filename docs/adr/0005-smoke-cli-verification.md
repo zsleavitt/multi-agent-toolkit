@@ -18,7 +18,7 @@ We need two levels of check:
 - Add **`python -m mat_runtime smoke`**, implemented in `mat_runtime/smoke.py`, with:
   - **Default (dry)**: for each `cli` that appears in `agents/*.md` and is registered in `ADAPTER_REGISTRY` (`claude`, `codex`, `gemini`, …), run a **PATH + `--version` preflight** and print a per-row status. Exits `0` by default even if a tool is missing (so “partial installs” are still easy to work with), unless **`--strict`** is passed (e.g. CI that installs all CLIs in the test image).
   - **Live (`--real`)**: only when **`MAT_SMOKE_REAL_CLI=1`** is set in the environment, run one or more **`AgentRouter.invoke(...)`** calls with a **tiny, non-destructive instruction** and a **MAT-2 `op` chosen to prefer `codex.review` / `codex.diagnose` / …** so side effects are minimized. Refuse `--real` if `MAT_SMOKE_REAL_CLI` is set to a falsy disable token (`0`, `false`, …) or if `MAT_SMOKE_REAL_CLI` is not exactly `1` (belt-and-suspenders against accidental runs in scripts).
-  - Modes: **`--real --agent reviewer`** (single agent) or **`--real --per-cli`** (one **representative** agent per unique CLI, e.g. `reviewer` for `codex`, `researcher` for `gemini`, `orchestrator` for `claude`).
+  - Modes: **`--real --agent reviewer`** (single agent) or **`--real --per-cli`** (one **representative** agent per unique CLI, e.g. `coder` for `codex`, `researcher` for `gemini`, `orchestrator` for `claude`).
 
 - **Default CI and `bin/setup`**: keep running **unit tests** with **mocks** (no real CLIs) and `scripts/validate_*.py`. Do **not** add `--real` to default CI without a controlled image, credentials, and a separate job name.
 

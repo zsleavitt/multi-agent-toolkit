@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "worker": {
+      "cli": "codex",
+      "timeout_ms": 300000
+    },
+    "reviewer": {
+      "cli": "claude",
+      "flags": ["--print"]
+    }
+  }
+}

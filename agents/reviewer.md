@@ -2,7 +2,7 @@
 name: reviewer
 description: Reviews code for quality, security, maintainability, and adherence to standards
 role: worker
-cli: codex-review
+cli: claude
 allowed_mat_ops:
   - codex.review
 tools:

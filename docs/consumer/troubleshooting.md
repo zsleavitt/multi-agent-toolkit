@@ -28,7 +28,7 @@ pip install -e /path/to/multi-agent-toolkit
 
 **Cause:** Missing or incorrect **MAT-16** file.
 
-**Fix:** Add **`mat-config.json`** or **`.mat/config.json`** at the repo root with the right `cli` fields per role. See [`schemas/provider-config/v1/README.md`](../../schemas/provider-config/v1/README.md).
+**Fix:** Add **`mat-config.json`** or **`.mat/config.json`** at the repo root. The router merges **`agents.<role>`** then **`agents.<agent-name>`** (per-agent wins), so you can override only `reviewer` or `coder` without touching `agents/*.md`. See **`mat-config.example.json`** and [`schemas/provider-config/v1/README.md`](../../schemas/provider-config/v1/README.md).
 
 ## `/ticket` does nothing or errors
 

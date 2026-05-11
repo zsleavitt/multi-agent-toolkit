@@ -136,7 +136,7 @@ The toolkit provides 6 core agent definitions:
 | `orchestrator` | orchestrator | claude | Planning, routing, synthesis |
 | `coder` | worker | codex | Code implementation |
 | `researcher` | executor | gemini | Information gathering, research |
-| `reviewer` | worker | codex-review | Code review, analysis (review-only Codex; see `mat_runtime/adapters`) |
+| `reviewer` | worker | claude | Code review and fixes (Claude Code CLI; MAT-2 op remains `codex.review` on the wire) |
 | `security` | worker | claude | Security analysis, vulnerability scanning |
 | `tester` | worker | codex | Test writing and execution |
 

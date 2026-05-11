@@ -63,10 +63,10 @@ Short forms like `/develop` apply only to skills living in **that project's** `.
 
 | Command | Description |
 |---------|-------------|
-| `/multi-agent-toolkit:develop <task>` | Orchestrated development workflow |
+| `/multi-agent-toolkit:develop <task>` | Implementation via **Codex** (`coder`, `codex.implement`) |
 | `/multi-agent-toolkit:diagnose <issue>` | Debug and investigate issues |
 | `/multi-agent-toolkit:plan <goal>` | Plan and decompose tasks |
-| `/multi-agent-toolkit:review-pr <target>` | Code review for pull requests |
+| `/multi-agent-toolkit:review-pr <target>` | Code review via **Claude** (`reviewer`, MAT-2 `codex.review` on the wire) |
 | `/multi-agent-toolkit:test <task>` | Write and run tests |
 | `/multi-agent-toolkit:ticket <action>` | Create, list, update tickets |
 

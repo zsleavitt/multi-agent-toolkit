@@ -12,7 +12,7 @@
       "additionalProperties": { "$ref": "#/$defs/agent_config" },
       "minProperties": 1,
       "propertyNames": { "$ref": "#/$defs/agent_role" },
-      "description": "Map of agent roles to CLI tool configurations. At least one agent required."
+      "description": "Map of agent roles and/or agent names to CLI tool configurations (runtime merges role then name). At least one entry required."
     },
     "routing": { "$ref": "#/$defs/routing" },
     "defaults": { "$ref": "#/$defs/defaults" }

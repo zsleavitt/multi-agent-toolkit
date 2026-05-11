@@ -1,11 +1,11 @@
 ---
 name: develop
-description: Orchestrated development workflow — plans, implements, and coordinates the agent team. Use when implementing features, fixing bugs, or refactoring code that benefits from multi-agent coordination.
+description: Implementation workflow via OpenAI Codex (coder agent). Use when implementing features, fixing bugs, or refactoring scoped tasks. For planning-only decomposition, use the plan skill.
 ---
 
 # Develop
 
-Orchestrated development workflow — plans, implements, and coordinates the agent team.
+Runs **Codex** on the task via the **coder** agent (`codex.implement`). Use **plan** for decomposition only; use **review-pr** for Claude-based review.
 
 ## Usage
 

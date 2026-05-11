@@ -73,11 +73,12 @@ def test_representative_prefers_coder_for_codex() -> None:
     assert name == "coder"
 
 
-def test_representative_prefers_reviewer_for_codex_review() -> None:
+def test_representative_codex_review_absent_when_no_agent_binds_it() -> None:
     root = Path(__file__).resolve().parents[2]
     agents = load_agent_definitions(repo_root=root)
     name = _representative_agent_for_cli(agents, "codex-review")
-    assert name == "reviewer"
+    # Reviewer defaults to Claude in this repo; codex-review smoke is optional.
+    assert name is None
 
 
 def test_run_smoke_dry_succeeds_from_repo_root() -> None:

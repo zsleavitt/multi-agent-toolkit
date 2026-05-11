@@ -5,8 +5,8 @@
 Usage:
     python develop.py <task_description> [--scope-paths <paths>] [--timeout-ms <ms>]
 
-Invokes the orchestrator agent, which coordinates the full development workflow
-(planning, coding, testing, review).
+    Invokes the **coder** agent (OpenAI Codex by default) with ``codex.implement``.
+    For planning-only decomposition, use the **plan** skill instead.
 """
 
 from __future__ import annotations
@@ -52,14 +52,14 @@ def main() -> int:
         print(f"Error initializing router: {e}", file=sys.stderr)
         return 1
 
-    response = router.invoke("orchestrator", request)
+        response = router.invoke("coder", request)
 
     if args.json:
         print(response.to_json(indent=2))
     elif response.ok:
         print(format_success(response, "Development"))
     else:
-        print(format_error(response, "orchestrator"), file=sys.stderr)
+        print(format_error(response, "coder"), file=sys.stderr)
 
     return 0 if response.ok else 1
 

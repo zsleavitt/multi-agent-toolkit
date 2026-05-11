@@ -53,6 +53,8 @@ The toolkit uses **CLI delegation** instead of direct API calls:
 
 ### Agents
 
+Keys under **`agents`** are usually **roles** (`orchestrator`, `worker`, `executor`, …). The runtime also accepts **agent names** (e.g. `reviewer`, `coder`): **`AgentRouter`** merges **`agents.<role>`** first, then **`agents.<agent-name>`**, so per-agent settings override role defaults without changing every worker.
+
 Each agent binds a semantic role to a CLI tool:
 
 ```json
@@ -77,7 +79,7 @@ Each agent binds a semantic role to a CLI tool:
 **Supported CLI tools:**
 - `claude` — Claude Code CLI
 - `codex` — OpenAI Codex CLI (`codex exec`, implement/test/refactor/diagnose)
-- `codex-review` — Codex review-only path (`codex review`, used by reviewer agent in `mat_runtime`)
+- `codex-review` — Codex review-only path (`codex review`; optional for **reviewer** if you prefer Codex-only review)
 - `gemini` — Google Gemini CLI
 - `cursor` — Cursor editor CLI
 - `aider` — Aider CLI

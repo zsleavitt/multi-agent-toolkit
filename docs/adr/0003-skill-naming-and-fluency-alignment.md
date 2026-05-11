@@ -29,7 +29,7 @@ MAT skills use **domain-specific names** that describe the workflow, not generic
 ### Skill Architecture
 
 ```
-/develop <task>        → Orchestrator coordinates team (coder, tester, reviewer)
+/develop <task>        → Coder agent (Codex) implements via `codex.implement`
 /review-pr <target>    → Reviewer agent directly (matches "review" + "pr")
 /test <scope>          → Tester agent directly (matches "test")
 /diagnose <issue>      → Debugging workflow (matches "diagnos")

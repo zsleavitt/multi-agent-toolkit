@@ -118,21 +118,35 @@ class AgentRouter:
         self.agents = agents or load_agent_definitions(repo_root=self.repo_root)
         self._adapters: dict[str, CLIAdapter] = {}
 
+    def _provider_overlay(self, agent: AgentDefinition) -> dict[str, Any]:
+        """Merge MAT-16 ``agents`` entries: role defaults, then per-agent name wins."""
+        merged: dict[str, Any] = {}
+        if not self.provider_config:
+            return merged
+        agents_map = self.provider_config.agents
+        role_cfg = agents_map.get(agent.role)
+        if isinstance(role_cfg, dict):
+            merged.update(role_cfg)
+        name_cfg = agents_map.get(agent.name)
+        if isinstance(name_cfg, dict):
+            merged.update(name_cfg)
+        return merged
+
     def _get_adapter(self, agent: AgentDefinition) -> CLIAdapter:
         """Get or create CLI adapter for an agent."""
         if agent.name not in self._adapters:
-            # Check provider config for CLI overrides
+            # Check provider config for CLI overrides (role, then agent name)
             cli = agent.cli
             flags: list[str] = []
             timeout_ms = agent.timeout_ms or 300_000
 
             if self.provider_config:
-                # Look up by role in provider config
-                role_config = self.provider_config.agents.get(agent.role, {})
-                if role_config:
-                    cli = role_config.get("cli", cli)
-                    flags = role_config.get("flags", [])
-                    timeout_ms = role_config.get(
+                overlay = self._provider_overlay(agent)
+                if overlay:
+                    cli = overlay.get("cli", cli)
+                    if "flags" in overlay:
+                        flags = list(overlay.get("flags") or [])
+                    timeout_ms = overlay.get(
                         "timeout_ms",
                         self.provider_config.defaults.get("timeout_ms", timeout_ms),
                     )

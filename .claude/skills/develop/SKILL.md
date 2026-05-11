@@ -1,6 +1,6 @@
 ---
 name: develop
-description: Orchestrated development workflow — plans, implements, and coordinates the agent team. Use when implementing features, fixing bugs, or refactoring code that needs coordination across multiple agents.
+description: Implementation workflow via OpenAI Codex (coder agent). Use when implementing features, fixing bugs, or refactoring scoped tasks. For planning-only decomposition, use the plan skill.
 version: 1.0.0
 allowed-tools: Bash(python *)
 ---
@@ -31,4 +31,4 @@ Run the skill script:
 python lib/skills/develop/develop.py "$ARGUMENTS" --repo-root "$(pwd)"
 ```
 
-The orchestrator will decompose the task, route to appropriate agents (coder, tester, reviewer), and synthesize results.
+The **coder** agent runs **Codex** (`codex.implement`) against the task. Use **plan** for decomposition without implementation, and **review-pr** for Claude-based review.

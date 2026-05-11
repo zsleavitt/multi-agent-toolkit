@@ -299,6 +299,47 @@ class TestAgentRouter:
         assert response.error is not None
         assert response.error["code"] == "execution_error"
 
+    @patch("mat_runtime.router.get_adapter")
+    def test_provider_overlay_agent_name_overrides_role(
+        self, mock_get_adapter, sample_agents, sample_request
+    ):
+        """Per-agent mat-config entry overrides same-key fields from role."""
+        mock_adapter = MagicMock()
+        mock_adapter.invoke.return_value = InvocationResult(
+            ok=True,
+            stdout="ok",
+            stderr="",
+            return_code=0,
+            correlation_id=sample_request.correlation_id,
+        )
+        mock_get_adapter.return_value = mock_adapter
+
+        cfg = ProviderConfig(
+            schema_version="1.0.0",
+            agents={
+                "worker": {"cli": "codex", "flags": ["--full-auto"], "timeout_ms": 111_000},
+                "reviewer": {"cli": "claude", "flags": ["--print"], "timeout_ms": 222_000},
+            },
+            routing={},
+            defaults={"timeout_ms": 999_000},
+        )
+        router = AgentRouter(agents=sample_agents, provider_config=cfg)
+        review_req = MAT2Request(
+            schema_version="1.2.0",
+            correlation_id=sample_request.correlation_id,
+            idempotency_key=sample_request.idempotency_key,
+            op="codex.review",
+            repo_root=sample_request.repo_root,
+            instruction="review",
+            timeout_ms=sample_request.timeout_ms,
+        )
+        router.invoke("reviewer", review_req)
+
+        call_kw = mock_get_adapter.call_args.kwargs
+        assert call_kw["cli"] == "claude"
+        assert call_kw["flags"] == ["--print"]
+        assert call_kw["timeout_ms"] == 222_000
+
 
 class TestConfigIntegration:
     """Integration tests for config loading."""

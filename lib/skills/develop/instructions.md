@@ -1,6 +1,8 @@
 # Develop
 
-Initiates an orchestrated development workflow. The orchestrator plans the task, routes work to specialized agents (coder, tester, reviewer), and synthesizes results.
+Runs the **coder** agent (OpenAI **Codex** by default) with MAT-2 **`codex.implement`** on your task. This is the default path for **implementation** from `/develop` in Claude Code, Cursor, or any surface that executes the skill script.
+
+For **planning only** (no code changes), use **`/plan`**. For **code review** with **Claude Code** by default in this repository, use **`/review-pr`** (reviewer agent).
 
 ## Usage
 
@@ -11,83 +13,44 @@ Initiates an orchestrated development workflow. The orchestrator plans the task,
 ## Examples
 
 ### Implement a feature
+
 ```
 /develop Add a fibonacci function to src/utils/math.py with input validation
 ```
 
 ### Fix a bug
+
 ```
 /develop Fix the null pointer exception in UserService.getProfile when user not found
 ```
 
 ### Refactor code
+
 ```
 /develop Refactor the authentication module to use dependency injection
 ```
 
-### Add tests and implementation
-```
-/develop Implement a caching layer for the API with unit tests
-```
-
 ## How it works
 
-1. **Plan** — Orchestrator decomposes the task into work items
-2. **Route** — Work items dispatched to appropriate agents:
-   - `coder` — Implementation, refactoring, bug fixes
-   - `tester` — Test writing and validation
-   - `reviewer` — Code review (if needed)
-3. **Coordinate** — Orchestrator manages dependencies between work items
-4. **Synthesize** — Results combined into a summary
+1. The skill builds a **MAT-2** request (`op`: `codex.implement`, your instruction, `repo_root`).
+2. **`AgentRouter`** invokes the **`coder`** agent → **`CodexAdapter`** → `codex exec` (see ADR 0002, `agents/coder.md`).
+3. Output is formatted for the chat session.
 
-## When to use `/develop` vs single-agent skills
+This is a **single-agent** implementation pass, not an in-process multi-agent loop. Chain **`/plan`** → **`/develop`** → **`/review-pr`** yourself when you want that sequence.
 
-| Scenario | Use |
-|----------|-----|
-| New feature with tests | `/develop` (orchestrates coder + tester) |
-| Bug fix that needs verification | `/develop` (coder + tester) |
-| Just review an existing PR | `/review-pr` (reviewer only) |
-| Just run/write tests | `/test` (tester only) |
-| Security audit only | `/security-scan` (security only) |
+## Personalizing CLIs (MAT-16)
 
-## Error handling
-
-| Error | Behavior |
-|-------|----------|
-| Task too vague | Orchestrator asks for clarification |
-| Agent timeout | Returns partial results with status |
-| Implementation fails | Reports failure, suggests next steps |
+Copy **`mat-config.example.json`** to **`mat-config.json`** (or **`.mat/config.json`**) in the repo root. The router merges **`agents.<role>`** then **`agents.<agent-name>`**, so you can override only **`reviewer`** (e.g. switch review back to **`codex-review`**) without changing **`coder`**.
 
 ## Execution
 
 When the user invokes this skill:
 
-1. Parse the task description from the input after `/develop`
+1. Parse the task description from the input after `/develop`.
+2. Run:
 
-2. Construct a MAT-2 request with:
-   - `op`: `codex.implement` (orchestrator will re-route as needed)
-   - `instruction`: The task description
-   - `repo_root`: Current working directory
-
-3. Invoke the orchestrator agent:
    ```bash
-   python -m mat_runtime invoke --agent orchestrator --instruction "<task>" --repo-root "$(pwd)"
+   python lib/skills/develop/develop.py "$ARGUMENTS" --repo-root "$(pwd)"
    ```
 
-4. The orchestrator will:
-   - Decompose the task into work items
-   - Route each item to the appropriate agent
-   - Coordinate execution order based on dependencies
-   - Return a synthesized summary
-
-5. Present the results to the user:
-   - Summary of completed work
-   - Files modified (if any)
-   - Any follow-up recommendations
-
-## See also
-
-- `/review-pr` — Direct reviewer invocation for PR review
-- `/test` — Direct tester invocation for test writing/running
-- `/diagnose` — Debug and investigate issues
-- ADR 0003 — Skill naming conventions and fluency alignment
+3. Present the Codex result: summary, suggested follow-ups, and any errors.
