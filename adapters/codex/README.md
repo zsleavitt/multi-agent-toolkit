@@ -84,6 +84,7 @@ Review `.codex/hooks.json` and `.codex/hooks/*.py` before trusting.
 
 ## Cross-References
 
+- [`AGENTS.md`](../../AGENTS.md) — Root Codex-oriented instructions (MAT-2; complements `CLAUDE.md`)
 - [`.codex/README.md`](../../.codex/README.md) — Detailed hook configuration, JSON contract, Windows notes
 - [`adapters/claude-code/README.md`](../claude-code/README.md) — Claude Code plugin setup
 - [`adapters/cursor/README.md`](../cursor/README.md) — Cursor personal skills setup

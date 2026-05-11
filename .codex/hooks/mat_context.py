@@ -40,7 +40,7 @@ Do NOT attempt git operations directly. The orchestrator (Claude Code) issues MA
 - `CLAUDE.md` — Orchestrator contract and schema overview
 - `schemas/` — MAT-1, MAT-2, and other JSON schemas
 - `agents/*.md` — Agent role definitions
-- `AGENTS.md` — Codex-native agent instructions (if present)
+- `AGENTS.md` — Codex-native agent instructions (repo root)
 
 ### Schemas
 
