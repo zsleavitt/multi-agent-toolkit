@@ -56,7 +56,13 @@ schemas/codex-code-exec/v1/
 └── response.schema.json
 ```
 
-Operations: `codex.implement`, `codex.test`, `codex.refactor`, `codex.diagnose`, `codex.review`
+| Operation | Description |
+|-----------|-------------|
+| `codex.implement` | Write or modify code |
+| `codex.test` | Write and run tests |
+| `codex.refactor` | Restructure existing code |
+| `codex.diagnose` | Debug and root-cause analysis |
+| `codex.review` | Structured code review |
 
 The `mat_runtime` module routes MAT-2 requests to the configured worker CLI. See [`mat_runtime/`](../../mat_runtime/) and [`schemas/provider-config/v1/`](../../schemas/provider-config/v1/).
 
