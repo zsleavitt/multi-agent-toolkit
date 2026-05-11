@@ -22,6 +22,8 @@ lib/skills/                ← Shared content (source of truth)
 adapters/                  ← Supplementary tool configuration
 ├── claude-code/
 │   └── README.md          ← Claude Code setup instructions
+├── codex/
+│   └── README.md          ← Codex MAT-2 worker setup (hooks, trust model)
 ├── cursor/
 │   ├── README.md          ← Cursor skills setup (global + optional .cursorrules)
 │   └── .cursorrules       ← Optional legacy project rules snippet
@@ -44,7 +46,7 @@ adapters/                  ← Supplementary tool configuration
 |------|---------|--------------|
 | Claude Code | `.claude-plugin/plugin.json` (repo root) | See `claude-code/README.md` |
 | Cursor | `scripts/install_cursor_personal_skills.py` + personal `~/.cursor/skills/` (wired by `bin/setup`; optional `.cursorrules`) | See `cursor/README.md` |
-| Codex | `.codex/hooks.json` + `~/.codex/config.toml` feature flag | See `.codex/README.md` |
+| Codex | `.codex/hooks.json` + `~/.codex/config.toml` feature flag | See `codex/README.md` |
 | Direct CLI | None needed | Run `python lib/skills/*/*.py` directly |
 
 ## Adding New Tool Adapters
