@@ -70,3 +70,37 @@ def test_apply_user_config_idempotent(tmp_path, mod):
     snippet = "[features]\ncodex_hooks = true\n"
     mod.apply_user_config(p, snippet)
     assert mod.apply_user_config(p, snippet) == "already_enabled"
+
+
+def test_apply_user_config_skipped_explicit_false(tmp_path, mod):
+    """Respect user intent when codex_hooks is explicitly false."""
+    p = tmp_path / "config.toml"
+    p.write_text("[features]\ncodex_hooks = false\n", encoding="utf-8")
+    snippet = "[features]\ncodex_hooks = true\n"
+    assert mod.apply_user_config(p, snippet) == "skipped_explicit_false"
+    # Verify file was NOT modified
+    assert "codex_hooks = false" in p.read_text(encoding="utf-8")
+
+
+def test_apply_user_config_creates_parent_dir(tmp_path, mod):
+    """Parent directory is created if it does not exist."""
+    p = tmp_path / "subdir" / "nested" / "config.toml"
+    snippet = "[features]\ncodex_hooks = true\n"
+    assert mod.apply_user_config(p, snippet) == "created"
+    assert p.exists()
+    assert p.read_text(encoding="utf-8") == snippet
+
+
+def test_merge_noop_when_any_codex_hooks_assignment(mod):
+    """Don't double-insert if codex_hooks has any value (even unusual ones)."""
+    # Quoted value
+    body = '[features]\ncodex_hooks = "true"\n'
+    assert mod.merge_codex_hooks_into_existing(body) is None
+
+    # No spaces
+    body = "[features]\ncodex_hooks=true\n"
+    assert mod.merge_codex_hooks_into_existing(body) is None
+
+    # Other value
+    body = "[features]\ncodex_hooks = maybe\n"
+    assert mod.merge_codex_hooks_into_existing(body) is None
