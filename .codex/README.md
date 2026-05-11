@@ -122,4 +122,5 @@ All adapters point to shared content in `lib/skills/` and follow MAT-16 provider
 
 - [Codex Hooks Documentation](https://developers.openai.com/codex/hooks)
 - [Codex AGENTS.md Guide](https://developers.openai.com/codex/guides/agents-md)
+- `AGENTS.md` (repo root — Codex-oriented MAT-2 summary; complements `CLAUDE.md`)
 - `CLAUDE.md` (orchestrator contract — Codex is a MAT-2 worker, not orchestrator)
