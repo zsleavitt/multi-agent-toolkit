@@ -52,7 +52,11 @@ def main() -> int:
         print(f"Error initializing router: {e}", file=sys.stderr)
         return 1
 
+    try:
         response = router.invoke("coder", request)
+    except Exception as e:
+        print(f"Error invoking coder: {e}", file=sys.stderr)
+        return 1
 
     if args.json:
         print(response.to_json(indent=2))
