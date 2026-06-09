@@ -7,7 +7,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from mat_runtime.adapters.base import CLIAdapter, InvocationResult
+from mat_runtime.adapters.base import CLIAdapter, InvocationResult, model_from_kwargs
 
 
 @dataclass
@@ -39,7 +39,13 @@ class CodexReviewAdapter(CLIAdapter):
         **kwargs: Any,
     ) -> list[str]:
         """Argv for `codex review`; the instruction is read from process stdin, not this argv."""
-        return [self.command, *self.flags, "-"]
+        cmd = [self.command, *self.flags]
+        model = model_from_kwargs(kwargs)
+        if model:
+            # codex review uses config overrides, not --model
+            cmd.extend(["-c", f'model="{model}"'])
+        cmd.append("-")
+        return cmd
 
     def invoke(
         self,
@@ -53,7 +59,11 @@ class CodexReviewAdapter(CLIAdapter):
         full_prompt = prompt
         if system_prompt:
             full_prompt = f"{system_prompt}\n\n---\n\nTask: {prompt}"
-        cmd = [self.command, *self.flags, "-"]
+        cmd = self.build_command(
+            prompt,
+            system_prompt=system_prompt,
+            **kwargs,
+        )
         correlation_id = correlation_id or str(uuid.uuid4())
         cwd = working_dir or self.working_dir
         timeout_sec = (timeout_ms or self.timeout_ms) / 1000.0

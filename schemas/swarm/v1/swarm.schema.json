@@ -72,6 +72,20 @@
   "else": {
     "properties": { "consensus_strategy": { "enum": ["first-complete", "majority-vote", "return-all"] } }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "model_matrix": { "type": "object", "minProperties": 1 } },
+        "required": ["model_matrix"]
+      },
+      "then": {
+        "properties": {
+          "schema_version": { "const": "1.1.0" },
+          "dispatch_mode": { "const": "parallel_model" }
+        }
+      }
+    }
+  ],
   "$defs": {
     "schema_version": {
       "type": "string",

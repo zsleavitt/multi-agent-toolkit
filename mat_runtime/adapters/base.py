@@ -11,6 +11,14 @@ from pathlib import Path
 from typing import Any
 
 
+def model_from_kwargs(kwargs: Any) -> str | None:
+    """Extract an optional model hint forwarded from swarm model_matrix."""
+    model = kwargs.get("model")
+    if isinstance(model, str) and model.strip():
+        return model
+    return None
+
+
 @dataclass
 class InvocationResult:
     """Result of a CLI invocation."""

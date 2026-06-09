@@ -7,6 +7,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+_MODEL_MATRIX_VALUE_MAX_LENGTH = 256
+
 
 @dataclass
 class ConstraintsConfig:
@@ -126,6 +128,10 @@ def load_swarm_definition(path: Path | str) -> SwarmDefinition:
     if raw_matrix is not None:
         if not isinstance(raw_matrix, dict):
             raise ValueError("model_matrix must be an object mapping candidate names to model strings")
+        if raw_matrix and dispatch_mode != "parallel_model":
+            raise ValueError(
+                "model_matrix is only valid for dispatch_mode 'parallel_model'."
+            )
         for key, value in raw_matrix.items():
             if not isinstance(key, str) or not isinstance(value, str):
                 raise ValueError("model_matrix keys and values must be strings")
@@ -136,6 +142,10 @@ def load_swarm_definition(path: Path | str) -> SwarmDefinition:
                 )
             if not value.strip():
                 raise ValueError(f"model_matrix value for '{key}' must be a non-empty string")
+            if len(value) > _MODEL_MATRIX_VALUE_MAX_LENGTH:
+                raise ValueError(
+                    f"model_matrix value for '{key}' exceeds {_MODEL_MATRIX_VALUE_MAX_LENGTH} characters"
+                )
             model_matrix[key] = value
         if model_matrix and schema_version != "1.1.0":
             raise ValueError(

@@ -247,6 +247,38 @@ class TestLoadSwarmDefinition:
 
         path.unlink()
 
+    def test_model_matrix_rejected_for_variant_mode(self):
+        """MAT-54: model_matrix is only valid for parallel_model dispatch."""
+        path = _write_definition({
+            "schema_version": "1.1.0",
+            "name": "variant-matrix",
+            "dispatch_mode": "variant",
+            "candidates": ["coder", "reviewer"],
+            "consensus_strategy": "return-all",
+            "model_matrix": {"coder": "sonnet"},
+        })
+
+        with pytest.raises(ValueError, match="only valid for dispatch_mode 'parallel_model'"):
+            load_swarm_definition(path)
+
+        path.unlink()
+
+    def test_model_matrix_value_max_length(self):
+        """MAT-54: model_matrix values are capped at 256 characters."""
+        path = _write_definition({
+            "schema_version": "1.1.0",
+            "name": "long-model",
+            "dispatch_mode": "parallel_model",
+            "candidates": ["claude", "codex"],
+            "consensus_strategy": "return-all",
+            "model_matrix": {"claude": "x" * 257},
+        })
+
+        with pytest.raises(ValueError, match="exceeds 256 characters"):
+            load_swarm_definition(path)
+
+        path.unlink()
+
     def test_load_model_matrix_1_1_0(self):
         """MAT-54: load definition with per-candidate model hints."""
         path = _write_definition({

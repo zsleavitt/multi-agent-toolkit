@@ -100,6 +100,11 @@ def _semantic_validation(instance: dict, path: Path, known_agents: set[str]) -> 
     # MAT-54: model_matrix keys must be swarm candidates; non-empty matrix needs 1.1.0
     model_matrix = instance.get("model_matrix")
     if isinstance(model_matrix, dict) and model_matrix:
+        if dispatch_mode != "parallel_model":
+            raise ValueError(
+                f"model_matrix is only valid for dispatch_mode 'parallel_model', "
+                f"not '{dispatch_mode}'. ({path})"
+            )
         schema_version = instance.get("schema_version", "1.0.0")
         if schema_version != "1.1.0":
             raise ValueError(

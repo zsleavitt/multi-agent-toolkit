@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from mat_runtime.adapters.base import CLIAdapter, InvocationResult
+from mat_runtime.adapters.base import CLIAdapter, InvocationResult, model_from_kwargs
 
 
 @dataclass
@@ -33,6 +33,10 @@ class ClaudeAdapter(CLIAdapter):
         # Add system prompt if provided
         if system_prompt:
             cmd.extend(["--system-prompt", system_prompt])
+
+        model = model_from_kwargs(kwargs)
+        if model:
+            cmd.extend(["--model", model])
 
         # Add the prompt
         cmd.append(prompt)

@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from mat_runtime.adapters.base import CLIAdapter, InvocationResult
+from mat_runtime.adapters.base import CLIAdapter, InvocationResult, model_from_kwargs
 
 
 @dataclass
@@ -30,6 +30,10 @@ class CodexAdapter(CLIAdapter):
         """Build codex CLI command."""
         # Use 'codex exec' for non-interactive execution
         cmd = [self.command, "exec", *self.flags]
+
+        model = model_from_kwargs(kwargs)
+        if model:
+            cmd.extend(["--model", model])
 
         # Combine system prompt with the task prompt
         full_prompt = prompt
