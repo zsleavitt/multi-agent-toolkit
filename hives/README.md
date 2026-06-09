@@ -49,6 +49,19 @@ source .venv/bin/activate
 python scripts/validate_hive.py
 ```
 
+## Runtime
+
+The Hive runtime lives in `mat_runtime/hive/`. It loads definitions from this directory, resolves crews via `CrewRegistry`, and routes tasks across crew stages with handoff rules.
+
+```bash
+python -m mat_runtime invoke-hive \
+  --hive dev-pipeline \
+  --instruction "Implement feature X" \
+  --repo-root .
+```
+
+Design spec: [Hive Runtime Design](../docs/superpowers/specs/2026-04-22-hive-runtime-design.md)
+
 ## See Also
 
 - [Hive Schema Spec](../docs/superpowers/specs/2026-04-21-hive-schema-design.md)

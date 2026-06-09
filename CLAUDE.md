@@ -23,6 +23,7 @@ Use this file in the **Claude Code** session that **orchestrates** work across w
 - **MAT-42** — `schemas/crew/v1/` — **Crew definition schema**: named agent collections with routing, constraints, hooks, and communication. Crews are defined in `crews/*.json`.
 - **MAT-45** — `schemas/swarm/v1/` — **Swarm definition schema**: parallel dispatch to multiple candidates with consensus strategies. Swarms are defined in `swarms/*.json`.
 - **MAT-49** — `schemas/hive/v1/` — **Hive definition schema**: top-level orchestrator managing multiple Crews with inter-crew routing, dependency sequencing, and global resource limits. Hives are defined in `hives/*.json`.
+- **MAT-50** — `mat_runtime/hive/` — **Hive runtime**: multi-crew task router and session manager; loads hive definitions, routes tasks via `CrewRegistry`, evaluates handoff rules, enforces hive-wide limits. CLI: `python -m mat_runtime invoke-hive`.
 - **Registry** — `config/schema-registry.json` — on-disk bundle paths; env overrides documented in each bundle’s README.
 
 Validation:

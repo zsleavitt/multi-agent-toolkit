@@ -24,6 +24,14 @@ from mat_runtime.swarm import (
     SwarmDefinition,
     load_swarm_definition,
 )
+from mat_runtime.hive import (
+    Hive,
+    HiveTask,
+    HiveResult,
+    HiveDefinition,
+    HiveRegistry,
+    load_hive_definition,
+)
 
 __all__ = [
     "AgentRouter",
@@ -44,5 +52,12 @@ __all__ = [
     "CandidateResult",
     "SwarmDefinition",
     "load_swarm_definition",
+    # Hive
+    "Hive",
+    "HiveTask",
+    "HiveResult",
+    "HiveDefinition",
+    "HiveRegistry",
+    "load_hive_definition",
 ]
 __version__ = "0.1.0"
