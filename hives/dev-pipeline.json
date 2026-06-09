@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "name": "dev-pipeline",
+  "description": "Implement then review using dev and review crews",
+  "shared_goal": "Ship features with TDD and security review",
+  "crews": [
+    { "ref": "dev-crew" },
+    {
+      "ref": "review-crew",
+      "depends_on": ["dev-crew"],
+      "role": "review"
+    }
+  ],
+  "global_config": {
+    "max_concurrent_crews": 2,
+    "timeout_ms": 3600000,
+    "max_tasks": 50,
+    "quotas": {
+      "max_agent_invocations": 200
+    }
+  },
+  "inter_crew_routing": {
+    "strategy": "sequential",
+    "default_handoff": "on_success",
+    "rules": [
+      {
+        "from": "dev-crew",
+        "to": "review-crew",
+        "when": "task_complete",
+        "condition": "success"
+      }
+    ]
+  }
+}

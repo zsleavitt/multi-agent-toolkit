@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mat.dev/schemas/hive/v1/hive.schema.json",
+  "title": "Hive definition (MAT-49)",
+  "description": "Schema for defining a top-level orchestrator that manages multiple named Crews with inter-crew routing and global resource limits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "crews"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/schema_version" },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique hive identifier (lowercase alphanumeric with hyphens)"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 512,
+      "description": "Human-readable description of the hive's purpose"
+    },
+    "shared_goal": {
+      "type": "string",
+      "maxLength": 2048,
+      "description": "Goal text injected into crew context when dispatched by this Hive"
+    },
+    "crews": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/crew_entry" },
+      "description": "Named crew references managed by this Hive"
+    },
+    "global_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_concurrent_crews": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum crews running simultaneously"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 86400000,
+          "description": "Hive-level timeout (1s to 24h)"
+        },
+        "max_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum tasks before hive auto-terminates"
+        },
+        "quotas": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_agent_invocations": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap on total MAT-2 invocations across all crews"
+            }
+          }
+        }
+      }
+    },
+    "inter_crew_routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["sequential", "capability", "dependency", "manual"],
+          "default": "sequential",
+          "description": "How tasks and handoffs flow between crews"
+        },
+        "default_handoff": {
+          "type": "string",
+          "enum": ["on_success", "always", "never"],
+          "default": "on_success",
+          "description": "Default handoff behavior when no explicit rule matches"
+        },
+        "rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/routing_rule" },
+          "description": "Explicit inter-crew routing rules"
+        }
+      },
+      "if": {
+        "properties": { "strategy": { "const": "manual" } },
+        "required": ["strategy"]
+      },
+      "then": {
+        "required": ["rules"]
+      }
+    }
+  },
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version. Bump when hive definition shape changes."
+    },
+    "crew_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Crew name reference (must exist as crews/{ref}.json)"
+    },
+    "crew_entry": {
+      "type": "object",
+      "required": ["ref"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": { "$ref": "#/$defs/crew_ref" },
+        "depends_on": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/crew_ref" },
+          "description": "Crew refs that must complete before this crew starts"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Optional label for routing rules (e.g. review, implement)"
+        }
+      }
+    },
+    "routing_rule": {
+      "type": "object",
+      "required": ["from", "to", "when"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "$ref": "#/$defs/crew_ref" },
+        "to": { "$ref": "#/$defs/crew_ref" },
+        "when": {
+          "type": "string",
+          "enum": ["task_complete", "crew_complete", "error"],
+          "description": "Event that triggers this routing rule"
+        },
+        "condition": {
+          "type": "string",
+          "enum": ["success", "failure", "any"],
+          "default": "success",
+          "description": "Outcome condition for the handoff"
+        }
+      }
+    }
+  }
+}

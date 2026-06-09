@@ -1,0 +1,15 @@
+{
+  "bundle_id": "hive@v1",
+  "title": "MAT Hive Definition — bundle manifest",
+  "description": "Machine-readable index for MAT-49. Defines the schema for Hive top-level orchestration.",
+  "schema_version": "1.0.0",
+  "hive_schema": "./hive.schema.json",
+  "notes": [
+    "Hive definitions are JSON files in the hives/ directory (parallel to crews/ and swarms/).",
+    "crews[].ref must resolve to crews/{ref}.json on disk.",
+    "depends_on defines a DAG of crew sequencing; circular dependencies are rejected by validate_hive.py.",
+    "inter_crew_routing.strategy 'manual' requires explicit rules array.",
+    "global_config quotas are parsed in v1; enforcement is deferred to MAT-50 runtime.",
+    "Swarm integration in Hive is deferred to v2."
+  ]
+}

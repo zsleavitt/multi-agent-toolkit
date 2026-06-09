@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "name": "circular-hive",
+  "description": "Circular depends_on — caught by semantic validation",
+  "crews": [
+    {
+      "ref": "dev-crew",
+      "depends_on": ["review-crew"]
+    },
+    {
+      "ref": "review-crew",
+      "depends_on": ["dev-crew"]
+    }
+  ]
+}
