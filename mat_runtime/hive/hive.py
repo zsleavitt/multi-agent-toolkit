@@ -83,6 +83,7 @@ class Hive:
         )
         self._hooks = HookRunner()
         self._task_count = 0
+        self._task_count_lock = asyncio.Lock()
         self._started = False
         self._shutdown = False
 
@@ -147,26 +148,26 @@ class Hive:
             await self._semaphore.acquire()
 
         try:
-            if config.max_tasks and self._task_count >= config.max_tasks:
-                await self._hooks.run(
-                    "on_error",
-                    {
-                        "hive": self._definition.name,
-                        "error": "max_tasks_exceeded",
-                        "task_id": task.correlation_id,
-                    },
-                )
-                return self._error_result(
-                    task,
-                    start_time,
-                    [],
-                    code="max_tasks_exceeded",
-                    message=(
-                        f"Hive reached max_tasks limit ({config.max_tasks})"
-                    ),
-                )
-
-            self._task_count += 1
+            async with self._task_count_lock:
+                if config.max_tasks and self._task_count >= config.max_tasks:
+                    await self._hooks.run(
+                        "on_error",
+                        {
+                            "hive": self._definition.name,
+                            "error": "max_tasks_exceeded",
+                            "task_id": task.correlation_id,
+                        },
+                    )
+                    return self._error_result(
+                        task,
+                        start_time,
+                        [],
+                        code="max_tasks_exceeded",
+                        message=(
+                            f"Hive reached max_tasks limit ({config.max_tasks})"
+                        ),
+                    )
+                self._task_count += 1
             await self._hooks.run(
                 "on_task_assigned",
                 {"task_id": task.correlation_id, "hive": self._definition.name},
@@ -295,12 +296,24 @@ class Hive:
         task: HiveTask,
         session: HiveSession,
     ) -> CrewStageResult:
+        from mat_runtime.crew.types import CrewResult
+
         stage_start = time.monotonic()
         crew = self._crew_registry.get_crew(crew_ref)
         await crew.start()
         try:
             crew_task = self._build_crew_task(task, session)
-            result = await crew.submit(crew_task)
+            try:
+                result = await crew.submit(crew_task)
+            except Exception as exc:
+                result = CrewResult(
+                    ok=False,
+                    agent_used="",
+                    output=None,
+                    correlation_id=task.correlation_id,
+                    duration_ms=int((time.monotonic() - stage_start) * 1000),
+                    error={"code": "crew_exception", "message": str(exc)},
+                )
         finally:
             await crew.shutdown()
 

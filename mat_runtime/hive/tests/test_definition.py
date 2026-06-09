@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -16,11 +15,18 @@ from mat_runtime.hive.definition import (
 )
 
 
-def _write_definition(data: dict, crews: dict[str, dict] | None = None) -> Path:
-    tmp_dir = Path(tempfile.mkdtemp())
+@pytest.fixture
+def tmp_repo(tmp_path: Path) -> Path:
+    """Provide a temporary directory for hive test fixtures."""
+    return tmp_path
+
+
+def _write_definition(
+    tmp_dir: Path, data: dict, crews: dict[str, dict] | None = None
+) -> Path:
     if crews:
         crews_dir = tmp_dir / "crews"
-        crews_dir.mkdir()
+        crews_dir.mkdir(exist_ok=True)
         for name, crew_data in crews.items():
             (crews_dir / f"{name}.json").write_text(
                 json.dumps(crew_data),
@@ -32,8 +38,9 @@ def _write_definition(data: dict, crews: dict[str, dict] | None = None) -> Path:
 
 
 class TestLoadHiveDefinition:
-    def test_load_dev_pipeline_shape(self):
+    def test_load_dev_pipeline_shape(self, tmp_repo: Path):
         path = _write_definition(
+            tmp_repo,
             {
                 "schema_version": "1.0.0",
                 "name": "dev-pipeline",
@@ -87,8 +94,9 @@ class TestLoadHiveDefinition:
         assert definition.inter_crew_routing.strategy == "sequential"
         assert len(definition.inter_crew_routing.rules) == 1
 
-    def test_reject_unknown_crew_ref(self):
+    def test_reject_unknown_crew_ref(self, tmp_repo: Path):
         path = _write_definition(
+            tmp_repo,
             {
                 "name": "bad-hive",
                 "crews": [{"ref": "missing-crew"}],
@@ -101,8 +109,9 @@ class TestLoadHiveDefinition:
         with pytest.raises(ValueError, match="Unknown crew ref 'missing-crew'"):
             load_hive_definition(path, repo_root=path.parent)
 
-    def test_reject_circular_depends_on(self):
+    def test_reject_circular_depends_on(self, tmp_repo: Path):
         path = _write_definition(
+            tmp_repo,
             {
                 "name": "cycle-hive",
                 "crews": [
@@ -119,8 +128,9 @@ class TestLoadHiveDefinition:
         with pytest.raises(ValueError, match="Circular depends_on"):
             load_hive_definition(path, repo_root=path.parent)
 
-    def test_reject_manual_without_rules(self):
+    def test_reject_manual_without_rules(self, tmp_repo: Path):
         path = _write_definition(
+            tmp_repo,
             {
                 "name": "manual-hive",
                 "crews": [{"ref": "dev-crew"}],

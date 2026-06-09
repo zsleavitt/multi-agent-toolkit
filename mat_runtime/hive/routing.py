@@ -91,7 +91,13 @@ class CapabilityStrategy:
 
 
 class ManualStrategy:
-    """Use explicit routing rules to determine reachable crews."""
+    """
+    Use explicit routing rules to determine reachable crews.
+
+    Note: Returns an empty list if routing.rules is empty. This should not
+    occur in practice since schema validation requires at least one rule
+    for manual strategy, but programmatic construction could bypass this.
+    """
 
     def get_execution_order(
         self,
