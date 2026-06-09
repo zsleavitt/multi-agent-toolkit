@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "name": "minimal-hive",
+  "description": "Single-crew hive for simple workflows",
+  "crews": [
+    { "ref": "dev-crew" }
+  ]
+}

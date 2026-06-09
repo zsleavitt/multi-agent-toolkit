@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "name": "bad-ref-hive",
+  "description": "Invalid crew ref pattern — caught by schema",
+  "crews": [
+    { "ref": "Dev-Crew" }
+  ]
+}
