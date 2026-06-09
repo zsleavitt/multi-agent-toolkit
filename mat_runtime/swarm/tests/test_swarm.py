@@ -116,6 +116,39 @@ class TestSwarmDispatch:
         assert result.output == "codex output"
         assert len(result.candidate_results) == 2
 
+    def test_parallel_model_passes_model_matrix_to_invoke(self, tmp_path: Path) -> None:
+        """MAT-54: model_matrix entries are forwarded as model= to adapter.invoke."""
+        path = _write_definition({
+            "schema_version": "1.1.0",
+            "name": "matrix-swarm",
+            "dispatch_mode": "parallel_model",
+            "candidates": ["claude", "codex"],
+            "consensus_strategy": "return-all",
+            "model_matrix": {"claude": "sonnet", "codex": "gpt-4.1"},
+        })
+
+        try:
+            swarm = Swarm(definition_path=path)
+            mock_claude = MagicMock()
+            mock_codex = MagicMock()
+            mock_claude.invoke = MagicMock(
+                return_value=_make_invocation_result(ok=True, stdout="a")
+            )
+            mock_codex.invoke = MagicMock(
+                return_value=_make_invocation_result(ok=True, stdout="b")
+            )
+            swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+            task = SwarmTask(instruction="do thing", op="implement")
+            asyncio.run(swarm.dispatch(task))
+
+            claude_kw = mock_claude.invoke.call_args.kwargs
+            codex_kw = mock_codex.invoke.call_args.kwargs
+            assert claude_kw.get("model") == "sonnet"
+            assert codex_kw.get("model") == "gpt-4.1"
+        finally:
+            path.unlink()
+
     def test_first_complete_skips_failures(self, swarm_path: Path):
         """First-complete skips failed candidates."""
         swarm = Swarm(definition_path=swarm_path)

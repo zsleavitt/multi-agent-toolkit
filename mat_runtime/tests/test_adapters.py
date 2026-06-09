@@ -3,7 +3,13 @@
 
 from __future__ import annotations
 
-from mat_runtime.adapters import CodexAdapter, CodexReviewAdapter, get_adapter
+from mat_runtime.adapters import (
+    ClaudeAdapter,
+    CodexAdapter,
+    CodexReviewAdapter,
+    GeminiAdapter,
+    get_adapter,
+)
 
 
 def test_codex_adapter_invokes_codex_exec() -> None:
@@ -27,6 +33,39 @@ def test_codex_review_adapter_invokes_npx_review_stdin() -> None:
         "review",
         "-",
     ]
+
+
+def test_claude_adapter_forwards_model_hint() -> None:
+    cmd = ClaudeAdapter().build_command("task", model="sonnet")
+    assert "--model" in cmd
+    assert cmd[cmd.index("--model") + 1] == "sonnet"
+
+
+def test_codex_adapter_forwards_model_hint() -> None:
+    cmd = CodexAdapter().build_command("task", model="gpt-4.1")
+    assert cmd[:3] == ["codex", "exec", "--full-auto"]
+    assert "--model" in cmd
+    assert cmd[cmd.index("--model") + 1] == "gpt-4.1"
+
+
+def test_codex_review_adapter_forwards_model_hint_via_config() -> None:
+    cmd = CodexReviewAdapter().build_command("review this", model="gpt-4.1")
+    assert cmd[:6] == [
+        "npx",
+        "--yes",
+        "--package=@openai/codex",
+        "--",
+        "codex",
+        "review",
+    ]
+    assert cmd[-3:-1] == ["-c", 'model="gpt-4.1"']
+    assert cmd[-1] == "-"
+
+
+def test_gemini_adapter_forwards_model_hint() -> None:
+    cmd = GeminiAdapter().build_command("task", model="gemini-2.0-flash")
+    assert "--model" in cmd
+    assert cmd[cmd.index("--model") + 1] == "gemini-2.0-flash"
 
 
 def test_get_adapter_drops_empty_flags_to_keep_defaults() -> None:

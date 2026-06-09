@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from mat_runtime.adapters.base import CLIAdapter, InvocationResult
+from mat_runtime.adapters.base import CLIAdapter, InvocationResult, model_from_kwargs
 
 
 @dataclass
@@ -27,6 +27,10 @@ class GeminiAdapter(CLIAdapter):
     ) -> list[str]:
         """Build gemini CLI command."""
         cmd = [self.command, *self.flags]
+
+        model = model_from_kwargs(kwargs)
+        if model:
+            cmd.extend(["--model", model])
 
         # Combine system prompt with task prompt
         full_prompt = prompt
