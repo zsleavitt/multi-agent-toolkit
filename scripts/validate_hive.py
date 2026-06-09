@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import deque
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -119,10 +120,10 @@ def _check_no_cycles(crews: list[dict], path: Path) -> None:
             if dep in dependents:
                 dependents[dep].append(ref)
 
-    queue = [ref for ref, degree in in_degree.items() if degree == 0]
+    queue = deque(ref for ref, degree in in_degree.items() if degree == 0)
     visited = 0
     while queue:
-        node = queue.pop(0)
+        node = queue.popleft()
         visited += 1
         for child in dependents[node]:
             in_degree[child] -= 1

@@ -68,3 +68,21 @@ def test_invalid_examples_fail_schema_validation() -> None:
         instance = _load(INVALID_DIR / name)
         errors = list(validator.iter_errors(instance))
         assert errors, f"Expected schema failure for {name}"
+
+
+def test_duplicate_crew_refs_fails() -> None:
+    instance = _load(INVALID_DIR / "duplicate-crew-refs.json")
+    known = validate_hive._load_known_crew_refs()
+    with pytest.raises(ValueError, match="Duplicate crew ref"):
+        validate_hive._semantic_validation(
+            instance, INVALID_DIR / "duplicate-crew-refs.json", known
+        )
+
+
+def test_invalid_routing_rule_fails() -> None:
+    instance = _load(INVALID_DIR / "invalid-routing-rule.json")
+    known = validate_hive._load_known_crew_refs()
+    with pytest.raises(ValueError, match="inter_crew_routing.rules to 'nonexistent-crew'"):
+        validate_hive._semantic_validation(
+            instance, INVALID_DIR / "invalid-routing-rule.json", known
+        )

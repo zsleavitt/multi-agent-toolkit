@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "name": "dup-refs-hive",
+  "crews": [
+    { "ref": "dev-crew" },
+    { "ref": "dev-crew" }
+  ]
+}
