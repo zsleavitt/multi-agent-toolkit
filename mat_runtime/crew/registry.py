@@ -126,9 +126,7 @@ def definition_to_dict(definition: CrewDefinition) -> dict:
     if definition.shared_goal:
         data["shared_goal"] = definition.shared_goal
 
-    routing = _routing_to_json(definition.routing)
-    if routing:
-        data["routing"] = routing
+    data["routing"] = _routing_to_json(definition.routing)
 
     constraints = _constraints_to_json(definition.constraints)
     if constraints:
@@ -151,6 +149,10 @@ class CrewRegistry:
 
     Runtime mutations update in-memory definitions only. Call ``save()`` to
     persist changes back to ``crews/{name}.json``.
+
+    Note: This class is not thread-safe. Concurrent calls to ``add_agent``,
+    ``remove_agent``, or ``save`` from multiple threads may cause race conditions.
+    Use external synchronization if concurrent access is required.
     """
 
     def __init__(

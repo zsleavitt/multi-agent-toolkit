@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -220,3 +220,15 @@ class TestCrewRegistrySave:
         assert data["name"] == "dev-crew"
         assert isinstance(data["agents"][2], dict)
         assert data["agents"][2]["name"] == "reviewer"
+
+    def test_save_cleans_up_temp_on_write_failure(
+        self,
+        registry: CrewRegistry,
+        crews_dir: Path,
+    ) -> None:
+        with patch.object(Path, "write_text", side_effect=IOError("disk full")):
+            with pytest.raises(IOError, match="disk full"):
+                registry.save("alpha-crew")
+
+        temp_files = list(crews_dir.glob(".alpha-crew.*.json.tmp"))
+        assert temp_files == [], "Temp file should be cleaned up on failure"

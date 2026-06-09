@@ -90,8 +90,8 @@ class Crew:
         elif definition_path is not None:
             # Auto-detect repo root by walking up from definition file
             self._repo_root = _find_repo_root(Path(definition_path).parent)
-        elif definition.source_path is not None:
-            self._repo_root = _find_repo_root(definition.source_path.parent)
+        elif self._definition.source_path is not None:
+            self._repo_root = _find_repo_root(self._definition.source_path.parent)
         else:
             self._repo_root = Path(".").resolve()
 
