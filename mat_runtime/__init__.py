@@ -13,6 +13,7 @@ from mat_runtime.crew import (
     CrewTask,
     CrewResult,
     CrewDefinition,
+    CrewRegistry,
     load_crew_definition,
 )
 from mat_runtime.swarm import (
@@ -34,6 +35,7 @@ __all__ = [
     "CrewTask",
     "CrewResult",
     "CrewDefinition",
+    "CrewRegistry",
     "load_crew_definition",
     # Swarm
     "Swarm",

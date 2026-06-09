@@ -59,27 +59,41 @@ class Crew:
 
     def __init__(
         self,
-        definition_path: str | Path,
+        definition_path: str | Path | None = None,
+        *,
+        definition: CrewDefinition | None = None,
         repo_root: str | Path | None = None,
         router: AgentRouter | None = None,
     ):
         """
-        Initialize a Crew from a definition file.
+        Initialize a Crew from a definition file or in-memory definition.
 
         Args:
             definition_path: Path to the crew definition JSON file.
+            definition: Pre-loaded crew definition (optional).
             repo_root: Repository root. Defaults to definition file's parent.
             router: AgentRouter instance. Created if not provided.
 
         Raises:
-            ValueError: If any referenced agent is unknown.
+            ValueError: If any referenced agent is unknown, or neither
+                definition_path nor definition is provided.
         """
-        self._definition = load_crew_definition(definition_path)
+        if definition is not None:
+            self._definition = definition
+        elif definition_path is not None:
+            self._definition = load_crew_definition(definition_path)
+        else:
+            raise ValueError("Either definition_path or definition must be provided")
+
         if repo_root:
             self._repo_root = Path(repo_root).resolve()
-        else:
+        elif definition_path is not None:
             # Auto-detect repo root by walking up from definition file
             self._repo_root = _find_repo_root(Path(definition_path).parent)
+        elif self._definition.source_path is not None:
+            self._repo_root = _find_repo_root(self._definition.source_path.parent)
+        else:
+            self._repo_root = Path(".").resolve()
 
         # Initialize router and validate agents exist
         self._router = router or AgentRouter(repo_root=self._repo_root)
