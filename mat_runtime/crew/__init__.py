@@ -27,6 +27,7 @@ from mat_runtime.crew.routing import (
     create_routing_strategy,
 )
 from mat_runtime.crew.crew import Crew
+from mat_runtime.crew.registry import CrewRegistry
 
 __all__ = [
     # Types
@@ -58,4 +59,5 @@ __all__ = [
     "create_routing_strategy",
     # Crew
     "Crew",
+    "CrewRegistry",
 ]

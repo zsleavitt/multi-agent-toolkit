@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "name": "review-crew",
+  "description": "Focused review team for code quality and security analysis",
+  "shared_goal": "Review changes for correctness, maintainability, and security",
+  "agents": [
+    "coder",
+    "reviewer",
+    {
+      "name": "security",
+      "timeout_ms": 180000,
+      "priority": 75,
+      "required_capabilities": ["security"]
+    }
+  ],
+  "routing": {
+    "strategy": "capability",
+    "match_on": ["domain", "tags"],
+    "fallback": "priority",
+    "task_assignment": {
+      "allow_reassignment": false,
+      "prefer_idle": true
+    }
+  },
+  "constraints": {
+    "max_concurrent_agents": 2,
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_ms": 1000
+    }
+  }
+}
