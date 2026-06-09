@@ -192,6 +192,95 @@ def cmd_invoke_swarm(args: argparse.Namespace) -> int:
     return asyncio.run(cmd_invoke_swarm_async(args))
 
 
+def _resolve_hive_path(repo_root: Path, hive: str) -> Path:
+    """Resolve hive name or path to a definition file."""
+    candidate = Path(hive)
+    if candidate.is_file():
+        return candidate.resolve()
+
+    named = repo_root / "hives" / f"{hive}.json"
+    if named.is_file():
+        return named.resolve()
+
+    if candidate.suffix == ".json" and (repo_root / "hives" / candidate.name).is_file():
+        return (repo_root / "hives" / candidate.name).resolve()
+
+    raise FileNotFoundError(
+        f"Hive definition not found for '{hive}'. "
+        f"Expected hives/{hive}.json under {repo_root}"
+    )
+
+
+async def cmd_invoke_hive_async(args: argparse.Namespace) -> int:
+    """Handle the invoke-hive command (async implementation)."""
+    from mat_runtime.hive import Hive, HiveTask
+
+    repo_root = (args.repo_root or Path.cwd()).resolve()
+    hive_path = _resolve_hive_path(repo_root, args.hive)
+
+    hive = Hive(
+        definition_path=hive_path,
+        repo_root=repo_root,
+    )
+
+    await hive.start()
+
+    try:
+        task_kwargs: dict = {
+            "instruction": args.instruction,
+            "op": args.op,
+            "scope_paths": args.scope_paths or [],
+            "timeout_ms": args.timeout_ms,
+        }
+        if args.correlation_id:
+            task_kwargs["correlation_id"] = args.correlation_id
+        if args.role:
+            task_kwargs["role"] = args.role
+
+        task = HiveTask(**task_kwargs)
+
+        result = await hive.submit(task)
+
+        output = {
+            "ok": result.ok,
+            "correlation_id": result.correlation_id,
+            "final_crew": result.final_crew,
+            "total_duration_ms": result.total_duration_ms,
+            "agent_invocations": result.agent_invocations,
+            "stages": [
+                {
+                    "crew_ref": stage.crew_ref,
+                    "ok": stage.ok,
+                    "duration_ms": stage.duration_ms,
+                    "agent_used": stage.crew_result.agent_used,
+                }
+                for stage in result.stages
+            ],
+        }
+        if result.ok:
+            if result.stages:
+                output["output"] = result.stages[-1].crew_result.output
+        else:
+            output["error"] = result.error or (
+                result.stages[-1].crew_result.error if result.stages else None
+            )
+
+        print(json.dumps(output, indent=2 if args.pretty else None))
+        return 0 if result.ok else 1
+
+    finally:
+        await hive.shutdown()
+
+
+def cmd_invoke_hive(args: argparse.Namespace) -> int:
+    """Handle the invoke-hive command."""
+    try:
+        return asyncio.run(cmd_invoke_hive_async(args))
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+
 def cmd_smoke(args: argparse.Namespace) -> int:
     """Handle the smoke command — adapter preflight; optional real MAT-2 with MAT_SMOKE_REAL_CLI=1."""
     from mat_runtime.smoke import SMOKE_INSTRUCTION, run_smoke
@@ -371,6 +460,56 @@ def main() -> int:
         help="Pretty-print JSON output (default: true)",
     )
     invoke_swarm_parser.set_defaults(func=cmd_invoke_swarm)
+
+    # invoke-hive command
+    invoke_hive_parser = subparsers.add_parser(
+        "invoke-hive", help="Submit a task to a hive"
+    )
+    invoke_hive_parser.add_argument(
+        "--hive",
+        required=True,
+        help="Hive name (hives/{name}.json) or path to hive definition JSON",
+    )
+    invoke_hive_parser.add_argument(
+        "--instruction",
+        "-i",
+        required=True,
+        help="Task instruction",
+    )
+    invoke_hive_parser.add_argument(
+        "--op",
+        "-o",
+        default="codex.implement",
+        help="Operation (default: codex.implement)",
+    )
+    invoke_hive_parser.add_argument(
+        "--role",
+        help="Crew role hint for capability routing",
+    )
+    invoke_hive_parser.add_argument(
+        "--correlation-id",
+        help="Correlation ID for session threading",
+    )
+    invoke_hive_parser.add_argument(
+        "--scope-paths",
+        "-s",
+        nargs="*",
+        help="Scope paths",
+    )
+    invoke_hive_parser.add_argument(
+        "--timeout-ms",
+        "-t",
+        type=int,
+        help="Task timeout in milliseconds",
+    )
+    invoke_hive_parser.add_argument(
+        "--pretty",
+        "-p",
+        action="store_true",
+        default=True,
+        help="Pretty-print JSON output (default: true)",
+    )
+    invoke_hive_parser.set_defaults(func=cmd_invoke_hive)
 
     # smoke — preflight and optional live MAT-2 checks (see docs/adr/0005-smoke-cli-verification.md)
     smoke_parser = subparsers.add_parser(
