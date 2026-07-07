@@ -64,6 +64,8 @@ class SwarmBackedRouter(AgentRouter):
             swarm_path = self._swarm_agents[agent_name]
             swarm = Swarm(definition_path=swarm_path, repo_root=self.repo_root)
             if self._adapter_factory is not None:
+                # _adapters is the internal adapter registry; patched here as a
+                # test seam since no public injection API exists yet.
                 swarm._adapters = self._adapter_factory(swarm)
             self._swarms[agent_name] = swarm
         return self._swarms[agent_name]
@@ -104,6 +106,9 @@ class SwarmBackedRouter(AgentRouter):
         agent_name: str,
         request: MAT2Request | dict | str,
     ) -> MAT2Response:
+        # Crew dispatches invoke() via asyncio.to_thread(), so this always runs
+        # in a worker thread — asyncio.run() is safe here (no running event loop
+        # in the thread).
         if isinstance(request, str):
             req = MAT2Request.from_json(request)
         elif isinstance(request, dict):
@@ -171,8 +176,10 @@ def integration_env(tmp_path: Path) -> dict:
                 "agents": ["swarm-worker"],
                 "routing": {"strategy": "round-robin"},
                 "constraints": {
-                    "max_retries": 0,
-                    "backoff_ms": 1,
+                    "retry_policy": {
+                        "max_retries": 0,
+                        "backoff_ms": 1,
+                    },
                 },
             }
         )
@@ -237,6 +244,8 @@ def _build_hive(
         crew_registry=registry,
     )
     if hive_timeout_ms is not None:
+        # _definition.global_config is patched here as a test seam; no public
+        # API for overriding timeout post-construction exists yet.
         hive._definition.global_config.timeout_ms = hive_timeout_ms
     return hive
 
@@ -288,24 +297,25 @@ def _timeout_adapters(_swarm: Swarm) -> dict[str, MagicMock]:
 class TestHiveCrewSwarmIntegration:
     """Full-stack dispatch: Hive.submit → Crew.submit → Swarm.dispatch."""
 
-    @pytest.mark.asyncio
-    async def test_happy_path_swarm_result_propagates(
+    def test_happy_path_swarm_result_propagates(
         self,
         integration_env: dict,
     ) -> None:
         hive = _build_hive(integration_env, _fast_codex_adapters)
         correlation_id = "integration-happy-path"
 
-        await hive.start()
+        asyncio.run(hive.start())
         try:
-            result = await hive.submit(
-                HiveTask(
-                    instruction="Implement the feature",
-                    correlation_id=correlation_id,
+            result = asyncio.run(
+                hive.submit(
+                    HiveTask(
+                        instruction="Implement the feature",
+                        correlation_id=correlation_id,
+                    )
                 )
             )
         finally:
-            await hive.shutdown()
+            asyncio.run(hive.shutdown())
 
         assert result.ok is True
         assert result.correlation_id == correlation_id
@@ -326,18 +336,17 @@ class TestHiveCrewSwarmIntegration:
         assert crew_result.output["swarm_result"]["candidate_count"] == 2
         assert result.agent_invocations == 1
 
-    @pytest.mark.asyncio
-    async def test_crew_failure_propagates_to_hive(
+    def test_crew_failure_propagates_to_hive(
         self,
         integration_env: dict,
     ) -> None:
         hive = _build_hive(integration_env, _failing_adapters)
 
-        await hive.start()
+        asyncio.run(hive.start())
         try:
-            result = await hive.submit(HiveTask(instruction="This will fail"))
+            result = asyncio.run(hive.submit(HiveTask(instruction="This will fail")))
         finally:
-            await hive.shutdown()
+            asyncio.run(hive.shutdown())
 
         assert result.ok is False
         assert len(result.stages) == 1
@@ -349,23 +358,28 @@ class TestHiveCrewSwarmIntegration:
         assert stage.crew_result.error["code"] == "all_candidates_failed"
         assert stage.crew_result.output is None
 
-    @pytest.mark.asyncio
-    async def test_timeout_enforcement_propagates_failure(
+    def test_adapter_timeout_failure_propagates_to_hive(
         self,
         integration_env: dict,
     ) -> None:
+        # Validates that adapter-level failures (timeout_exceeded=True) propagate
+        # through swarm → crew → hive as all_candidates_failed. Note: crew-level
+        # timeout enforcement is deferred to v2; HiveTask.timeout_ms flows to
+        # adapters but is not enforced by the crew or hive layers.
         hive = _build_hive(integration_env, _timeout_adapters)
 
-        await hive.start()
+        asyncio.run(hive.start())
         try:
-            result = await hive.submit(
-                HiveTask(
-                    instruction="Should hit adapter timeouts",
-                    timeout_ms=1,
+            result = asyncio.run(
+                hive.submit(
+                    HiveTask(
+                        instruction="Should hit adapter timeouts",
+                        timeout_ms=1,
+                    )
                 )
             )
         finally:
-            await hive.shutdown()
+            asyncio.run(hive.shutdown())
 
         assert result.ok is False
         assert len(result.stages) == 1
@@ -373,8 +387,7 @@ class TestHiveCrewSwarmIntegration:
         assert result.stages[0].crew_result.error is not None
         assert result.stages[0].crew_result.error["code"] == "all_candidates_failed"
 
-    @pytest.mark.asyncio
-    async def test_hive_timeout_before_stage(
+    def test_hive_timeout_before_stage(
         self,
         integration_env: dict,
         monkeypatch: pytest.MonkeyPatch,
@@ -391,11 +404,13 @@ class TestHiveCrewSwarmIntegration:
             staticmethod(lambda _start, _timeout: True),
         )
 
-        await hive.start()
+        asyncio.run(hive.start())
         try:
-            result = await hive.submit(HiveTask(instruction="Should time out immediately"))
+            result = asyncio.run(
+                hive.submit(HiveTask(instruction="Should time out immediately"))
+            )
         finally:
-            await hive.shutdown()
+            asyncio.run(hive.shutdown())
 
         assert result.ok is False
         assert result.error is not None
