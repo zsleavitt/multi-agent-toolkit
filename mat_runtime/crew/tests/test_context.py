@@ -8,7 +8,6 @@ import time
 import pytest
 
 from mat_runtime.crew.context import (
-    ContextStore,
     MemoryContextStore,
     NullContextStore,
     create_context_store,
@@ -18,81 +17,71 @@ from mat_runtime.crew.context import (
 class TestMemoryContextStore:
     """Tests for MemoryContextStore."""
 
-    @pytest.mark.asyncio
-    async def test_get_set_basic(self) -> None:
+    def test_get_set_basic(self) -> None:
         store = MemoryContextStore()
-        await store.set("key1", {"value": 42})
-        result = await store.get("key1")
+        asyncio.run(store.set("key1", {"value": 42}))
+        result = asyncio.run(store.get("key1"))
         assert result == {"value": 42}
 
-    @pytest.mark.asyncio
-    async def test_get_missing_returns_none(self) -> None:
+    def test_get_missing_returns_none(self) -> None:
         store = MemoryContextStore()
-        result = await store.get("nonexistent")
+        result = asyncio.run(store.get("nonexistent"))
         assert result is None
 
-    @pytest.mark.asyncio
-    async def test_delete(self) -> None:
+    def test_delete(self) -> None:
         store = MemoryContextStore()
-        await store.set("key1", "value")
-        await store.delete("key1")
-        result = await store.get("key1")
+        asyncio.run(store.set("key1", "value"))
+        asyncio.run(store.delete("key1"))
+        result = asyncio.run(store.get("key1"))
         assert result is None
 
-    @pytest.mark.asyncio
-    async def test_delete_nonexistent_no_error(self) -> None:
+    def test_delete_nonexistent_no_error(self) -> None:
         store = MemoryContextStore()
-        await store.delete("nonexistent")  # Should not raise
+        asyncio.run(store.delete("nonexistent"))  # Should not raise
 
-    @pytest.mark.asyncio
-    async def test_keys(self) -> None:
+    def test_keys(self) -> None:
         store = MemoryContextStore()
-        await store.set("a", 1)
-        await store.set("b", 2)
-        await store.set("c", 3)
-        keys = await store.keys()
+        asyncio.run(store.set("a", 1))
+        asyncio.run(store.set("b", 2))
+        asyncio.run(store.set("c", 3))
+        keys = asyncio.run(store.keys())
         assert sorted(keys) == ["a", "b", "c"]
 
-    @pytest.mark.asyncio
-    async def test_ttl_expiry(self) -> None:
+    def test_ttl_expiry(self) -> None:
         store = MemoryContextStore()
-        await store.set("expires", "soon", ttl_ms=50)
+        asyncio.run(store.set("expires", "soon", ttl_ms=50))
         # Should exist immediately
-        assert await store.get("expires") == "soon"
+        assert asyncio.run(store.get("expires")) == "soon"
         # Wait for expiry
-        await asyncio.sleep(0.1)
+        time.sleep(0.1)
         # Should be gone (lazy expiry on read)
-        assert await store.get("expires") is None
+        assert asyncio.run(store.get("expires")) is None
 
-    @pytest.mark.asyncio
-    async def test_ttl_zero_no_expiry(self) -> None:
+    def test_ttl_zero_no_expiry(self) -> None:
         store = MemoryContextStore()
-        await store.set("forever", "value", ttl_ms=0)
-        await asyncio.sleep(0.05)
-        assert await store.get("forever") == "value"
+        asyncio.run(store.set("forever", "value", ttl_ms=0))
+        time.sleep(0.05)
+        assert asyncio.run(store.get("forever")) == "value"
 
 
 class TestNullContextStore:
     """Tests for NullContextStore (Null Object pattern)."""
 
-    @pytest.mark.asyncio
-    async def test_get_always_none(self) -> None:
+    def test_get_always_none(self) -> None:
         store = NullContextStore()
-        await store.set("key", "value")
-        result = await store.get("key")
+        asyncio.run(store.set("key", "value"))
+        result = asyncio.run(store.get("key"))
         assert result is None
 
-    @pytest.mark.asyncio
-    async def test_keys_always_empty(self) -> None:
+    def test_keys_always_empty(self) -> None:
         store = NullContextStore()
-        await store.set("key", "value")
-        keys = await store.keys()
+        asyncio.run(store.set("key", "value"))
+        keys = asyncio.run(store.keys())
         assert keys == []
 
-    @pytest.mark.asyncio
-    async def test_delete_no_error(self) -> None:
+    def test_delete_no_error(self) -> None:
         store = NullContextStore()
-        await store.delete("key")  # Should not raise
+        asyncio.run(store.delete("key"))  # Should not raise
 
 
 class TestCreateContextStore:
