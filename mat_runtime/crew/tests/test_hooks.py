@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import stat
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -34,8 +33,7 @@ exit {exit_code}
 class TestHookRunner:
     """Tests for HookRunner."""
 
-    @pytest.mark.asyncio
-    async def test_run_existing_hook(self, hooks_dir: Path) -> None:
+    def test_run_existing_hook(self, hooks_dir: Path) -> None:
         """Run a hook that exists and succeeds."""
         script = hooks_dir / "on_start.sh"
         create_script(script, "echo 'started'")
@@ -46,35 +44,32 @@ class TestHookRunner:
         )
         runner = HookRunner(config, repo_root=hooks_dir.parent)
 
-        result = await runner.run("on_start", {"crew": "test-crew"})
+        result = asyncio.run(runner.run("on_start", {"crew": "test-crew"}))
 
         assert result.ok
         assert result.hook_name == "on_start"
 
-    @pytest.mark.asyncio
-    async def test_run_nonexistent_hook_no_error(self, hooks_dir: Path) -> None:
+    def test_run_nonexistent_hook_no_error(self, hooks_dir: Path) -> None:
         """Running a hook that's not configured is a no-op."""
         config = HooksConfig()  # No hooks configured
         runner = HookRunner(config, repo_root=hooks_dir.parent)
 
-        result = await runner.run("on_start", {})
+        result = asyncio.run(runner.run("on_start", {}))
 
         assert result.ok
         assert result.skipped
 
-    @pytest.mark.asyncio
-    async def test_run_missing_script_non_fatal(self, hooks_dir: Path) -> None:
+    def test_run_missing_script_non_fatal(self, hooks_dir: Path) -> None:
         """Missing script file is non-fatal, returns error result."""
         config = HooksConfig(on_start="scripts/missing.sh")
         runner = HookRunner(config, repo_root=hooks_dir.parent)
 
-        result = await runner.run("on_start", {})
+        result = asyncio.run(runner.run("on_start", {}))
 
         assert not result.ok
         assert "not found" in result.error.lower()
 
-    @pytest.mark.asyncio
-    async def test_timeout_kills_process(self, hooks_dir: Path) -> None:
+    def test_timeout_kills_process(self, hooks_dir: Path) -> None:
         """Hook that exceeds timeout is killed."""
         script = hooks_dir / "slow.sh"
         create_script(script, "sleep 10")
@@ -85,13 +80,12 @@ class TestHookRunner:
         )
         runner = HookRunner(config, repo_root=hooks_dir.parent)
 
-        result = await runner.run("on_start", {})
+        result = asyncio.run(runner.run("on_start", {}))
 
         assert not result.ok
         assert result.timeout_exceeded
 
-    @pytest.mark.asyncio
-    async def test_hook_failure_non_fatal(self, hooks_dir: Path) -> None:
+    def test_hook_failure_non_fatal(self, hooks_dir: Path) -> None:
         """Hook that exits non-zero is non-fatal."""
         script = hooks_dir / "failing.sh"
         create_script(script, "echo 'oops'", exit_code=1)
@@ -99,13 +93,12 @@ class TestHookRunner:
         config = HooksConfig(on_start="scripts/failing.sh")
         runner = HookRunner(config, repo_root=hooks_dir.parent)
 
-        result = await runner.run("on_start", {})
+        result = asyncio.run(runner.run("on_start", {}))
 
         assert not result.ok
         assert result.return_code == 1
 
-    @pytest.mark.asyncio
-    async def test_context_passed_as_env(self, hooks_dir: Path) -> None:
+    def test_context_passed_as_env(self, hooks_dir: Path) -> None:
         """Context dict is passed as environment variables."""
         script = hooks_dir / "env_check.sh"
         create_script(script, 'echo "CREW=$MAT_CREW"')
@@ -113,7 +106,7 @@ class TestHookRunner:
         config = HooksConfig(on_start="scripts/env_check.sh")
         runner = HookRunner(config, repo_root=hooks_dir.parent)
 
-        result = await runner.run("on_start", {"crew": "my-crew"})
+        result = asyncio.run(runner.run("on_start", {"crew": "my-crew"}))
 
         assert result.ok
         assert "CREW=my-crew" in result.stdout

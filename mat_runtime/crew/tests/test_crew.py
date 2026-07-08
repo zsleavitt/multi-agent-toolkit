@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from mat_runtime.crew.crew import Crew, RETRYABLE_ERRORS
-from mat_runtime.crew.types import CrewTask, CrewResult
+from mat_runtime.crew.crew import Crew
+from mat_runtime.crew.types import CrewTask
 from mat_runtime.config import AgentDefinition
 from mat_runtime.router import MAT2Response
 
@@ -92,8 +92,7 @@ class TestCrewInit:
 class TestCrewLifecycle:
     """Tests for crew lifecycle methods."""
 
-    @pytest.mark.asyncio
-    async def test_start_runs_hook(
+    def test_start_runs_hook(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -101,12 +100,11 @@ class TestCrewLifecycle:
         crew = Crew(crew_definition, router=mock_router)
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock) as mock_run:
-            await crew.start()
+            asyncio.run(crew.start())
             mock_run.assert_called_once()
             assert mock_run.call_args[0][0] == "on_start"
 
-    @pytest.mark.asyncio
-    async def test_start_idempotent(
+    def test_start_idempotent(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -114,12 +112,11 @@ class TestCrewLifecycle:
         crew = Crew(crew_definition, router=mock_router)
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock) as mock_run:
-            await crew.start()
-            await crew.start()  # Second call
+            asyncio.run(crew.start())
+            asyncio.run(crew.start())  # Second call
             assert mock_run.call_count == 1  # Only called once
 
-    @pytest.mark.asyncio
-    async def test_shutdown_runs_hook(
+    def test_shutdown_runs_hook(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -127,7 +124,7 @@ class TestCrewLifecycle:
         crew = Crew(crew_definition, router=mock_router)
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock) as mock_run:
-            await crew.shutdown()
+            asyncio.run(crew.shutdown())
             mock_run.assert_called_once()
             assert mock_run.call_args[0][0] == "on_finish"
 
@@ -135,8 +132,7 @@ class TestCrewLifecycle:
 class TestCrewSubmit:
     """Tests for task submission."""
 
-    @pytest.mark.asyncio
-    async def test_submit_success(
+    def test_submit_success(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -153,14 +149,13 @@ class TestCrewSubmit:
         task = CrewTask(instruction="implement feature", correlation_id="test-123")
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock):
-            result = await crew.submit(task)
+            result = asyncio.run(crew.submit(task))
 
         assert result.ok
         assert result.agent_used == "coder"  # First in round-robin
         assert result.attempts == 1
 
-    @pytest.mark.asyncio
-    async def test_submit_max_tasks_exceeded(
+    def test_submit_max_tasks_exceeded(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -169,7 +164,7 @@ class TestCrewSubmit:
         crew._task_count = 10  # At the limit
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock) as mock_run:
-            result = await crew.submit(CrewTask(instruction="test"))
+            result = asyncio.run(crew.submit(CrewTask(instruction="test")))
 
         assert not result.ok
         assert result.error["code"] == "max_tasks_exceeded"
@@ -177,8 +172,7 @@ class TestCrewSubmit:
         mock_run.assert_called()
         assert any(call[0][0] == "on_error" for call in mock_run.call_args_list)
 
-    @pytest.mark.asyncio
-    async def test_submit_retries_on_timeout(
+    def test_submit_retries_on_timeout(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -211,14 +205,13 @@ class TestCrewSubmit:
         crew = Crew(crew_definition, router=mock_router)
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock):
-            result = await crew.submit(CrewTask(instruction="test"))
+            result = asyncio.run(crew.submit(CrewTask(instruction="test")))
 
         assert result.ok
         assert result.attempts == 3
         assert len(result.retry_reasons) == 2
 
-    @pytest.mark.asyncio
-    async def test_submit_no_retry_on_agent_refused(
+    def test_submit_no_retry_on_agent_refused(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -234,7 +227,7 @@ class TestCrewSubmit:
         crew = Crew(crew_definition, router=mock_router)
 
         with patch.object(crew._hooks, "run", new_callable=AsyncMock):
-            result = await crew.submit(CrewTask(instruction="test"))
+            result = asyncio.run(crew.submit(CrewTask(instruction="test")))
 
         assert not result.ok
         assert result.attempts == 1  # No retries
@@ -244,8 +237,7 @@ class TestCrewSubmit:
 class TestCrewConcurrency:
     """Tests for concurrency control."""
 
-    @pytest.mark.asyncio
-    async def test_semaphore_limits_concurrency(
+    def test_semaphore_limits_concurrency(
         self,
         crew_definition: Path,
         mock_router: MagicMock,
@@ -278,13 +270,15 @@ class TestCrewConcurrency:
 
         crew = Crew(crew_definition, router=mock_router)
 
-        with patch.object(crew._hooks, "run", new_callable=AsyncMock):
-            # Submit 5 tasks concurrently
+        async def run_concurrent_submits() -> None:
             tasks = [
                 crew.submit(CrewTask(instruction=f"task-{i}"))
                 for i in range(5)
             ]
             await asyncio.gather(*tasks)
+
+        with patch.object(crew._hooks, "run", new_callable=AsyncMock):
+            asyncio.run(run_concurrent_submits())
 
         # max_concurrent_agents is 2 in fixture
         assert max_concurrent <= 2
