@@ -2,23 +2,11 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
+from mat_runtime.providers._utils import require_api_key
 from mat_runtime.providers.errors import map_gemini_error
 from mat_runtime.providers.model import ModelResponse, ProviderError
-
-
-def _require_api_key(api_key: str | None, env_var: str) -> str:
-    if api_key:
-        return api_key
-    from_env = os.environ.get(env_var)
-    if from_env:
-        return from_env
-    raise ProviderError(
-        code="auth_error",
-        message=f"{env_var} is not set",
-    )
 
 
 class GeminiProvider:
@@ -28,10 +16,11 @@ class GeminiProvider:
         if client is not None:
             self._client = client
             return
-        key = _require_api_key(api_key, "GOOGLE_API_KEY")
+        key = require_api_key(api_key, "GOOGLE_API_KEY")
         import google.generativeai as genai
 
         genai.configure(api_key=key)
+        # Store the module (not a client instance) — GenerativeModel is constructed per call.
         self._client = genai
 
     def complete(

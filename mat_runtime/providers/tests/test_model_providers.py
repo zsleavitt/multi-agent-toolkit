@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -95,13 +94,15 @@ def test_gemini_provider_success_from_mock() -> None:
 
 
 def test_map_anthropic_errors() -> None:
-    from anthropic import APITimeoutError, AuthenticationError, BadRequestError, RateLimitError
+    anthropic = pytest.importorskip("anthropic")
 
-    auth = map_anthropic_error(AuthenticationError("bad key", response=MagicMock(), body=None))
+    auth = map_anthropic_error(
+        anthropic.AuthenticationError("bad key", response=MagicMock(), body=None)
+    )
     assert auth.code == "auth_error"
 
     rate = map_anthropic_error(
-        RateLimitError(
+        anthropic.RateLimitError(
             "slow down",
             response=MagicMock(headers={"retry-after": "2"}),
             body=None,
@@ -111,24 +112,28 @@ def test_map_anthropic_errors() -> None:
     assert rate.retryable is True
     assert rate.retry_after_ms == 2000
 
-    timeout = map_anthropic_error(APITimeoutError(request=MagicMock()))
+    timeout = map_anthropic_error(anthropic.APITimeoutError(request=MagicMock()))
     assert timeout.code == "timeout"
     assert timeout.retryable is True
 
     context = map_anthropic_error(
-        BadRequestError("prompt exceeds maximum context length", response=MagicMock(), body=None)
+        anthropic.BadRequestError(
+            "prompt exceeds maximum context length", response=MagicMock(), body=None
+        )
     )
     assert context.code == "context_length"
 
 
 def test_map_openai_errors() -> None:
-    from openai import APITimeoutError, AuthenticationError, BadRequestError, RateLimitError
+    openai = pytest.importorskip("openai")
 
-    auth = map_openai_error(AuthenticationError("bad key", response=MagicMock(), body=None))
+    auth = map_openai_error(
+        openai.AuthenticationError("bad key", response=MagicMock(), body=None)
+    )
     assert auth.code == "auth_error"
 
     rate = map_openai_error(
-        RateLimitError(
+        openai.RateLimitError(
             "slow down",
             response=MagicMock(headers={"Retry-After": "3"}),
             body=None,
@@ -138,17 +143,19 @@ def test_map_openai_errors() -> None:
     assert rate.retryable is True
     assert rate.retry_after_ms == 3000
 
-    timeout = map_openai_error(APITimeoutError(request=MagicMock()))
+    timeout = map_openai_error(openai.APITimeoutError(request=MagicMock()))
     assert timeout.code == "timeout"
 
     context = map_openai_error(
-        BadRequestError("maximum context length exceeded", response=MagicMock(), body=None)
+        openai.BadRequestError(
+            "maximum context length exceeded", response=MagicMock(), body=None
+        )
     )
     assert context.code == "context_length"
 
 
 def test_map_gemini_errors() -> None:
-    from google.api_core import exceptions as google_exceptions
+    google_exceptions = pytest.importorskip("google.api_core.exceptions")
 
     auth = map_gemini_error(google_exceptions.Unauthenticated("bad key"))
     assert auth.code == "auth_error"
@@ -167,10 +174,10 @@ def test_map_gemini_errors() -> None:
 
 
 def test_provider_api_errors_return_model_response() -> None:
-    from anthropic import RateLimitError
+    anthropic = pytest.importorskip("anthropic")
 
     client = MagicMock()
-    client.messages.create.side_effect = RateLimitError(
+    client.messages.create.side_effect = anthropic.RateLimitError(
         "rate limited",
         response=MagicMock(headers={}),
         body=None,
@@ -229,8 +236,11 @@ def test_get_provider_missing_key_raises_auth_error(monkeypatch: pytest.MonkeyPa
 
 
 def test_providers_read_api_key_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+    pytest.importorskip("anthropic")
+    pytest.importorskip("openai")
+    pytest.importorskip("google.generativeai")
 
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
     with patch("anthropic.Anthropic") as anthropic_ctor:
         ClaudeProvider()
         anthropic_ctor.assert_called_once_with(api_key="test-anthropic-key")
