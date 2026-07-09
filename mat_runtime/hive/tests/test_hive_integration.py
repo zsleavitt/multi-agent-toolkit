@@ -7,7 +7,7 @@ import json
 import time
 from pathlib import Path
 from typing import Callable
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -416,3 +416,102 @@ class TestHiveCrewSwarmIntegration:
         assert result.error is not None
         assert result.error["code"] == "hive_timeout"
         assert result.stages == []
+
+
+class TestHiveSharedMemoryIntegration:
+    """Cross-crew shared memory flows through Hive.submit."""
+
+    def test_stage_two_reads_value_written_in_stage_one(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        asyncio.run(self._test_stage_two_reads_value_written_in_stage_one(tmp_path))
+
+    async def _test_stage_two_reads_value_written_in_stage_one(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        from mat_runtime.crew.types import CrewResult, CrewTask
+        from mat_runtime.hive.definition import (
+            CrewEntry,
+            GlobalConfig,
+            HiveDefinition,
+            InterCrewRoutingConfig,
+            SharedMemoryConfig,
+        )
+        from mat_runtime.hive.hive import Hive
+        from mat_runtime.hive.types import HiveTask
+
+        definition = HiveDefinition(
+            name="memory-hive",
+            crews=[
+                CrewEntry(ref="crew-a"),
+                CrewEntry(ref="crew-b", depends_on=["crew-a"]),
+            ],
+            global_config=GlobalConfig(
+                shared_memory=SharedMemoryConfig(type="memory"),
+            ),
+            inter_crew_routing=InterCrewRoutingConfig(
+                strategy="sequential",
+                default_handoff="on_success",
+            ),
+        )
+
+        registry = MagicMock()
+        registry.get_definition.return_value = MagicMock()
+
+        async def crew_a_submit(task: CrewTask) -> CrewResult:
+            memory = task.metadata["hive_memory"]
+            await memory.set_global("handoff", "from-crew-a")
+            return CrewResult(
+                ok=True,
+                agent_used="agent-a",
+                output={"status": "done"},
+                correlation_id=task.correlation_id,
+                duration_ms=1,
+            )
+
+        async def crew_b_submit(task: CrewTask) -> CrewResult:
+            memory = task.metadata["hive_memory"]
+            value = await memory.get_global("handoff")
+            assert value == "from-crew-a"
+            return CrewResult(
+                ok=True,
+                agent_used="agent-b",
+                output={"read": value},
+                correlation_id=task.correlation_id,
+                duration_ms=1,
+            )
+
+        crew_a = MagicMock()
+        crew_a.start = AsyncMock()
+        crew_a.shutdown = AsyncMock()
+        crew_a.submit = AsyncMock(side_effect=crew_a_submit)
+
+        crew_b = MagicMock()
+        crew_b.start = AsyncMock()
+        crew_b.shutdown = AsyncMock()
+        crew_b.submit = AsyncMock(side_effect=crew_b_submit)
+
+        registry.get_crew.side_effect = lambda name: (
+            crew_a if name == "crew-a" else crew_b
+        )
+
+        hive = Hive(
+            definition=definition,
+            repo_root=tmp_path,
+            crew_registry=registry,
+        )
+        await hive.start()
+        try:
+            result = await hive.submit(HiveTask(instruction="Share memory"))
+        finally:
+            await hive.shutdown()
+
+        assert result.ok is True
+        assert len(result.stages) == 2
+        assert result.stages[1].crew_result.output == {"read": "from-crew-a"}
+        crew_a.submit.assert_called_once()
+        crew_b.submit.assert_called_once()
+        assert "hive_memory" in crew_a.submit.call_args.args[0].metadata
+        assert "hive_memory" in crew_b.submit.call_args.args[0].metadata

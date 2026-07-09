@@ -14,6 +14,7 @@ from mat_runtime.hive.definition import (
     InterCrewRoutingConfig,
     QuotasConfig,
     RoutingRule,
+    SharedMemoryConfig,
     load_hive_definition,
 )
 from mat_runtime.hive.hooks import HookResult, HookRunner
@@ -29,6 +30,12 @@ from mat_runtime.hive.routing import (
     evaluate_handoff_context,
     get_crew_entry,
 )
+from mat_runtime.hive.memory import (
+    HiveMemoryStore,
+    NamespacePermissions,
+    ScopedHiveMemoryView,
+    create_hive_memory_store,
+)
 from mat_runtime.hive.hive import Hive
 from mat_runtime.hive.registry import HiveRegistry
 
@@ -43,6 +50,7 @@ __all__ = [
     "CrewEntry",
     "GlobalConfig",
     "QuotasConfig",
+    "SharedMemoryConfig",
     "InterCrewRoutingConfig",
     "RoutingRule",
     "HiveDefinition",
@@ -64,4 +72,9 @@ __all__ = [
     # Hive
     "Hive",
     "HiveRegistry",
+    # Memory
+    "HiveMemoryStore",
+    "ScopedHiveMemoryView",
+    "NamespacePermissions",
+    "create_hive_memory_store",
 ]

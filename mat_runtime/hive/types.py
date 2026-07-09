@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mat_runtime.crew.types import CrewResult
+
+if TYPE_CHECKING:
+    from mat_runtime.hive.memory import HiveMemoryStore
 
 
 @dataclass
@@ -55,6 +58,7 @@ class HiveSession:
     completed_crews: set[str] = field(default_factory=set)
     stage_results: list[CrewStageResult] = field(default_factory=list)
     shared_context: dict[str, Any] = field(default_factory=dict)
+    hive_memory_store: HiveMemoryStore | None = None
 
 
 @dataclass

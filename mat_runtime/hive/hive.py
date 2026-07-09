@@ -10,6 +10,7 @@ from mat_runtime.crew.registry import CrewRegistry
 from mat_runtime.crew.types import CrewTask
 from mat_runtime.hive.definition import HiveDefinition, load_hive_definition
 from mat_runtime.hive.hooks import HookRunner
+from mat_runtime.hive.memory import create_hive_memory_store
 from mat_runtime.hive.routing import (
     create_routing_strategy,
     dependencies_satisfied,
@@ -95,6 +96,15 @@ class Hive:
         else:
             self._semaphore = None
 
+        shared_memory = self._definition.global_config.shared_memory
+        self._memory_store = create_hive_memory_store(
+            shared_memory.type,
+            path=shared_memory.path,
+            ttl_ms=shared_memory.ttl_ms,
+            permissions=shared_memory.permissions,
+            repo_root=self._repo_root,
+        )
+
     def _validate_crew_refs(self) -> None:
         for entry in self._definition.crews:
             try:
@@ -176,6 +186,7 @@ class Hive:
             session = HiveSession(
                 correlation_id=task.correlation_id,
                 hive_name=self._definition.name,
+                hive_memory_store=self._memory_store,
             )
             execution_order = self._strategy.get_execution_order(
                 self._definition,
@@ -302,7 +313,7 @@ class Hive:
         crew = self._crew_registry.get_crew(crew_ref)
         await crew.start()
         try:
-            crew_task = self._build_crew_task(task, session)
+            crew_task = self._build_crew_task(task, session, crew_ref)
             try:
                 result = await crew.submit(crew_task)
             except Exception as exc:
@@ -324,7 +335,12 @@ class Hive:
             duration_ms=int((time.monotonic() - stage_start) * 1000),
         )
 
-    def _build_crew_task(self, task: HiveTask, session: HiveSession) -> CrewTask:
+    def _build_crew_task(
+        self,
+        task: HiveTask,
+        session: HiveSession,
+        crew_ref: str,
+    ) -> CrewTask:
         parts: list[str] = []
         if self._definition.shared_goal:
             parts.append(f"HIVE GOAL: {self._definition.shared_goal}")
@@ -343,6 +359,10 @@ class Hive:
 
         parts.append(task.instruction)
 
+        metadata = {**task.metadata, "hive": self._definition.name}
+        if session.hive_memory_store is not None:
+            metadata["hive_memory"] = session.hive_memory_store.scope_for(crew_ref)
+
         return CrewTask(
             instruction="\n\n".join(parts),
             op=task.op,
@@ -350,7 +370,7 @@ class Hive:
             required_capabilities=list(task.required_capabilities),
             scope_paths=list(task.scope_paths),
             timeout_ms=task.timeout_ms,
-            metadata={**task.metadata, "hive": self._definition.name},
+            metadata=metadata,
         )
 
     @staticmethod
