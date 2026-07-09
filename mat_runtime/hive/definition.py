@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from mat_runtime.hive.validation import semantic_validation
+from mat_runtime.hive.memory import NamespacePermissions
 
 
 @dataclass
@@ -27,6 +28,16 @@ class QuotasConfig:
 
 
 @dataclass
+class SharedMemoryConfig:
+    """Hive-wide shared memory configuration."""
+
+    type: str = "memory"
+    path: str | None = None
+    ttl_ms: int = 0
+    permissions: dict[str, NamespacePermissions] = field(default_factory=dict)
+
+
+@dataclass
 class GlobalConfig:
     """Hive-wide resource limits."""
 
@@ -34,6 +45,7 @@ class GlobalConfig:
     timeout_ms: int | None = None
     max_tasks: int | None = None
     quotas: QuotasConfig = field(default_factory=QuotasConfig)
+    shared_memory: SharedMemoryConfig = field(default_factory=SharedMemoryConfig)
 
 
 @dataclass
@@ -105,6 +117,36 @@ def _parse_crews(crews_data: list[Any]) -> list[CrewEntry]:
     return result
 
 
+def _parse_shared_memory(data: dict[str, Any] | None) -> SharedMemoryConfig:
+    if not data:
+        return SharedMemoryConfig()
+
+    store_type = data.get("type", "memory")
+    if store_type not in {"memory", "file"}:
+        raise ValueError(
+            f"global_config.shared_memory.type '{store_type}' not valid. "
+            "Use one of: file, memory"
+        )
+
+    permissions: dict[str, NamespacePermissions] = {}
+    raw_permissions = data.get("permissions") or {}
+    if isinstance(raw_permissions, dict):
+        for crew_name, config in raw_permissions.items():
+            if not isinstance(crew_name, str) or not isinstance(config, dict):
+                continue
+            permissions[crew_name] = NamespacePermissions(
+                read=bool(config.get("read", True)),
+                write=bool(config.get("write", True)),
+            )
+
+    return SharedMemoryConfig(
+        type=store_type,
+        path=data.get("path"),
+        ttl_ms=int(data.get("ttl_ms", 0) or 0),
+        permissions=permissions,
+    )
+
+
 def _parse_global_config(data: dict[str, Any] | None) -> GlobalConfig:
     if not data:
         return GlobalConfig()
@@ -118,6 +160,7 @@ def _parse_global_config(data: dict[str, Any] | None) -> GlobalConfig:
         timeout_ms=data.get("timeout_ms"),
         max_tasks=data.get("max_tasks"),
         quotas=quotas,
+        shared_memory=_parse_shared_memory(data.get("shared_memory")),
     )
 
 

@@ -62,6 +62,49 @@
               "description": "Cap on total MAT-2 invocations across all crews"
             }
           }
+        },
+        "shared_memory": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["memory", "file"],
+              "default": "memory",
+              "description": "Persistence backend for cross-crew shared memory"
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Relative path for file-backed shared memory"
+            },
+            "ttl_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "description": "Default TTL for shared memory entries (0 = no expiry)"
+            },
+            "permissions": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "read": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the crew can read the global namespace"
+                  },
+                  "write": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the crew can write the global namespace"
+                  }
+                }
+              },
+              "description": "Per-crew permissions for the global shared memory namespace"
+            }
+          }
         }
       }
     },
