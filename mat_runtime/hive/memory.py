@@ -70,17 +70,6 @@ class _MemoryBackend:
                 data[namespace] = dict(store._data)
             return data
 
-    async def load_snapshot(
-        self,
-        data: dict[str, dict[str, tuple[Any, int | None]]],
-    ) -> None:
-        async with self._lock:
-            self._namespaces.clear()
-            for namespace, entries in data.items():
-                store = MemoryContextStore()
-                store._data = dict(entries)
-                self._namespaces[namespace] = store
-
 
 class _FileBackend(_MemoryBackend):
     """JSON file-backed namespace storage."""
@@ -90,7 +79,12 @@ class _FileBackend(_MemoryBackend):
         self._path = path
         self._path.parent.mkdir(parents=True, exist_ok=True)
         if self._path.is_file():
-            raw = json.loads(self._path.read_text(encoding="utf-8"))
+            try:
+                raw = json.loads(self._path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError) as e:
+                raise ValueError(
+                    f"Hive memory file is corrupt or unreadable ({self._path}): {e}"
+                ) from e
             if isinstance(raw, dict):
                 for namespace, entries in raw.items():
                     if not isinstance(namespace, str) or not isinstance(entries, dict):
@@ -158,9 +152,11 @@ class ScopedHiveMemoryView:
         return self._crew_name
 
     async def get(self, key: str) -> Any | None:
-        crew_value = await self._store.get(crew_namespace(self._crew_name), key)
-        if crew_value is not None:
-            return crew_value
+        # Check key presence via keys() rather than value truthiness — the crew
+        # may have explicitly stored None, which must shadow the global namespace.
+        crew_keys = await self._store.keys(crew_namespace(self._crew_name))
+        if key in crew_keys:
+            return await self._store.get(crew_namespace(self._crew_name), key)
         if self._permissions.read:
             return await self._store.get(GLOBAL_NAMESPACE, key)
         return None

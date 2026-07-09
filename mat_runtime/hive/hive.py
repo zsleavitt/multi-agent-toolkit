@@ -361,6 +361,8 @@ class Hive:
 
         metadata = {**task.metadata, "hive": self._definition.name}
         if session.hive_memory_store is not None:
+            # ScopedHiveMemoryView is not JSON-serializable; CrewTask.metadata
+            # is in-process only and must not be sent over the MAT-2 wire.
             metadata["hive_memory"] = session.hive_memory_store.scope_for(crew_ref)
 
         return CrewTask(
