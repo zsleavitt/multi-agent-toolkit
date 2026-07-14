@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "agents": {
+    "worker": {
+      "cli": "codex",
+      "invocation_mode": "api",
+      "provider": "openai",
+      "model": "gpt-4o",
+      "max_tokens": 8192,
+      "timeout_ms": 120000
+    },
+    "orchestrator": {
+      "cli": "claude",
+      "invocation_mode": "cli",
+      "capabilities": ["planning", "routing", "synthesis"]
+    }
+  },
+  "defaults": {
+    "timeout_ms": 180000,
+    "max_tokens": 4096
+  }
+}

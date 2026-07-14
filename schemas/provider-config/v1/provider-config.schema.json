@@ -74,6 +74,30 @@
           "type": "boolean",
           "default": true,
           "description": "Set false to disable this agent without removing config."
+        },
+        "invocation_mode": {
+          "type": "string",
+          "enum": ["cli", "api"],
+          "default": "cli",
+          "description": "Dispatch via CLI subprocess (default) or direct provider API."
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "API provider registry key when invocation_mode is 'api' (e.g. claude, openai, gemini). Defaults from cli binding."
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Model id for API invocations when invocation_mode is 'api'."
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200000,
+          "description": "Max completion tokens for API invocations."
         }
       }
     },
@@ -138,6 +162,17 @@
           "type": "string",
           "pattern": "^[A-Z][A-Z0-9_]*$",
           "description": "Env var name to read default working directory from."
+        },
+        "invocation_mode": {
+          "type": "string",
+          "enum": ["cli", "api"],
+          "description": "Default dispatch mode for all agents (cli or direct API)."
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200000,
+          "description": "Default max completion tokens for API invocations."
         }
       }
     }
