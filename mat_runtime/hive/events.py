@@ -50,12 +50,7 @@ class Severity(str, Enum):
 
     @property
     def level(self) -> int:
-        """Numeric ordering / stdlib logging level for this severity."""
-        return _SEVERITY_LEVELS[self]
-
-    @property
-    def logging_level(self) -> int:
-        """Corresponding ``logging`` module level."""
+        """Numeric ordering matching the corresponding ``logging`` module level."""
         return _SEVERITY_LEVELS[self]
 
 
@@ -253,7 +248,7 @@ class LoggingObserver:
     def handle(self, event: Event) -> None:
         payload = event.to_dict()
         self._logger.log(
-            event.severity.logging_level,
+            event.severity.level,
             "mat_event %s crew=%s swarm=%s ok=%s duration_ms=%s",
             event.event_type.value,
             event.crew,

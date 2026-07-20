@@ -318,6 +318,8 @@ class Hive:
         from mat_runtime.crew.types import CrewResult
 
         stage_start = time.monotonic()
+        crew = self._crew_registry.get_crew(crew_ref)
+        await crew.start()
         self._emit(
             Event(
                 event_type=EventType.CREW_STARTED,
@@ -326,15 +328,13 @@ class Hive:
                 crew=crew_ref,
                 hive=self._definition.name,
                 task_metadata={
+                    **task.metadata,
                     "op": task.op,
                     "required_capabilities": list(task.required_capabilities),
-                    **task.metadata,
                 },
                 source="hive",
             )
         )
-        crew = self._crew_registry.get_crew(crew_ref)
-        await crew.start()
         try:
             crew_task = self._build_crew_task(task, session, crew_ref)
             try:

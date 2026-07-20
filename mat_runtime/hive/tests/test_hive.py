@@ -342,3 +342,45 @@ class TestHiveSubmit:
         assert [e.crew for e in completed] == ["dev-crew", "review-crew"]
         assert all(e.outcome["ok"] is True for e in completed)
         assert all(e.duration_ms is not None for e in completed)
+
+    def test_no_crew_started_event_when_start_raises(
+        self,
+        mock_crew_registry: MagicMock,
+    ) -> None:
+        asyncio.run(
+            self._test_no_crew_started_event_when_start_raises(mock_crew_registry)
+        )
+
+    async def _test_no_crew_started_event_when_start_raises(
+        self,
+        mock_crew_registry: MagicMock,
+    ) -> None:
+        failing_crew = MagicMock()
+        failing_crew.start = AsyncMock(side_effect=RuntimeError("startup failed"))
+        failing_crew.shutdown = AsyncMock()
+        mock_crew_registry.get_crew.return_value = failing_crew
+
+        events: list[Event] = []
+        bus = EventBus()
+
+        class _Recorder:
+            def handle(self, event: Event) -> None:
+                events.append(event)
+
+        bus.subscribe(_Recorder())
+
+        hive = Hive(
+            definition=_pipeline_definition(),
+            repo_root="/tmp",
+            crew_registry=mock_crew_registry,
+            event_bus=bus,
+        )
+        await hive.start()
+        try:
+            with pytest.raises(Exception):
+                await hive.submit(HiveTask(instruction="Implement feature"))
+        finally:
+            await hive.shutdown()
+
+        # crew.start() raised before CREW_STARTED was emitted — no events at all.
+        assert events == []
