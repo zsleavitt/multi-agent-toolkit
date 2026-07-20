@@ -17,6 +17,17 @@ from mat_runtime.hive.definition import (
     SharedMemoryConfig,
     load_hive_definition,
 )
+from mat_runtime.hive.events import (
+    Event,
+    EventBus,
+    EventFilter,
+    EventObserver,
+    EventType,
+    LoggingObserver,
+    Severity,
+    WebhookObserver,
+    build_event_bus,
+)
 from mat_runtime.hive.hooks import HookResult, HookRunner
 from mat_runtime.hive.routing import (
     CapabilityStrategy,
@@ -58,6 +69,16 @@ __all__ = [
     # Hooks
     "HookRunner",
     "HookResult",
+    # Events / observability
+    "Event",
+    "EventType",
+    "Severity",
+    "EventFilter",
+    "EventObserver",
+    "EventBus",
+    "LoggingObserver",
+    "WebhookObserver",
+    "build_event_bus",
     # Routing
     "InterCrewRoutingStrategy",
     "SequentialStrategy",

@@ -11,6 +11,7 @@ from typing import Any
 from mat_runtime.adapters import ADAPTER_REGISTRY, get_adapter
 from mat_runtime.providers import AgentInvocationProvider
 from mat_runtime.config import AgentDefinition, load_agent_definitions
+from mat_runtime.hive.events import Event, EventBus, EventType, Severity
 from mat_runtime.router import AgentRouter, MAT2Request
 from mat_runtime.swarm.definition import SwarmDefinition, load_swarm_definition
 from mat_runtime.swarm.types import CandidateResult, SwarmResult, SwarmTask
@@ -50,6 +51,8 @@ class Swarm:
         self,
         definition_path: str | Path,
         repo_root: str | Path | None = None,
+        *,
+        event_bus: EventBus | None = None,
     ):
         """
         Initialize Swarm from definition file.
@@ -58,12 +61,16 @@ class Swarm:
             definition_path: Path to swarm definition JSON.
             repo_root: Repository root for CLI invocations.
                 Defaults to definition file's parent (auto-detects repo root).
+            event_bus: Optional observability event bus. When provided, the
+                swarm emits ``swarm_dispatched`` and ``swarm_consensus_reached``
+                events over its lifecycle.
 
         Raises:
             ValueError: If any candidate is not valid for the dispatch mode.
                 - parallel_model: candidates must be registered CLI adapters.
                 - variant: candidates must be known agent definitions.
         """
+        self._events = event_bus
         self._definition = load_swarm_definition(definition_path)
         if repo_root:
             self._repo_root = Path(repo_root).resolve()
@@ -120,6 +127,11 @@ class Swarm:
 
         self._router = AgentRouter(repo_root=self._repo_root, agents=self._agents)
 
+    def _emit(self, event: Event) -> None:
+        """Publish an observability event if an event bus is configured."""
+        if self._events is not None:
+            self._events.emit(event)
+
     @property
     def name(self) -> str:
         """Swarm name."""
@@ -145,6 +157,22 @@ class Swarm:
         """
         start_time = time.monotonic()
 
+        self._emit(
+            Event(
+                event_type=EventType.SWARM_DISPATCHED,
+                correlation_id=task.correlation_id,
+                severity=Severity.INFO,
+                swarm=self._definition.name,
+                task_metadata={
+                    "op": task.op,
+                    "dispatch_mode": self._definition.dispatch_mode,
+                    "candidates": list(self._definition.candidates),
+                    "consensus_strategy": self._definition.consensus_strategy,
+                },
+                source="swarm",
+            )
+        )
+
         # Dispatch to all candidates
         coros = [
             self._invoke_candidate(candidate, task)
@@ -169,7 +197,33 @@ class Swarm:
                 candidate_results.append(result)
 
         total_duration_ms = int((time.monotonic() - start_time) * 1000)
-        return self._apply_consensus(candidate_results, task, total_duration_ms)
+        swarm_result = self._apply_consensus(
+            candidate_results, task, total_duration_ms
+        )
+
+        self._emit(
+            Event(
+                event_type=EventType.SWARM_CONSENSUS_REACHED,
+                correlation_id=task.correlation_id,
+                severity=Severity.INFO if swarm_result.ok else Severity.ERROR,
+                swarm=self._definition.name,
+                duration_ms=total_duration_ms,
+                task_metadata={
+                    "op": task.op,
+                    "dispatch_mode": self._definition.dispatch_mode,
+                },
+                outcome={
+                    "ok": swarm_result.ok,
+                    "consensus_strategy": swarm_result.consensus_strategy,
+                    "winning_candidate": swarm_result.winning_candidate,
+                    "candidate_count": len(candidate_results),
+                    "error": swarm_result.error,
+                },
+                source="swarm",
+            )
+        )
+
+        return swarm_result
 
     async def _invoke_candidate(
         self,
