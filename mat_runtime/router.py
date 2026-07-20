@@ -8,7 +8,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from mat_runtime.adapters import get_adapter, CLIAdapter, InvocationResult
+from mat_runtime.adapters import InvocationResult
+from mat_runtime.providers.bridge import create_invocation_provider
+from mat_runtime.providers.model import ProviderError
+from mat_runtime.providers.protocol import AgentInvocationProvider
 from mat_runtime.config import (
     AgentDefinition,
     ProviderConfig,
@@ -116,7 +119,7 @@ class AgentRouter:
             repo_root=self.repo_root
         )
         self.agents = agents or load_agent_definitions(repo_root=self.repo_root)
-        self._adapters: dict[str, CLIAdapter] = {}
+        self._adapters: dict[str, AgentInvocationProvider] = {}
 
     def _provider_overlay(self, agent: AgentDefinition) -> dict[str, Any]:
         """Merge MAT-16 ``agents`` entries: role defaults, then per-agent name wins."""
@@ -132,27 +135,32 @@ class AgentRouter:
             merged.update(name_cfg)
         return merged
 
-    def _get_adapter(self, agent: AgentDefinition) -> CLIAdapter:
-        """Get or create CLI adapter for an agent."""
+    def _get_adapter(self, agent: AgentDefinition) -> AgentInvocationProvider:
+        """Get or create invocation provider (CLI or direct API) for an agent."""
         if agent.name not in self._adapters:
-            # Check provider config for CLI overrides (role, then agent name)
-            cli = agent.cli
+            # Check provider config for CLI/API overrides (role, then agent name)
+            cli = agent.cli or "codex"
             flags: list[str] = []
             timeout_ms = agent.timeout_ms or 300_000
+            overlay: dict[str, Any] = {}
+            defaults: dict[str, Any] = {}
 
             if self.provider_config:
                 overlay = self._provider_overlay(agent)
+                defaults = self.provider_config.defaults
                 if overlay:
                     cli = overlay.get("cli", cli)
                     if "flags" in overlay:
                         flags = list(overlay.get("flags") or [])
                     timeout_ms = overlay.get(
                         "timeout_ms",
-                        self.provider_config.defaults.get("timeout_ms", timeout_ms),
+                        defaults.get("timeout_ms", timeout_ms),
                     )
 
-            self._adapters[agent.name] = get_adapter(
+            self._adapters[agent.name] = create_invocation_provider(
                 cli=cli,
+                overlay=overlay,
+                defaults=defaults,
                 flags=flags,
                 working_dir=str(self.repo_root),
                 timeout_ms=timeout_ms,
@@ -239,7 +247,19 @@ class AgentRouter:
             )
 
         # Get adapter and invoke
-        adapter = self._get_adapter(agent)
+        try:
+            adapter = self._get_adapter(agent)
+        except (ProviderError, ValueError) as exc:
+            return MAT2Response(
+                schema_version=req.schema_version,
+                correlation_id=req.correlation_id,
+                idempotency_key=req.idempotency_key,
+                ok=False,
+                error={
+                    "code": "provider_init_error",
+                    "message": str(exc),
+                },
+            )
         result = adapter.invoke(
             prompt=req.instruction,
             system_prompt=agent.system_prompt,

@@ -11,6 +11,7 @@ import pytest
 
 from mat_runtime.adapters.base import InvocationResult
 from mat_runtime.config import AgentDefinition, ProviderConfig
+from mat_runtime.providers.model import ModelResponse
 from mat_runtime.router import AgentRouter, MAT2Request, MAT2Response
 
 
@@ -173,7 +174,7 @@ class TestAgentRouter:
         assert agent is not None
         assert agent.name == "reviewer"
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_success(self, mock_get_adapter, sample_agents, sample_request):
         # Mock adapter
         mock_adapter = MagicMock()
@@ -192,7 +193,7 @@ class TestAgentRouter:
         assert response.ok is True
         assert "output" in response.result
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_agent_not_found(self, mock_get_adapter, sample_agents, sample_request):
         router = AgentRouter(agents=sample_agents)
         response = router.invoke("nonexistent", sample_request)
@@ -200,7 +201,7 @@ class TestAgentRouter:
         assert response.ok is False
         assert response.error["code"] == "agent_not_found"
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_operation_not_allowed(
         self, mock_get_adapter, sample_agents, sample_request
     ):
@@ -212,7 +213,7 @@ class TestAgentRouter:
         assert response.ok is False
         assert response.error["code"] == "operation_not_allowed"
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_timeout(self, mock_get_adapter, sample_agents, sample_request):
         mock_adapter = MagicMock()
         mock_adapter.invoke.return_value = InvocationResult(
@@ -231,7 +232,7 @@ class TestAgentRouter:
         assert response.ok is False
         assert response.error["code"] == "timeout"
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_op_routes_correctly(
         self, mock_get_adapter, sample_agents, sample_request
     ):
@@ -252,7 +253,7 @@ class TestAgentRouter:
         # Should have routed to coder based on codex.implement
         mock_adapter.invoke.assert_called_once()
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_agent_refused_when_output_but_failure(
         self, mock_get_adapter, sample_agents, sample_request
     ):
@@ -276,7 +277,7 @@ class TestAgentRouter:
         assert response.error is not None
         assert response.error["code"] == "agent_refused"
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_invoke_execution_error_when_no_output(
         self, mock_get_adapter, sample_agents, sample_request
     ):
@@ -299,9 +300,9 @@ class TestAgentRouter:
         assert response.error is not None
         assert response.error["code"] == "execution_error"
 
-    @patch("mat_runtime.router.get_adapter")
+    @patch("mat_runtime.router.create_invocation_provider")
     def test_provider_overlay_agent_name_overrides_role(
-        self, mock_get_adapter, sample_agents, sample_request
+        self, mock_create_provider, sample_agents, sample_request
     ):
         """Per-agent mat-config entry overrides same-key fields from role."""
         mock_adapter = MagicMock()
@@ -312,7 +313,7 @@ class TestAgentRouter:
             return_code=0,
             correlation_id=sample_request.correlation_id,
         )
-        mock_get_adapter.return_value = mock_adapter
+        mock_create_provider.return_value = mock_adapter
 
         cfg = ProviderConfig(
             schema_version="1.0.0",
@@ -335,10 +336,82 @@ class TestAgentRouter:
         )
         router.invoke("reviewer", review_req)
 
-        call_kw = mock_get_adapter.call_args.kwargs
+        call_kw = mock_create_provider.call_args.kwargs
         assert call_kw["cli"] == "claude"
         assert call_kw["flags"] == ["--print"]
         assert call_kw["timeout_ms"] == 222_000
+
+    @patch("mat_runtime.router.create_invocation_provider")
+    def test_invoke_api_mode_routes_to_model_provider(
+        self, mock_create_provider, sample_agents, sample_request
+    ):
+        """invocation_mode api uses ModelProviderAdapter instead of CLI."""
+        from mat_runtime.providers.bridge import ModelProviderAdapter
+
+        mock_provider = MagicMock()
+        mock_provider.complete.return_value = ModelResponse(
+            ok=True,
+            text="api result",
+            input_tokens=1,
+            output_tokens=2,
+            model="gpt-4o",
+            stop_reason="stop",
+        )
+        api_adapter = ModelProviderAdapter(
+            provider=mock_provider,
+            default_model="gpt-4o",
+        )
+        mock_create_provider.return_value = api_adapter
+
+        cfg = ProviderConfig(
+            schema_version="1.0.0",
+            agents={
+                "worker": {
+                    "cli": "codex",
+                    "invocation_mode": "api",
+                    "model": "gpt-4o",
+                },
+            },
+            routing={},
+            defaults={},
+        )
+        router = AgentRouter(agents=sample_agents, provider_config=cfg)
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is True
+        assert response.result["output"] == "api result"
+        call_kw = mock_create_provider.call_args.kwargs
+        assert call_kw["overlay"]["invocation_mode"] == "api"
+
+    @patch("mat_runtime.router.create_invocation_provider")
+    def test_invoke_provider_init_error_returns_structured_response(
+        self, mock_create_provider, sample_agents, sample_request
+    ):
+        """ProviderError during provider init returns structured MAT2Response."""
+        from mat_runtime.providers.model import ProviderError
+
+        mock_create_provider.side_effect = ProviderError(
+            code="auth_error", message="ANTHROPIC_API_KEY is not set"
+        )
+        router = AgentRouter(agents=sample_agents)
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is False
+        assert response.error["code"] == "provider_init_error"
+        assert "ANTHROPIC_API_KEY" in response.error["message"]
+
+    @patch("mat_runtime.router.create_invocation_provider")
+    def test_invoke_provider_value_error_returns_structured_response(
+        self, mock_create_provider, sample_agents, sample_request
+    ):
+        """ValueError from provider resolution returns structured MAT2Response."""
+        mock_create_provider.side_effect = ValueError("Cannot map cli 'cursor'")
+        router = AgentRouter(agents=sample_agents)
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is False
+        assert response.error["code"] == "provider_init_error"
+        assert "cursor" in response.error["message"]
 
 
 class TestConfigIntegration:
