@@ -383,6 +383,36 @@ class TestAgentRouter:
         call_kw = mock_create_provider.call_args.kwargs
         assert call_kw["overlay"]["invocation_mode"] == "api"
 
+    @patch("mat_runtime.router.create_invocation_provider")
+    def test_invoke_provider_init_error_returns_structured_response(
+        self, mock_create_provider, sample_agents, sample_request
+    ):
+        """ProviderError during provider init returns structured MAT2Response."""
+        from mat_runtime.providers.model import ProviderError
+
+        mock_create_provider.side_effect = ProviderError(
+            code="auth_error", message="ANTHROPIC_API_KEY is not set"
+        )
+        router = AgentRouter(agents=sample_agents)
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is False
+        assert response.error["code"] == "provider_init_error"
+        assert "ANTHROPIC_API_KEY" in response.error["message"]
+
+    @patch("mat_runtime.router.create_invocation_provider")
+    def test_invoke_provider_value_error_returns_structured_response(
+        self, mock_create_provider, sample_agents, sample_request
+    ):
+        """ValueError from provider resolution returns structured MAT2Response."""
+        mock_create_provider.side_effect = ValueError("Cannot map cli 'cursor'")
+        router = AgentRouter(agents=sample_agents)
+        response = router.invoke("coder", sample_request)
+
+        assert response.ok is False
+        assert response.error["code"] == "provider_init_error"
+        assert "cursor" in response.error["message"]
+
 
 class TestConfigIntegration:
     """Integration tests for config loading."""

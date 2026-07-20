@@ -229,7 +229,45 @@ def test_model_provider_adapter_invoke_with_file(tmp_path) -> None:
     )
     adapter = ModelProviderAdapter(provider=provider, default_model="gpt-4o")
 
-    result = adapter.invoke_with_file(prompt=f"@{prompt_file}")
+    result = adapter.invoke_with_file(
+        prompt=f"@{prompt_file}", working_dir=str(tmp_path)
+    )
 
     assert result.ok is True
     assert "file prompt body" in provider.complete.call_args.args[0]
+
+
+def test_invoke_with_file_rejects_path_outside_working_dir(tmp_path) -> None:
+    outside = tmp_path.parent / "secret.txt"
+    outside.write_text("sensitive", encoding="utf-8")
+    provider = MagicMock()
+    adapter = ModelProviderAdapter(provider=provider, default_model="gpt-4o")
+    subdir = tmp_path / "work"
+    subdir.mkdir()
+
+    result = adapter.invoke_with_file(
+        prompt=f"@{outside}", working_dir=str(subdir)
+    )
+
+    assert result.ok is False
+    assert "escapes working_dir" in result.stderr
+    provider.complete.assert_not_called()
+
+
+def test_invoke_with_file_no_working_dir_allows_any_path(tmp_path) -> None:
+    prompt_file = tmp_path / "task.md"
+    prompt_file.write_text("body", encoding="utf-8")
+    provider = MagicMock()
+    provider.complete.return_value = ModelResponse(
+        ok=True,
+        text="ok",
+        input_tokens=1,
+        output_tokens=1,
+        model="gpt-4o",
+        stop_reason="stop",
+    )
+    adapter = ModelProviderAdapter(provider=provider, default_model="gpt-4o")
+
+    result = adapter.invoke_with_file(prompt=f"@{prompt_file}")
+
+    assert result.ok is True

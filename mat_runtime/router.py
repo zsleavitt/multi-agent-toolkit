@@ -10,6 +10,7 @@ from typing import Any
 
 from mat_runtime.adapters import InvocationResult
 from mat_runtime.providers.bridge import create_invocation_provider
+from mat_runtime.providers.model import ProviderError
 from mat_runtime.providers.protocol import AgentInvocationProvider
 from mat_runtime.config import (
     AgentDefinition,
@@ -246,7 +247,19 @@ class AgentRouter:
             )
 
         # Get adapter and invoke
-        adapter = self._get_adapter(agent)
+        try:
+            adapter = self._get_adapter(agent)
+        except (ProviderError, ValueError) as exc:
+            return MAT2Response(
+                schema_version=req.schema_version,
+                correlation_id=req.correlation_id,
+                idempotency_key=req.idempotency_key,
+                ok=False,
+                error={
+                    "code": "provider_init_error",
+                    "message": str(exc),
+                },
+            )
         result = adapter.invoke(
             prompt=req.instruction,
             system_prompt=agent.system_prompt,

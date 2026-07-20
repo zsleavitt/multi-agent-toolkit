@@ -180,9 +180,22 @@ class ModelProviderAdapter:
         correlation_id: str | None = None,
         **kwargs: Any,
     ) -> InvocationResult:
-        """Read ``@path`` prompts from disk, then delegate to ``invoke``."""
+        """Read ``@path`` prompts from disk, then delegate to ``invoke``.
+
+        When ``working_dir`` is provided, the resolved path must be within it.
+        """
         if prompt.startswith("@"):
-            path = Path(prompt[1:])
+            path = Path(prompt[1:]).resolve()
+            if working_dir is not None:
+                root = Path(working_dir).resolve()
+                if not path.is_relative_to(root):
+                    return InvocationResult(
+                        ok=False,
+                        stdout="",
+                        stderr=f"Prompt file path escapes working_dir: {path}",
+                        return_code=1,
+                        correlation_id=correlation_id or str(uuid.uuid4()),
+                    )
             prompt = path.read_text(encoding="utf-8")
         return self.invoke(
             prompt=prompt,
