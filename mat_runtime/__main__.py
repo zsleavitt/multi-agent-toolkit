@@ -8,6 +8,7 @@ import json
 import sys
 from pathlib import Path
 
+from mat_runtime import telemetry
 from mat_runtime.crew import Crew, CrewTask
 from mat_runtime.router import AgentRouter, MAT2Request
 
@@ -561,6 +562,10 @@ def main() -> int:
     if not args.command:
         parser.print_help()
         return 0
+
+    # Enable OpenTelemetry GenAI tracing when configured via env (MAT-97). No-op
+    # unless the `otel` extra is installed and tracing is explicitly enabled.
+    telemetry.configure_tracing()
 
     return args.func(args)
 

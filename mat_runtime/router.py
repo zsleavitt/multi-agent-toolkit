@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from mat_runtime import telemetry
 from mat_runtime.adapters import InvocationResult
 from mat_runtime.providers.bridge import create_invocation_provider
 from mat_runtime.providers.model import ProviderError
@@ -219,9 +221,33 @@ class AgentRouter:
         else:
             req = request
 
+        # Root span per MAT task; a child span per CLI invocation is created
+        # around adapter.invoke() below. See mat_runtime/telemetry.py (MAT-97).
+        with telemetry.start_span(
+            f"invoke_agent {req.op}",
+            attributes={
+                telemetry.GEN_AI_OPERATION_NAME: "invoke_agent",
+                telemetry.MAT_OP: req.op,
+                telemetry.MAT_CORRELATION_ID: req.correlation_id,
+                telemetry.MAT_IDEMPOTENCY_KEY: req.idempotency_key,
+                telemetry.MAT_REPO_ROOT: req.repo_root,
+                telemetry.MAT_TIMEOUT_MS: req.timeout_ms,
+                telemetry.MAT_AGENT_NAME: agent_name,
+            },
+        ) as root_span:
+            return self._invoke_with_span(agent_name, req, root_span)
+
+    def _invoke_with_span(
+        self,
+        agent_name: str,
+        req: MAT2Request,
+        root_span: Any,
+    ) -> MAT2Response:
+        """Core invoke logic, executed inside the task root span."""
         # Find agent
         agent = self.find_agent(agent_name)
         if not agent:
+            telemetry.set_error(root_span, error_code="agent_not_found")
             return MAT2Response(
                 schema_version=req.schema_version,
                 correlation_id=req.correlation_id,
@@ -233,8 +259,18 @@ class AgentRouter:
                 },
             )
 
+        telemetry.set_attributes(
+            root_span,
+            {
+                telemetry.MAT_AGENT_ROLE: agent.role,
+                telemetry.MAT_AGENT_CLI: agent.cli,
+                telemetry.GEN_AI_SYSTEM: telemetry.cli_to_gen_ai_system(agent.cli),
+            },
+        )
+
         # Check if agent can handle this operation
         if agent.allowed_mat_ops and req.op not in agent.allowed_mat_ops:
+            telemetry.set_error(root_span, error_code="operation_not_allowed")
             return MAT2Response(
                 schema_version=req.schema_version,
                 correlation_id=req.correlation_id,
@@ -250,6 +286,9 @@ class AgentRouter:
         try:
             adapter = self._get_adapter(agent)
         except (ProviderError, ValueError) as exc:
+            telemetry.set_error(
+                root_span, error_code="provider_init_error", message=str(exc)
+            )
             return MAT2Response(
                 schema_version=req.schema_version,
                 correlation_id=req.correlation_id,
@@ -260,15 +299,82 @@ class AgentRouter:
                     "message": str(exc),
                 },
             )
-        result = adapter.invoke(
-            prompt=req.instruction,
-            system_prompt=agent.system_prompt,
-            working_dir=req.repo_root,
-            timeout_ms=req.timeout_ms,
-            correlation_id=req.correlation_id,
-        )
 
-        # Build response
+        # Resolve the request model for the CLI span (best-effort; MAT-16 overlay).
+        overlay = self._provider_overlay(agent)
+        request_model = overlay.get("model") if isinstance(overlay, dict) else None
+        gen_ai_system = telemetry.cli_to_gen_ai_system(agent.cli)
+
+        with telemetry.start_span(
+            f"{agent.cli or 'cli'} invoke",
+            attributes={
+                telemetry.GEN_AI_OPERATION_NAME: "invoke_agent",
+                telemetry.GEN_AI_SYSTEM: gen_ai_system,
+                telemetry.GEN_AI_REQUEST_MODEL: request_model,
+                telemetry.MAT_AGENT_NAME: agent.name,
+                telemetry.MAT_AGENT_CLI: agent.cli,
+                telemetry.MAT_CORRELATION_ID: req.correlation_id,
+            },
+        ) as cli_span:
+            started = time.perf_counter()
+            result = adapter.invoke(
+                prompt=req.instruction,
+                system_prompt=agent.system_prompt,
+                working_dir=req.repo_root,
+                timeout_ms=req.timeout_ms,
+                correlation_id=req.correlation_id,
+            )
+            self._record_invocation_span(cli_span, result, started, request_model)
+
+        response = self._build_response(req, result)
+        if response.ok:
+            telemetry.set_ok(root_span)
+        else:
+            telemetry.set_error(
+                root_span,
+                error_code=(response.error or {}).get("code", "unknown"),
+                message=(response.error or {}).get("message"),
+            )
+        return response
+
+    @staticmethod
+    def _record_invocation_span(
+        cli_span: Any,
+        result: InvocationResult,
+        started: float,
+        request_model: str | None,
+    ) -> None:
+        """Populate a CLI-invocation span from the adapter result."""
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        input_tokens, output_tokens = telemetry.extract_token_usage(result.stdout)
+        telemetry.set_attributes(
+            cli_span,
+            {
+                telemetry.MAT_DURATION_MS: duration_ms,
+                telemetry.MAT_RETURN_CODE: result.return_code,
+                telemetry.MAT_TIMEOUT_EXCEEDED: result.timeout_exceeded,
+                telemetry.MAT_CORRELATION_ID: result.correlation_id,
+                telemetry.GEN_AI_RESPONSE_MODEL: request_model,
+                telemetry.GEN_AI_USAGE_INPUT_TOKENS: input_tokens,
+                telemetry.GEN_AI_USAGE_OUTPUT_TOKENS: output_tokens,
+            },
+        )
+        if result.ok:
+            telemetry.set_ok(cli_span)
+        elif result.timeout_exceeded:
+            telemetry.set_error(
+                cli_span, error_code="timeout", message=result.stderr or "timeout"
+            )
+        else:
+            telemetry.set_error(
+                cli_span,
+                error_code="execution_error",
+                message=result.stderr or f"CLI returned code {result.return_code}",
+            )
+
+    @staticmethod
+    def _build_response(req: MAT2Request, result: InvocationResult) -> MAT2Response:
+        """Translate an adapter :class:`InvocationResult` into a MAT-2 response."""
         if result.ok:
             return MAT2Response(
                 schema_version=req.schema_version,
@@ -280,30 +386,30 @@ class AgentRouter:
                     "files_modified": [],  # Would need to parse from output
                 },
             )
+
+        if result.timeout_exceeded:
+            error_code = "timeout"
+        elif result.stdout.strip():
+            # Agent produced output but failed = semantic refusal
+            error_code = "agent_refused"
         else:
-            if result.timeout_exceeded:
-                error_code = "timeout"
-            elif result.stdout.strip():
-                # Agent produced output but failed = semantic refusal
-                error_code = "agent_refused"
-            else:
-                # No output = infrastructure failure
-                error_code = "execution_error"
-            # Preserve refusal reason from stdout for agent_refused errors
-            if error_code == "agent_refused":
-                error_message = result.stdout.strip()
-            else:
-                error_message = result.stderr or f"CLI returned code {result.return_code}"
-            return MAT2Response(
-                schema_version=req.schema_version,
-                correlation_id=req.correlation_id,
-                idempotency_key=req.idempotency_key,
-                ok=False,
-                error={
-                    "code": error_code,
-                    "message": error_message,
-                },
-            )
+            # No output = infrastructure failure
+            error_code = "execution_error"
+        # Preserve refusal reason from stdout for agent_refused errors
+        if error_code == "agent_refused":
+            error_message = result.stdout.strip()
+        else:
+            error_message = result.stderr or f"CLI returned code {result.return_code}"
+        return MAT2Response(
+            schema_version=req.schema_version,
+            correlation_id=req.correlation_id,
+            idempotency_key=req.idempotency_key,
+            ok=False,
+            error={
+                "code": error_code,
+                "message": error_message,
+            },
+        )
 
     def invoke_op(self, request: MAT2Request | dict[str, Any] | str) -> MAT2Response:
         """
