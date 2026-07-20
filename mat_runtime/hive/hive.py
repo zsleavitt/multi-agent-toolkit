@@ -9,6 +9,7 @@ from pathlib import Path
 from mat_runtime.crew.registry import CrewRegistry
 from mat_runtime.crew.types import CrewTask
 from mat_runtime.hive.definition import HiveDefinition, load_hive_definition
+from mat_runtime.hive.events import Event, EventBus, EventType, Severity
 from mat_runtime.hive.hooks import HookRunner
 from mat_runtime.hive.memory import create_hive_memory_store
 from mat_runtime.hive.routing import (
@@ -57,6 +58,7 @@ class Hive:
         definition: HiveDefinition | None = None,
         repo_root: str | Path | None = None,
         crew_registry: CrewRegistry | None = None,
+        event_bus: EventBus | None = None,
     ):
         if definition is not None:
             self._definition = definition
@@ -83,6 +85,7 @@ class Hive:
             self._definition.inter_crew_routing.strategy
         )
         self._hooks = HookRunner()
+        self._events = event_bus
         self._task_count = 0
         self._task_count_lock = asyncio.Lock()
         self._started = False
@@ -114,6 +117,11 @@ class Hive:
                     f"Unknown crew ref '{entry.ref}' in hive "
                     f"'{self._definition.name}'. {exc}"
                 ) from exc
+
+    def _emit(self, event: Event) -> None:
+        """Publish an observability event if an event bus is configured."""
+        if self._events is not None:
+            self._events.emit(event)
 
     @property
     def name(self) -> str:
@@ -310,6 +318,21 @@ class Hive:
         from mat_runtime.crew.types import CrewResult
 
         stage_start = time.monotonic()
+        self._emit(
+            Event(
+                event_type=EventType.CREW_STARTED,
+                correlation_id=task.correlation_id,
+                severity=Severity.INFO,
+                crew=crew_ref,
+                hive=self._definition.name,
+                task_metadata={
+                    "op": task.op,
+                    "required_capabilities": list(task.required_capabilities),
+                    **task.metadata,
+                },
+                source="hive",
+            )
+        )
         crew = self._crew_registry.get_crew(crew_ref)
         await crew.start()
         try:
@@ -328,11 +351,31 @@ class Hive:
         finally:
             await crew.shutdown()
 
+        duration_ms = int((time.monotonic() - stage_start) * 1000)
+        self._emit(
+            Event(
+                event_type=EventType.CREW_COMPLETED,
+                correlation_id=task.correlation_id,
+                severity=Severity.INFO if result.ok else Severity.ERROR,
+                crew=crew_ref,
+                hive=self._definition.name,
+                duration_ms=duration_ms,
+                task_metadata={"op": task.op},
+                outcome={
+                    "ok": result.ok,
+                    "agent_used": result.agent_used,
+                    "attempts": result.attempts,
+                    "error": result.error,
+                },
+                source="hive",
+            )
+        )
+
         return CrewStageResult(
             crew_ref=crew_ref,
             ok=result.ok,
             crew_result=result,
-            duration_ms=int((time.monotonic() - stage_start) * 1000),
+            duration_ms=duration_ms,
         )
 
     def _build_crew_task(

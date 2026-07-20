@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from mat_runtime.adapters import InvocationResult
+from mat_runtime.hive.events import Event, EventBus, EventType
 from mat_runtime.swarm import Swarm, SwarmTask
 
 
@@ -148,6 +149,46 @@ class TestSwarmDispatch:
             assert codex_kw.get("model") == "gpt-4.1"
         finally:
             path.unlink()
+
+    def test_emits_dispatch_and_consensus_events(self, swarm_path: Path):
+        """Swarm emits swarm_dispatched and swarm_consensus_reached events."""
+        events: list[Event] = []
+        bus = EventBus()
+
+        class _Recorder:
+            def handle(self, event: Event) -> None:
+                events.append(event)
+
+        bus.subscribe(_Recorder())
+
+        swarm = Swarm(definition_path=swarm_path, event_bus=bus)
+
+        mock_claude = MagicMock()
+        mock_codex = MagicMock()
+        mock_claude.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="claude output"
+        )
+        mock_codex.invoke = lambda **kwargs: _make_invocation_result(
+            ok=True, stdout="codex output"
+        )
+        swarm._adapters = {"claude": mock_claude, "codex": mock_codex}
+
+        result = asyncio.run(swarm.dispatch(SwarmTask(instruction="test")))
+
+        types = [e.event_type for e in events]
+        assert types == [
+            EventType.SWARM_DISPATCHED,
+            EventType.SWARM_CONSENSUS_REACHED,
+        ]
+
+        dispatched, consensus = events
+        assert dispatched.swarm == "test-swarm"
+        assert dispatched.task_metadata["candidates"] == ["claude", "codex"]
+
+        assert consensus.outcome["ok"] is True
+        assert consensus.outcome["winning_candidate"] == result.winning_candidate
+        assert consensus.outcome["candidate_count"] == 2
+        assert consensus.duration_ms is not None
 
     def test_first_complete_skips_failures(self, swarm_path: Path):
         """First-complete skips failed candidates."""

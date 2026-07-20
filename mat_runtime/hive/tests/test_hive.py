@@ -16,6 +16,7 @@ from mat_runtime.hive.definition import (
     QuotasConfig,
     RoutingRule,
 )
+from mat_runtime.hive.events import Event, EventBus, EventType
 from mat_runtime.hive.hive import Hive
 from mat_runtime.hive.types import HiveTask
 
@@ -296,3 +297,48 @@ class TestHiveSubmit:
             assert "on_task_assigned" in hook_names
             assert "on_task_complete" in hook_names
             assert "on_finish" in hook_names
+
+    def test_emits_crew_events_to_event_bus(
+        self,
+        mock_crew_registry: MagicMock,
+    ) -> None:
+        asyncio.run(self._test_emits_crew_events_to_event_bus(mock_crew_registry))
+
+    async def _test_emits_crew_events_to_event_bus(
+        self,
+        mock_crew_registry: MagicMock,
+    ) -> None:
+        dev_crew = _mock_crew([_crew_result(True)])
+        review_crew = _mock_crew([_crew_result(True)])
+        mock_crew_registry.get_crew.side_effect = lambda name: (
+            dev_crew if name == "dev-crew" else review_crew
+        )
+
+        events: list[Event] = []
+        bus = EventBus()
+
+        class _Recorder:
+            def handle(self, event: Event) -> None:
+                events.append(event)
+
+        bus.subscribe(_Recorder())
+
+        hive = Hive(
+            definition=_pipeline_definition(),
+            repo_root="/tmp",
+            crew_registry=mock_crew_registry,
+            event_bus=bus,
+        )
+        await hive.start()
+        try:
+            await hive.submit(HiveTask(instruction="Implement feature"))
+        finally:
+            await hive.shutdown()
+
+        started = [e for e in events if e.event_type == EventType.CREW_STARTED]
+        completed = [e for e in events if e.event_type == EventType.CREW_COMPLETED]
+
+        assert [e.crew for e in started] == ["dev-crew", "review-crew"]
+        assert [e.crew for e in completed] == ["dev-crew", "review-crew"]
+        assert all(e.outcome["ok"] is True for e in completed)
+        assert all(e.duration_ms is not None for e in completed)
