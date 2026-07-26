@@ -7,3 +7,10 @@ PyYAML==6.0.2
 anthropic>=0.40.0
 openai>=1.50.0
 google-generativeai>=0.8.0
+
+# OpenTelemetry GenAI tracing (MAT-97). Optional at runtime (the `otel` extra in
+# pyproject.toml), but required to exercise mat_runtime/tests/test_telemetry.py —
+# those tests skip when opentelemetry is not installed. Install with:
+#   pip install '.[otel]'
+opentelemetry-sdk>=1.27.0
+opentelemetry-exporter-otlp-proto-grpc>=1.27.0

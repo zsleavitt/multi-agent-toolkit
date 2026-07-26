@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-agent-toolkit"
+version = "0.1.0"
+description = "Multi-Agent Toolkit runtime — CLI-delegated agent orchestration (MAT)."
+readme = "README.md"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+# OpenTelemetry GenAI tracing (MAT-97). Optional so the runtime works without
+# any telemetry deps installed. Enable at runtime via MAT_OTEL_ENABLED=1 or by
+# setting OTEL_EXPORTER_OTLP_ENDPOINT. Keep versions aligned with the pinned
+# GenAI SemConv version in mat_runtime/telemetry.py (GEN_AI_SEMCONV_VERSION).
+otel = [
+    "opentelemetry-sdk>=1.27.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["mat_runtime*"]
