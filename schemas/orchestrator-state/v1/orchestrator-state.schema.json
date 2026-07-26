@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Orchestrator persisted state — queue, artifacts, checkpoints (MAT-4); sessions + fluency (MAT-10)",
+  "title": "Orchestrator persisted state — queue, artifacts, checkpoints (MAT-4); sessions + fluency (MAT-10); budgets (MAT-98)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "queue", "artifacts", "checkpoints"],
@@ -16,13 +16,33 @@
   "$defs": {
     "schema_version": {
       "type": "string",
-      "enum": ["1.0.0", "1.1.0"],
-      "description": "Document format version. 1.1.0 adds optional MAT-10 `orchestrator_session` and checkpoint `fluency`; writers omitting those fields may stay on 1.0.0."
+      "enum": ["1.0.0", "1.1.0", "1.2.0"],
+      "description": "Document format version. 1.1.0 adds optional MAT-10 `orchestrator_session` and checkpoint `fluency`. 1.2.0 adds optional MAT-98 per-session / per-task `token_budget` and `cost_budget` (and optional usage counters). Writers omitting newer fields may stay on an earlier version."
+    },
+    "token_budget": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum cumulative tokens (input + output) allowed before the run must halt with budget_exceeded."
+    },
+    "cost_budget": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Maximum cumulative cost (currency units configured by the orchestrator) allowed before the run must halt with budget_exceeded."
+    },
+    "tokens_used": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cumulative tokens consumed so far against the matching token_budget."
+    },
+    "cost_used": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Cumulative cost consumed so far against the matching cost_budget."
     },
     "orchestrator_session": {
       "type": "object",
       "additionalProperties": false,
-      "description": "MAT-10: optional handle for the primary orchestrator session (e.g. main Claude Code) that owns planning, routing, and review. Distinct from MAT-2 worker `checkpoints.items[].session`.",
+      "description": "MAT-10: optional handle for the primary orchestrator session (e.g. main Claude Code) that owns planning, routing, and review. Distinct from MAT-2 worker `checkpoints.items[].session`. MAT-98: optional session-level token/cost budgets.",
       "required": ["session_id"],
       "properties": {
         "session_id": {
@@ -31,7 +51,11 @@
           "maxLength": 256,
           "description": "Opaque orchestrator session id (tool-defined; not an absolute path)."
         },
-        "updated_at": { "type": "string", "format": "date-time" }
+        "updated_at": { "type": "string", "format": "date-time" },
+        "token_budget": { "$ref": "#/$defs/token_budget" },
+        "cost_budget": { "$ref": "#/$defs/cost_budget" },
+        "tokens_used": { "$ref": "#/$defs/tokens_used" },
+        "cost_used": { "$ref": "#/$defs/cost_used" }
       }
     },
     "repo_profile_link": {
@@ -92,9 +116,10 @@
             "blocked_hitl",
             "succeeded",
             "failed",
-            "cancelled"
+            "cancelled",
+            "budget_exceeded"
           ],
-          "description": "Lifecycle status for orchestration and dashboards."
+          "description": "Lifecycle status for orchestration and dashboards. `budget_exceeded` (MAT-98) is a terminal halt when session or task token/cost budget is exhausted."
         },
         "title": {
           "type": "string",
@@ -120,6 +145,10 @@
             }
           }
         },
+        "token_budget": { "$ref": "#/$defs/token_budget" },
+        "cost_budget": { "$ref": "#/$defs/cost_budget" },
+        "tokens_used": { "$ref": "#/$defs/tokens_used" },
+        "cost_used": { "$ref": "#/$defs/cost_used" },
         "correlation_id": { "$ref": "#/$defs/uuid" },
         "created_at": { "type": "string", "format": "date-time" },
         "updated_at": { "type": "string", "format": "date-time" }
@@ -229,7 +258,49 @@
       "additionalProperties": false,
       "properties": {
         "updated_at": { "type": "string", "format": "date-time" },
-        "run_correlation_id": { "$ref": "#/$defs/uuid" }
+        "run_correlation_id": { "$ref": "#/$defs/uuid" },
+        "transitions": {
+          "type": "array",
+          "description": "Append-only log of significant queue/session state transitions (e.g. MAT-98 budget_exceeded).",
+          "items": { "$ref": "#/$defs/state_transition" }
+        }
+      }
+    },
+    "state_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "to", "reason"],
+      "properties": {
+        "at": { "type": "string", "format": "date-time" },
+        "queue_item_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Queue item id when the transition applies to a task."
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Previous status when known."
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "New status (e.g. budget_exceeded)."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "Human-readable halt or transition reason."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["session", "task"],
+          "description": "Whether the transition was triggered by session or task budget/policy."
+        }
       }
     }
   }

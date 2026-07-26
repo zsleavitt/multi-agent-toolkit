@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from mat_runtime import telemetry
+from mat_runtime import orchestrator_state, telemetry
 from mat_runtime.adapters import InvocationResult
 from mat_runtime.providers.bridge import create_invocation_provider
 from mat_runtime.providers.model import ProviderError
@@ -19,6 +19,14 @@ from mat_runtime.config import (
     ProviderConfig,
     load_agent_definitions,
     load_provider_config,
+)
+from mat_runtime.resilience import (
+    ERROR_BUDGET_EXCEEDED,
+    ERROR_CIRCUIT_OPEN,
+    BudgetLimits,
+    CircuitBreaker,
+    ResilienceConfig,
+    invoke_with_retry,
 )
 
 
@@ -122,6 +130,16 @@ class AgentRouter:
         )
         self.agents = agents or load_agent_definitions(repo_root=self.repo_root)
         self._adapters: dict[str, AgentInvocationProvider] = {}
+        # MAT-98: in-process breaker shared across invocations on this router.
+        defaults = self.provider_config.defaults if self.provider_config else {}
+        cfg = ResilienceConfig.from_overlay(defaults=defaults)
+        self._resilience_config = cfg
+        self._circuit_breaker = CircuitBreaker(
+            failure_threshold=cfg.breaker_failure_threshold,
+            cooldown_ms=cfg.breaker_cooldown_ms,
+            spend_rate_window_ms=cfg.spend_rate_window_ms,
+            spend_rate_token_limit=cfg.spend_rate_token_limit,
+        )
 
     def _provider_overlay(self, agent: AgentDefinition) -> dict[str, Any]:
         """Merge MAT-16 ``agents`` entries: role defaults, then per-agent name wins."""
@@ -304,6 +322,24 @@ class AgentRouter:
         overlay = self._provider_overlay(agent)
         request_model = overlay.get("model") if isinstance(overlay, dict) else None
         gen_ai_system = telemetry.cli_to_gen_ai_system(agent.cli)
+        defaults = self.provider_config.defaults if self.provider_config else {}
+        resilience_cfg = ResilienceConfig.from_overlay(
+            overlay=overlay if isinstance(overlay, dict) else {},
+            defaults=defaults,
+        )
+        # Keep breaker thresholds in sync with latest overlay without resetting state.
+        self._circuit_breaker.failure_threshold = (
+            resilience_cfg.breaker_failure_threshold
+        )
+        self._circuit_breaker.cooldown_ms = resilience_cfg.breaker_cooldown_ms
+        self._circuit_breaker.spend_rate_window_ms = (
+            resilience_cfg.spend_rate_window_ms
+        )
+        self._circuit_breaker.spend_rate_token_limit = (
+            resilience_cfg.spend_rate_token_limit
+        )
+
+        budgets, state_path, state_doc = self._resolve_budgets(req)
 
         with telemetry.start_span(
             f"{agent.cli or 'cli'} invoke",
@@ -317,14 +353,79 @@ class AgentRouter:
             },
         ) as cli_span:
             started = time.perf_counter()
-            result = adapter.invoke(
+            outcome = invoke_with_retry(
+                adapter.invoke,
+                idempotency_key=req.idempotency_key,
+                config=resilience_cfg,
+                breaker=self._circuit_breaker,
+                budgets=budgets,
+                tokens_from_result=lambda r: self._tokens_from_invocation(r),
+                cost_from_result=lambda r: self._cost_from_invocation(r),
                 prompt=req.instruction,
                 system_prompt=agent.system_prompt,
                 working_dir=req.repo_root,
                 timeout_ms=req.timeout_ms,
                 correlation_id=req.correlation_id,
             )
+
+            if outcome.budget_exceeded:
+                self._persist_budget_exceeded(
+                    state_path,
+                    state_doc,
+                    budgets,
+                    reason=outcome.budget_message or "Budget exceeded",
+                    scope=outcome.budget_scope or "task",
+                )
+                telemetry.set_error(
+                    cli_span,
+                    error_code=ERROR_BUDGET_EXCEEDED,
+                    message=outcome.budget_message,
+                )
+                response = MAT2Response(
+                    schema_version=req.schema_version,
+                    correlation_id=req.correlation_id,
+                    idempotency_key=req.idempotency_key,
+                    ok=False,
+                    error={
+                        "code": ERROR_BUDGET_EXCEEDED,
+                        "message": outcome.budget_message
+                        or "Token or cost budget exceeded",
+                    },
+                )
+                telemetry.set_error(
+                    root_span,
+                    error_code=ERROR_BUDGET_EXCEEDED,
+                    message=outcome.budget_message,
+                )
+                return response
+
+            if outcome.circuit_open and outcome.result is None:
+                telemetry.set_error(
+                    cli_span,
+                    error_code=ERROR_CIRCUIT_OPEN,
+                    message="Circuit breaker is open",
+                )
+                response = MAT2Response(
+                    schema_version=req.schema_version,
+                    correlation_id=req.correlation_id,
+                    idempotency_key=req.idempotency_key,
+                    ok=False,
+                    error={
+                        "code": ERROR_CIRCUIT_OPEN,
+                        "message": "Circuit breaker is open; failing fast",
+                    },
+                )
+                telemetry.set_error(
+                    root_span,
+                    error_code=ERROR_CIRCUIT_OPEN,
+                    message="Circuit breaker is open",
+                )
+                return response
+
+            result = outcome.result
+            assert result is not None
             self._record_invocation_span(cli_span, result, started, request_model)
+            self._persist_usage(state_path, state_doc, budgets)
 
         response = self._build_response(req, result)
         if response.ok:
@@ -336,6 +437,143 @@ class AgentRouter:
                 message=(response.error or {}).get("message"),
             )
         return response
+
+    def _resolve_budgets(
+        self, req: MAT2Request
+    ) -> tuple[BudgetLimits, Path | None, dict[str, Any] | None]:
+        """Build budget limits from request session/turn and optional MAT-4 state."""
+        budgets = BudgetLimits()
+        session = req.session if isinstance(req.session, dict) else {}
+        turn = req.turn if isinstance(req.turn, dict) else {}
+
+        if session.get("token_budget") is not None:
+            budgets.session_token_budget = int(session["token_budget"])
+        if session.get("cost_budget") is not None:
+            budgets.session_cost_budget = float(session["cost_budget"])
+        if session.get("tokens_used") is not None:
+            budgets.session_tokens_used = int(session["tokens_used"])
+        if session.get("cost_used") is not None:
+            budgets.session_cost_used = float(session["cost_used"])
+
+        task_token = turn.get("token_budget", session.get("task_token_budget"))
+        task_cost = turn.get("cost_budget", session.get("task_cost_budget"))
+        if task_token is not None:
+            budgets.task_token_budget = int(task_token)
+        if task_cost is not None:
+            budgets.task_cost_budget = float(task_cost)
+        if turn.get("tokens_used") is not None:
+            budgets.task_tokens_used = int(turn["tokens_used"])
+        elif session.get("task_tokens_used") is not None:
+            budgets.task_tokens_used = int(session["task_tokens_used"])
+        if turn.get("cost_used") is not None:
+            budgets.task_cost_used = float(turn["cost_used"])
+        elif session.get("task_cost_used") is not None:
+            budgets.task_cost_used = float(session["task_cost_used"])
+
+        queue_item_id = session.get("queue_item_id") or turn.get("queue_item_id")
+        if queue_item_id:
+            budgets.queue_item_id = str(queue_item_id)
+
+        state_path = orchestrator_state.find_state_path(req.repo_root or self.repo_root)
+        state_doc: dict[str, Any] | None = None
+        if state_path is not None:
+            try:
+                state_doc = orchestrator_state.load_state(state_path)
+                from_state = orchestrator_state.budgets_from_state(
+                    state_doc,
+                    queue_item_id=budgets.queue_item_id,
+                    correlation_id=req.correlation_id,
+                )
+                # State fills gaps; explicit request session/turn wins.
+                for key, value in from_state.items():
+                    if value is None:
+                        continue
+                    current = getattr(budgets, key, None)
+                    if key.endswith("_used"):
+                        # Prefer the higher watermark so we never under-count.
+                        if current is None or current == 0:
+                            setattr(budgets, key, value)
+                        else:
+                            setattr(budgets, key, max(current, value))
+                    elif current is None:
+                        setattr(budgets, key, value)
+            except (OSError, json.JSONDecodeError, TypeError, ValueError):
+                state_doc = None
+                state_path = None
+
+        return budgets, state_path, state_doc
+
+    @staticmethod
+    def _tokens_from_invocation(result: InvocationResult | None) -> int:
+        if result is None:
+            return 0
+        inp, out = telemetry.extract_token_usage(result.stdout)
+        total = (inp or 0) + (out or 0)
+        return total
+
+    @staticmethod
+    def _cost_from_invocation(result: InvocationResult | None) -> float:
+        """Best-effort cost from stdout JSON ``usage.cost`` / ``cost`` when present."""
+        if result is None or not result.stdout:
+            return 0.0
+        stripped = result.stdout.strip()
+        if not (stripped.startswith("{") and stripped.endswith("}")):
+            return 0.0
+        try:
+            data = json.loads(stripped)
+        except ValueError:
+            return 0.0
+        if not isinstance(data, dict):
+            return 0.0
+        usage = data.get("usage") if isinstance(data.get("usage"), dict) else data
+        for key in ("cost", "total_cost", "cost_usd"):
+            value = usage.get(key) if isinstance(usage, dict) else None
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                return float(value)
+        return 0.0
+
+    @staticmethod
+    def _persist_budget_exceeded(
+        state_path: Path | None,
+        state_doc: dict[str, Any] | None,
+        budgets: BudgetLimits,
+        *,
+        reason: str,
+        scope: str,
+    ) -> None:
+        if state_path is None or state_doc is None:
+            return
+        orchestrator_state.record_budget_exceeded_transition(
+            state_doc,
+            reason=reason,
+            scope=scope,
+            queue_item_id=budgets.queue_item_id,
+        )
+        try:
+            orchestrator_state.save_state(state_path, state_doc)
+        except OSError:
+            pass
+
+    @staticmethod
+    def _persist_usage(
+        state_path: Path | None,
+        state_doc: dict[str, Any] | None,
+        budgets: BudgetLimits,
+    ) -> None:
+        if state_path is None or state_doc is None:
+            return
+        orchestrator_state.sync_usage_counters(
+            state_doc,
+            session_tokens_used=budgets.session_tokens_used,
+            session_cost_used=budgets.session_cost_used,
+            queue_item_id=budgets.queue_item_id,
+            task_tokens_used=budgets.task_tokens_used,
+            task_cost_used=budgets.task_cost_used,
+        )
+        try:
+            orchestrator_state.save_state(state_path, state_doc)
+        except OSError:
+            pass
 
     @staticmethod
     def _record_invocation_span(

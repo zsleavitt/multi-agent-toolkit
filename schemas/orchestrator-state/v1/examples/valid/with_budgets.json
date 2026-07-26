@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.2.0",
+  "orchestrator_session": {
+    "session_id": "cc-main-orch-budget",
+    "updated_at": "2026-07-26T15:00:00Z",
+    "token_budget": 500000,
+    "cost_budget": 25.0,
+    "tokens_used": 12000,
+    "cost_used": 0.42
+  },
+  "queue": {
+    "items": [
+      {
+        "id": "q-budget-1",
+        "status": "running",
+        "title": "Implement feature under budget",
+        "token_budget": 80000,
+        "cost_budget": 5.0,
+        "tokens_used": 1500,
+        "cost_used": 0.05,
+        "correlation_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "created_at": "2026-07-26T14:55:00Z",
+        "updated_at": "2026-07-26T15:00:00Z"
+      }
+    ]
+  },
+  "artifacts": { "items": [] },
+  "checkpoints": { "items": [] },
+  "meta": {
+    "updated_at": "2026-07-26T15:00:00Z",
+    "run_correlation_id": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+    "transitions": []
+  }
+}
