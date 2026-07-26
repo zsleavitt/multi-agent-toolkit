@@ -86,7 +86,7 @@ shown as exported JSON (abridged):
   "name": "codex invoke",
   "kind": "SpanKind.CLIENT",
   "status": { "status_code": "OK" },
-  "parent_id": "invoke_agent codex.implement",
+  "parent_id": "aabbccddeeff1122",
   "attributes": {
     "gen_ai.operation.name": "invoke_agent",
     "gen_ai.system": "openai",

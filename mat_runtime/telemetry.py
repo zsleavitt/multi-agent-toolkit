@@ -107,9 +107,14 @@ def set_tracer_provider(provider: Any | None) -> None:
 
     Passing an explicit provider avoids the global-provider-set-once limitation,
     which matters for tests that need a fresh in-memory exporter each run.
+
+    Passing ``None`` clears the provider and resets the ``_configured`` flag so
+    that a subsequent ``configure_tracing()`` call can rebuild the provider.
     """
-    global _tracer_provider
+    global _tracer_provider, _configured
     _tracer_provider = provider
+    if provider is None:
+        _configured = False
 
 
 def get_tracer() -> "Tracer | None":

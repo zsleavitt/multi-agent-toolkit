@@ -139,8 +139,7 @@ class TestConfigureTracing:
             # thread does not linger and spam connection errors after the test.
             if provider is not None:
                 provider.shutdown()
-            telemetry.set_tracer_provider(None)
-            monkeypatch.setattr(telemetry, "_configured", False)
+            telemetry.set_tracer_provider(None)  # also resets _configured
 
 
 class TestRouterSpans:
