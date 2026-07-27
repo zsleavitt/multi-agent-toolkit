@@ -4,6 +4,8 @@ JSON Schema for a **single durable state document** (`orchestrator.state.json` o
 
 **MAT-10** adds optional **orchestrator session** and **fluency** metadata on checkpoints so the primary orchestrator session (main Claude Code) can record planning/review phases for correlation with fluency tooling (for example **`/ai-fluency-insights`** via `claude-introspection`). Use document **`schema_version`** `1.1.0` when emitting these fields; documents without them may remain **`1.0.0`**.
 
+**MAT-98** adds optional per-session and per-task **`token_budget`** / **`cost_budget`** (plus optional **`tokens_used`** / **`cost_used`** counters), terminal queue status **`budget_exceeded`**, and an optional append-only **`meta.transitions`** log. Use **`schema_version`** `1.2.0` when emitting these fields.
+
 ## Schema identity
 
 - Uses **Draft 2020-12** with **only** `#/$defs/...` fragment references (same convention as MAT-1 / MAT-2 / MAT-9).
@@ -42,6 +44,14 @@ python scripts/validate_orchestrator_state.py
 
 - **`orchestrator_session`** (optional, top-level) identifies the **primary orchestrator** run (e.g. main Claude Code). It is **not** the same object as **`checkpoints.items[].session`**, which links a checkpoint to a **MAT-2** worker session.
 - **`checkpoints.items[].fluency`** (optional) records **`capture_phase`** (`planning`, `review`, `routing`, `synthesis`, `other`) and optional **`insights_surface`** (string label such as `/ai-fluency-insights`, not a URL) plus an optional **`correlation_id`** for introspection exports. Prefer **planning** and **review** in the main orchestrator session when fluency scores should reflect high-signal work.
+
+## Budgets and resilience (MAT-98)
+
+- **`orchestrator_session.token_budget` / `cost_budget`** — optional session-wide caps. When exceeded, the runtime returns MAT-2 error code **`budget_exceeded`** and records a transition.
+- **`queue.items[].token_budget` / `cost_budget`** — optional per-task caps (same semantics).
+- Optional **`tokens_used` / `cost_used`** counters on session and queue items track spend against those caps.
+- Queue status **`budget_exceeded`** is a terminal halt distinct from **`failed`**.
+- **`meta.transitions`** is an append-only audit list (`at`, `to`, `reason`, optional `from` / `queue_item_id` / `scope`) written when a budget halt (or similar policy) fires.
 
 ## Validate locally
 

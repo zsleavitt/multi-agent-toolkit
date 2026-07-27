@@ -98,6 +98,55 @@
           "minimum": 1,
           "maximum": 200000,
           "description": "Max completion tokens for API invocations."
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Retry count for transient CLI/API infrastructure failures (MAT-98)."
+        },
+        "backoff_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000,
+          "description": "Initial exponential-backoff delay in milliseconds before the first retry (MAT-98)."
+        },
+        "backoff_multiplier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Multiplier applied to backoff_ms after each retry (MAT-98)."
+        },
+        "circuit_breaker": { "$ref": "#/$defs/circuit_breaker" }
+      }
+    },
+    "circuit_breaker": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MAT-98 in-process circuit breaker settings for CLI/API invocations.",
+      "properties": {
+        "failure_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Consecutive infrastructure failures that open the breaker."
+        },
+        "cooldown_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600000,
+          "description": "Time in the open state before transitioning to half-open."
+        },
+        "spend_rate_window_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "description": "Rolling window for spend-rate spike detection."
+        },
+        "spend_rate_token_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "If tokens consumed in the window exceed this limit, open the breaker."
         }
       }
     },
@@ -156,8 +205,21 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 5,
-          "description": "Default retry count for transient failures."
+          "description": "Default retry count for transient failures (MAT-98)."
         },
+        "backoff_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000,
+          "description": "Default initial exponential-backoff delay in milliseconds (MAT-98)."
+        },
+        "backoff_multiplier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Default backoff multiplier after each retry (MAT-98)."
+        },
+        "circuit_breaker": { "$ref": "#/$defs/circuit_breaker" },
         "working_dir_env": {
           "type": "string",
           "pattern": "^[A-Z][A-Z0-9_]*$",
