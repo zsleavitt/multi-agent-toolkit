@@ -423,7 +423,22 @@ class AgentRouter:
                 return response
 
             result = outcome.result
-            assert result is not None
+            if result is None:
+                # Invariant: budget_exceeded and circuit_open paths returned above.
+                # Treat an unexpected None as an infrastructure failure.
+                telemetry.set_error(
+                    cli_span, error_code="execution_error", message="No result from invocation"
+                )
+                telemetry.set_error(
+                    root_span, error_code="execution_error", message="No result from invocation"
+                )
+                return MAT2Response(
+                    schema_version=req.schema_version,
+                    correlation_id=req.correlation_id,
+                    idempotency_key=req.idempotency_key,
+                    ok=False,
+                    error={"code": "execution_error", "message": "No result from invocation"},
+                )
             self._record_invocation_span(cli_span, result, started, request_model)
             self._persist_usage(state_path, state_doc, budgets)
 

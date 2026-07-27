@@ -375,12 +375,6 @@ def invoke_with_retry(
             sleep(backoff_ms / 1000.0)
         backoff_ms = int(backoff_ms * config.backoff_multiplier)
 
-    return RetryOutcome(
-        result=last_result,
-        attempts=max_attempts,
-        retry_reasons=retry_reasons,
-    )
-
 
 __all__ = [
     "RETRYABLE_ERROR_CODES",
