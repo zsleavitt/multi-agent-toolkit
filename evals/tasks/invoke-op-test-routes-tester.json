@@ -1,0 +1,29 @@
+{
+  "id": "invoke-op-test-routes-tester",
+  "description": "invoke_op routes codex.test to tester",
+  "tags": [
+    "routing",
+    "invoke_op"
+  ],
+  "setup": {
+    "routing": {},
+    "mock": {
+      "kind": "ok",
+      "stdout": "tests ok"
+    }
+  },
+  "request": {
+    "use_invoke_op": true,
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.test",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Auto-route test"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "tester",
+    "op_in_allowlist": true
+  }
+}

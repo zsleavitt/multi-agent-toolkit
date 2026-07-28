@@ -1,0 +1,32 @@
+{
+  "id": "timeout-single-attempt",
+  "description": "Timeout with no retries maps to timeout error",
+  "tags": [
+    "timeout",
+    "resilience"
+  ],
+  "must_pass": true,
+  "setup": {
+    "provider_defaults": {
+      "max_retries": 0,
+      "backoff_ms": 0
+    },
+    "mock": {
+      "kind": "timeout"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "timeout",
+    "attempts": 1
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "allowlist-agent-not-found",
+  "description": "Unknown agent name returns agent_not_found",
+  "tags": [
+    "routing",
+    "rejection"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "does-not-exist",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "agent_not_found",
+    "attempts": 0
+  }
+}

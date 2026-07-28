@@ -1,0 +1,31 @@
+{
+  "id": "route-reviewer-review-ok",
+  "description": "Reviewer successfully handles codex.review",
+  "tags": [
+    "routing",
+    "success"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "LGTM with nits"
+    }
+  },
+  "request": {
+    "agent_name": "reviewer",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.review",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Review PR diff"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "reviewer",
+    "agent_cli": "claude",
+    "op_in_allowlist": true,
+    "attempts": 1
+  }
+}

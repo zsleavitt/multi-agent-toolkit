@@ -1,0 +1,35 @@
+{
+  "id": "circuit-open-fail-fast",
+  "description": "Pre-tripped breaker returns circuit_open without invoking",
+  "tags": [
+    "circuit",
+    "resilience"
+  ],
+  "must_pass": true,
+  "setup": {
+    "pre_failures": 5,
+    "provider_defaults": {
+      "circuit_breaker": {
+        "failure_threshold": 5
+      }
+    },
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "circuit_open",
+    "attempts": 0,
+    "circuit_state": "open"
+  }
+}

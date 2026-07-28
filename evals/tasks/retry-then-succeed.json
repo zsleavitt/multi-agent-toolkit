@@ -1,0 +1,48 @@
+{
+  "id": "retry-then-succeed",
+  "description": "Retryable execution_error then success",
+  "tags": [
+    "retry",
+    "resilience"
+  ],
+  "must_pass": true,
+  "setup": {
+    "provider_defaults": {
+      "max_retries": 3,
+      "backoff_ms": 0,
+      "circuit_breaker": {
+        "failure_threshold": 10
+      }
+    },
+    "mock": {
+      "sequence": [
+        {
+          "kind": "execution_error"
+        },
+        {
+          "kind": "execution_error"
+        },
+        {
+          "kind": "ok",
+          "stdout": "recovered"
+        }
+      ]
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Retry path"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "attempts": 3,
+    "retry_count": 2,
+    "circuit_state": "closed",
+    "output_contains": "recovered"
+  }
+}

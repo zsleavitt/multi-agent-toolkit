@@ -1,0 +1,30 @@
+{
+  "id": "budget-task-cost-exceeded",
+  "description": "Task cost budget halt",
+  "tags": [
+    "budget"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement",
+      "turn": {
+        "cost_budget": 0.5,
+        "cost_used": 0.5
+      }
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "budget_exceeded",
+    "attempts": 0
+  }
+}

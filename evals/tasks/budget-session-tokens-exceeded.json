@@ -1,0 +1,31 @@
+{
+  "id": "budget-session-tokens-exceeded",
+  "description": "Session token budget halt before invoke",
+  "tags": [
+    "budget"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Budget halt",
+      "session": {
+        "token_budget": 100,
+        "tokens_used": 100
+      }
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "budget_exceeded",
+    "attempts": 0
+  }
+}

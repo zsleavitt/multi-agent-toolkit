@@ -1,0 +1,31 @@
+{
+  "id": "allowlist-coder-rejects-review",
+  "description": "Coder cannot handle codex.review \u2192 operation_not_allowed",
+  "tags": [
+    "allowlist",
+    "rejection"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "should not run"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.review",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Review as coder"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "operation_not_allowed",
+    "agent_name": "coder",
+    "op_in_allowlist": false,
+    "attempts": 0
+  }
+}

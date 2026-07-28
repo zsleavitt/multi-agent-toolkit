@@ -1,0 +1,28 @@
+{
+  "id": "allowlist-tester-rejects-review",
+  "description": "Tester cannot handle codex.review",
+  "tags": [
+    "allowlist",
+    "rejection"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "tester",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.review",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Review as tester"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "operation_not_allowed",
+    "op_in_allowlist": false,
+    "attempts": 0
+  }
+}

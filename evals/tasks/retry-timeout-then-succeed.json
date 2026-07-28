@@ -1,0 +1,45 @@
+{
+  "id": "retry-timeout-then-succeed",
+  "description": "Timeout failures retry then succeed",
+  "tags": [
+    "retry",
+    "timeout",
+    "resilience"
+  ],
+  "must_pass": true,
+  "setup": {
+    "provider_defaults": {
+      "max_retries": 2,
+      "backoff_ms": 0,
+      "circuit_breaker": {
+        "failure_threshold": 10
+      }
+    },
+    "mock": {
+      "sequence": [
+        {
+          "kind": "timeout"
+        },
+        {
+          "kind": "ok",
+          "stdout": "after timeout"
+        }
+      ]
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "attempts": 2,
+    "retry_count": 1,
+    "output_contains": "after timeout"
+  }
+}

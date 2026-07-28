@@ -1,0 +1,30 @@
+{
+  "id": "allowlist-reviewer-rejects-implement",
+  "description": "Reviewer cannot handle codex.implement",
+  "tags": [
+    "allowlist",
+    "rejection"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "reviewer",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Implement as reviewer"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "operation_not_allowed",
+    "agent_name": "reviewer",
+    "op_in_allowlist": false,
+    "attempts": 0
+  }
+}

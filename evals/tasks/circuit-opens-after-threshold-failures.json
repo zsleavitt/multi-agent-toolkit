@@ -1,0 +1,38 @@
+{
+  "id": "circuit-opens-after-threshold-failures",
+  "description": "Infra failures trip breaker; next call is circuit_open",
+  "tags": [
+    "circuit",
+    "resilience"
+  ],
+  "must_pass": true,
+  "setup": {
+    "pre_failures": 1,
+    "provider_defaults": {
+      "max_retries": 0,
+      "backoff_ms": 0,
+      "circuit_breaker": {
+        "failure_threshold": 2,
+        "cooldown_ms": 60000
+      }
+    },
+    "mock": {
+      "kind": "execution_error"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "execution_error",
+    "attempts": 1,
+    "circuit_state": "open"
+  }
+}
