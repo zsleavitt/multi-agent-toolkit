@@ -51,20 +51,30 @@ def load_allowed_operations(manifest_path: Path | None = None) -> frozenset[str]
     ops = data.get("allowed_operations")
     if not isinstance(ops, list) or not all(isinstance(o, str) for o in ops):
         raise ValueError(f"manifest missing allowed_operations list: {path}")
+    # Invariant required for op_to_tool_name / tool_name_to_op roundtrip.
+    for op in ops:
+        if op.count(".") != 1:
+            raise ValueError(
+                f"MAT-1 op must have exactly one dot for MCP tool name roundtrip: {op!r}"
+            )
     return frozenset(ops)
 
 
 def expand_repo_root(repo_root: str) -> Path:
-    """Expand ``~`` / ``~user``, reject traversal, require an existing directory."""
+    """Expand ``~`` / ``~user`` and require an existing directory."""
     if not repo_root or not isinstance(repo_root, str):
         raise ValueError("repo_root is required")
-    if "/../" in repo_root or repo_root.endswith("/..") or "\\..\\" in repo_root:
-        raise ValueError("repo_root must not contain path traversal")
-    expanded = Path(repo_root).expanduser()
-    resolved = expanded.resolve()
+    resolved = Path(repo_root).expanduser().resolve()
     if not resolved.is_dir():
         raise FileNotFoundError(f"repo_root does not exist: {resolved}")
     return resolved
+
+
+def _require_safe_name(value: str, field: str) -> str:
+    """Reject values that start with '-' to prevent git option injection."""
+    if str(value).startswith("-"):
+        raise ValueError(f"{field} must not start with '-': {value!r}")
+    return str(value)
 
 
 def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
@@ -83,7 +93,7 @@ def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
         if params.get("prune"):
             cmd.append("--prune")
         if params.get("remote"):
-            cmd.append(str(params["remote"]))
+            cmd.append(_require_safe_name(params["remote"], "remote"))
         return cmd
 
     if op == "git.pull":
@@ -95,9 +105,9 @@ def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
         if params.get("ff_only"):
             cmd.append("--ff-only")
         if params.get("remote"):
-            cmd.append(str(params["remote"]))
+            cmd.append(_require_safe_name(params["remote"], "remote"))
         if params.get("refspec"):
-            cmd.append(str(params["refspec"]))
+            cmd.append(_require_safe_name(params["refspec"], "refspec"))
         return cmd
 
     if op == "git.checkout_new_branch":
@@ -149,9 +159,9 @@ def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
         if params.get("force_with_lease"):
             cmd.append("--force-with-lease")
         if params.get("remote"):
-            cmd.append(str(params["remote"]))
+            cmd.append(_require_safe_name(params["remote"], "remote"))
         if params.get("refspec"):
-            cmd.append(str(params["refspec"]))
+            cmd.append(_require_safe_name(params["refspec"], "refspec"))
         return cmd
 
     if op == "git.add":
@@ -225,8 +235,8 @@ def run_git(
     except subprocess.TimeoutExpired as exc:
         return GitRunResult(
             ok=False,
-            stdout=(exc.stdout or "") if isinstance(exc.stdout, str) else "",
-            stderr=(exc.stderr or "") if isinstance(exc.stderr, str) else "timeout",
+            stdout=exc.stdout or "",
+            stderr=exc.stderr or "timeout",
             return_code=-1,
             argv=list(argv),
             timeout_exceeded=True,

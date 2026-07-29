@@ -35,12 +35,39 @@ def test_load_allowed_operations_from_manifest(manifest_path: Path) -> None:
     assert "git.commit" in ops
     assert "git.add" in ops
     assert "shell.exec" not in ops
+    # All ops must have exactly one dot for the tool-name roundtrip to be correct.
+    for op in ops:
+        assert op.count(".") == 1, f"unexpected multi-dot op: {op!r}"
+
+
+def test_load_allowed_operations_rejects_multi_dot_op(tmp_path: Path, manifest_path: Path) -> None:
+    import pytest
+
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    bad = {**data, "allowed_operations": ["git.status", "git.op.sub"]}
+    bad_path = tmp_path / "manifest.json"
+    bad_path.write_text(json.dumps(bad), encoding="utf-8")
+    with pytest.raises(ValueError, match="exactly one dot"):
+        load_allowed_operations(bad_path)
 
 
 def test_op_tool_name_roundtrip() -> None:
     assert op_to_tool_name("git.commit") == "git_commit"
     assert tool_name_to_op("git_commit") == "git.commit"
     assert tool_name_to_op("git_checkout_new_branch") == "git.checkout_new_branch"
+
+
+def test_build_git_argv_rejects_dash_remote() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.push", {"remote": "--upload-pack=/evil"})
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.pull", {"remote": "-evil"})
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.fetch", {"remote": "--evil"})
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.push", {"remote": "origin", "refspec": "--evil"})
 
 
 def test_build_git_argv_common_ops() -> None:
