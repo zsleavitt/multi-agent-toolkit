@@ -18,6 +18,11 @@ otel = [
     "opentelemetry-sdk>=1.27.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
 ]
+# MCP git server (MAT-101). Optional so the runtime works without the MCP SDK.
+# Install with: pip install '.[mcp]'
+mcp = [
+    "mcp>=1.0,<2",
+]
 
 [tool.setuptools.packages.find]
 include = ["mat_runtime*"]
