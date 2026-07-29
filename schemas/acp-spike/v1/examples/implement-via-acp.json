@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1.0-spike",
+  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+  "idempotency_key": "impl-fib-2026-07-29-a1b2c3d4",
+  "repo_root": "/Users/example/project",
+  "timeout_ms": 300000,
+  "op": "codex.implement",
+  "params": {
+    "instruction": "Add a pure fibonacci(n) helper with input validation.",
+    "scope_globs": ["src/utils/**"],
+    "acceptance_criteria": "Unit tests cover n<0 and n=0..10."
+  },
+  "transport": {
+    "kind": "acp",
+    "permission_mode": "auto_approve",
+    "mcp_servers": []
+  }
+}

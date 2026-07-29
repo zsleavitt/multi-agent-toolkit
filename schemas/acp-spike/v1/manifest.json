@@ -1,0 +1,11 @@
+{
+  "bundle_id": "acp-spike@v1",
+  "title": "MAT-over-ACP spike (non-normative)",
+  "description": "Illustrative sketch only (MAT-100). Not an allowed production contract.",
+  "schema_version": "0.1.0",
+  "request_schema": "./mat-over-acp.request.schema.json",
+  "notes": [
+    "Spike artifact for research/2026-07-acp-spike.md — do not validate production traffic against this.",
+    "Production path remains schemas/codex-code-exec/v1/ until an implementation ticket promotes ACP transport."
+  ]
+}

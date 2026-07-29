@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MAT-over-ACP request sketch (MAT-100 spike — non-normative)",
+  "description": "Shows how MAT-2 governance fields sit beside ACP session transport hints. Not for production validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "correlation_id",
+    "idempotency_key",
+    "repo_root",
+    "op",
+    "params",
+    "transport"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0-spike"
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "MAT trace id; adapters SHOULD also place this in ACP _meta."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "description": "MAT-only. ACP has no task idempotency; runtime caches MAT2Response by this key."
+    },
+    "repo_root": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(/|~|[A-Za-z]:[/\\\\])",
+      "description": "Mapped to ACP session/new cwd (after ~ expansion)."
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400000,
+      "description": "Client wall-clock; on expiry adapter sends session/cancel."
+    },
+    "op": {
+      "type": "string",
+      "enum": [
+        "codex.implement",
+        "codex.test",
+        "codex.refactor",
+        "codex.diagnose",
+        "codex.review"
+      ],
+      "description": "MAT allowlisted op — not an ACP method. Rejected if not in codex-code-exec manifest."
+    },
+    "params": {
+      "type": "object",
+      "description": "Same shapes as schemas/codex-code-exec/v1/request.schema.json $defs for the given op."
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "acp",
+          "description": "Distinguishes from legacy kind=exec (codex exec stdout)."
+        },
+        "acp_session_id": {
+          "type": "string",
+          "description": "If set, adapter calls session/resume; else session/new."
+        },
+        "mcp_servers": {
+          "type": "array",
+          "description": "Forwarded to session/new|resume mcpServers (ACP).",
+          "items": { "type": "object" }
+        },
+        "permission_mode": {
+          "type": "string",
+          "enum": ["auto_approve", "deny_all", "hitl"],
+          "description": "How the MAT client answers session/request_permission."
+        },
+        "prompt_template": {
+          "type": "string",
+          "description": "Optional override; default derives from op + params + agent system prompt."
+        }
+      }
+    }
+  }
+}
