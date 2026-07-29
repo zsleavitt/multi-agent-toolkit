@@ -164,13 +164,13 @@ class TestAgentRouter:
 
     def test_find_agent_for_op_by_allowed_ops(self, sample_agents):
         router = AgentRouter(agents=sample_agents)
-        agent = router._find_agent_for_op("codex.implement")
+        agent = router.find_agent_for_op("codex.implement")
         assert agent is not None
         assert agent.name == "coder"
 
     def test_find_agent_for_op_review(self, sample_agents):
         router = AgentRouter(agents=sample_agents)
-        agent = router._find_agent_for_op("codex.review")
+        agent = router.find_agent_for_op("codex.review")
         assert agent is not None
         assert agent.name == "reviewer"
 

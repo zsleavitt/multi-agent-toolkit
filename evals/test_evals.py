@@ -44,13 +44,12 @@ def scored_results():
     return results
 
 
-def test_eval_task(eval_task):
+def test_eval_task(eval_task, scored_results):
     """Per-task checks — only ``must_pass`` tasks hard-fail individually.
 
     Soft failures still count against the aggregate pass-rate gate.
     """
-    execution = execute_task(eval_task)
-    result = score_task(execution, llm_judge=False)
+    result = next(r for r in scored_results if r.task_id == eval_task.id)
     if result.passed:
         return
     detail = "; ".join(result.reasons) or "failed"

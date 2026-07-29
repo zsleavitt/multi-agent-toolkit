@@ -106,7 +106,7 @@ def execute_task(task: EvalTask) -> TaskExecution:
             return_value=mock,
         ):
             if use_invoke_op:
-                chosen = router._find_agent_for_op(req.op)
+                chosen = router.find_agent_for_op(req.op)
                 if chosen is not None:
                     traj.agent_name = chosen.name
                     traj.agent_cli = chosen.cli
@@ -139,9 +139,5 @@ def execute_task(task: EvalTask) -> TaskExecution:
         if isinstance(router._circuit_breaker.state, CircuitState)
         else str(router._circuit_breaker.state)
     )
-    # After invoke_op, prefer agent recorded on successful routing.
-    if use_invoke_op and traj.agent_name is None and response.ok:
-        # Should not happen; keep trajectory as-is.
-        pass
     traj.response = response
     return TaskExecution(task=task, trajectory=traj)
