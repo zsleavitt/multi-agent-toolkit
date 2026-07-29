@@ -1,0 +1,29 @@
+{
+  "id": "refusal-preserves-message",
+  "description": "Refusal message preserved in error",
+  "tags": [
+    "refusal"
+  ],
+  "setup": {
+    "provider_defaults": {
+      "max_retries": 0
+    },
+    "mock": {
+      "kind": "refuse",
+      "stdout": "Policy violation: cannot delete repo"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "agent_refused"
+  }
+}

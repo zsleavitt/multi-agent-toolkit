@@ -1,0 +1,30 @@
+{
+  "id": "invoke-op-review-routes-reviewer",
+  "description": "invoke_op finds reviewer via allowed_mat_ops for codex.review",
+  "tags": [
+    "routing",
+    "invoke_op"
+  ],
+  "setup": {
+    "routing": {},
+    "mock": {
+      "kind": "ok",
+      "stdout": "reviewed"
+    }
+  },
+  "request": {
+    "use_invoke_op": true,
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.review",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Auto-route review"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "reviewer",
+    "agent_cli": "claude",
+    "op_in_allowlist": true
+  }
+}

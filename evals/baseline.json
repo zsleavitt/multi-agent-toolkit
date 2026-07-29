@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "pass_rate": 1.0,
+  "total": 32,
+  "passed": 32,
+  "failed": 0,
+  "tasks": {
+    "allowlist-agent-not-found": {
+      "passed": true,
+      "score": 1.0
+    },
+    "allowlist-coder-rejects-review": {
+      "passed": true,
+      "score": 1.0
+    },
+    "allowlist-orchestrator-rejects-implement": {
+      "passed": true,
+      "score": 1.0
+    },
+    "allowlist-reviewer-rejects-implement": {
+      "passed": true,
+      "score": 1.0
+    },
+    "allowlist-tester-rejects-review": {
+      "passed": true,
+      "score": 1.0
+    },
+    "budget-session-cost-exceeded": {
+      "passed": true,
+      "score": 1.0
+    },
+    "budget-session-tokens-exceeded": {
+      "passed": true,
+      "score": 1.0
+    },
+    "budget-task-cost-exceeded": {
+      "passed": true,
+      "score": 1.0
+    },
+    "budget-task-tokens-exceeded": {
+      "passed": true,
+      "score": 1.0
+    },
+    "budget-within-limits-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "circuit-closed-on-success": {
+      "passed": true,
+      "score": 1.0
+    },
+    "circuit-open-fail-fast": {
+      "passed": true,
+      "score": 1.0
+    },
+    "circuit-opens-after-threshold-failures": {
+      "passed": true,
+      "score": 1.0
+    },
+    "invoke-op-implement-routes-worker": {
+      "passed": true,
+      "score": 1.0
+    },
+    "invoke-op-review-routes-reviewer": {
+      "passed": true,
+      "score": 1.0
+    },
+    "invoke-op-test-routes-tester": {
+      "passed": true,
+      "score": 1.0
+    },
+    "output-quality-implement-summary": {
+      "passed": true,
+      "score": 1.0
+    },
+    "refusal-no-retry": {
+      "passed": true,
+      "score": 1.0
+    },
+    "refusal-preserves-message": {
+      "passed": true,
+      "score": 1.0
+    },
+    "retry-exhausted-stays-failed": {
+      "passed": true,
+      "score": 1.0
+    },
+    "retry-no-idempotency-key": {
+      "passed": true,
+      "score": 1.0
+    },
+    "retry-then-succeed": {
+      "passed": true,
+      "score": 1.0
+    },
+    "retry-timeout-then-succeed": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-coder-diagnose-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-coder-implement-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-coder-refactor-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-researcher-research-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-reviewer-review-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-security-review-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "route-tester-test-ok": {
+      "passed": true,
+      "score": 1.0
+    },
+    "timeout-single-attempt": {
+      "passed": true,
+      "score": 1.0
+    },
+    "trajectory-coder-allowlist-shape": {
+      "passed": true,
+      "score": 1.0
+    }
+  }
+}

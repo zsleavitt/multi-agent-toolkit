@@ -1,0 +1,29 @@
+{
+  "id": "route-researcher-research-ok",
+  "description": "Researcher handles codex.research",
+  "tags": [
+    "routing",
+    "success"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "Found three call sites"
+    }
+  },
+  "request": {
+    "agent_name": "researcher",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.research",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Where is X defined?"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "researcher",
+    "agent_cli": "gemini",
+    "op_in_allowlist": true
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "circuit-closed-on-success",
+  "description": "Successful invoke leaves breaker closed",
+  "tags": [
+    "circuit",
+    "resilience"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "fine"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "circuit_state": "closed",
+    "attempts": 1
+  }
+}

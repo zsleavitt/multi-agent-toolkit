@@ -1,0 +1,28 @@
+{
+  "id": "output-quality-implement-summary",
+  "description": "Successful implement returns non-empty structured-ish output",
+  "tags": [
+    "output",
+    "success"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "## Changes made\nImplemented feature X"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Add feature X"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "output_contains": "Changes made",
+    "judge_rubric": "Changes made Implemented feature"
+  }
+}

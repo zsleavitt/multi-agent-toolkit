@@ -188,7 +188,7 @@ class AgentRouter:
 
         return self._adapters[agent.name]
 
-    def _find_agent_for_op(self, op: str) -> AgentDefinition | None:
+    def find_agent_for_op(self, op: str) -> AgentDefinition | None:
         """Find an agent that can handle the given operation."""
         # First check explicit routing in provider config
         if self.provider_config and self.provider_config.routing:
@@ -679,7 +679,7 @@ class AgentRouter:
             req = request
 
         # Find agent for this operation
-        agent = self._find_agent_for_op(req.op)
+        agent = self.find_agent_for_op(req.op)
         if not agent:
             return MAT2Response(
                 schema_version=req.schema_version,

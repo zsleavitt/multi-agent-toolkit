@@ -1,0 +1,29 @@
+{
+  "id": "route-security-review-ok",
+  "description": "Security agent handles codex.review",
+  "tags": [
+    "routing",
+    "success"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "No critical findings"
+    }
+  },
+  "request": {
+    "agent_name": "security",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.review",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Security review"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "security",
+    "agent_cli": "claude",
+    "op_in_allowlist": true
+  }
+}

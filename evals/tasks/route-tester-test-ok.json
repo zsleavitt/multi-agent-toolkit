@@ -1,0 +1,31 @@
+{
+  "id": "route-tester-test-ok",
+  "description": "Tester successfully handles codex.test",
+  "tags": [
+    "routing",
+    "success"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "All tests passed"
+    }
+  },
+  "request": {
+    "agent_name": "tester",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.test",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Run unit tests"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "tester",
+    "agent_cli": "codex",
+    "op_in_allowlist": true,
+    "attempts": 1
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "route-coder-diagnose-ok",
+  "description": "Coder successfully handles codex.diagnose",
+  "tags": [
+    "routing",
+    "success"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "Root cause found"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.diagnose",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Diagnose null deref"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "coder",
+    "op_in_allowlist": true,
+    "attempts": 1
+  }
+}

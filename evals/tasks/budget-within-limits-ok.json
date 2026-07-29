@@ -1,0 +1,36 @@
+{
+  "id": "budget-within-limits-ok",
+  "description": "Within budget allows successful invoke",
+  "tags": [
+    "budget",
+    "success"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "within budget"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement",
+      "session": {
+        "token_budget": 1000,
+        "tokens_used": 10
+      },
+      "turn": {
+        "token_budget": 200,
+        "tokens_used": 5
+      }
+    }
+  },
+  "expected": {
+    "ok": true,
+    "attempts": 1,
+    "error_code": null
+  }
+}

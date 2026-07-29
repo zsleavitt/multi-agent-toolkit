@@ -1,0 +1,34 @@
+{
+  "id": "allowlist-orchestrator-rejects-implement",
+  "description": "Orchestrator with planning-only allowlist rejects codex.implement",
+  "tags": [
+    "allowlist",
+    "rejection"
+  ],
+  "setup": {
+    "agents": {
+      "orchestrator": {
+        "allowed_mat_ops": ["codex.plan"]
+      }
+    },
+    "mock": {
+      "kind": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "orchestrator",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Implement as orchestrator"
+    }
+  },
+  "expected": {
+    "ok": false,
+    "error_code": "operation_not_allowed",
+    "agent_name": "orchestrator",
+    "op_in_allowlist": false,
+    "attempts": 0
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "trajectory-coder-allowlist-shape",
+  "description": "Coder allowlist is a subset of known coder ops",
+  "tags": [
+    "trajectory",
+    "allowlist"
+  ],
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "ok"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Do codex.implement"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "coder",
+    "allowed_mat_ops_subset_of": [
+      "codex.implement",
+      "codex.refactor",
+      "codex.diagnose",
+      "codex.test",
+      "codex.review",
+      "codex.research"
+    ]
+  }
+}

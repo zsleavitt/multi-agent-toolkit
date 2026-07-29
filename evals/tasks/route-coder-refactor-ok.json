@@ -1,0 +1,31 @@
+{
+  "id": "route-coder-refactor-ok",
+  "description": "Coder successfully handles codex.refactor",
+  "tags": [
+    "routing",
+    "success"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "Refactored module"
+    }
+  },
+  "request": {
+    "agent_name": "coder",
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.refactor",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Refactor utils"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "coder",
+    "agent_cli": "codex",
+    "op_in_allowlist": true,
+    "attempts": 1
+  }
+}

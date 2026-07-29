@@ -1,0 +1,31 @@
+{
+  "id": "invoke-op-implement-routes-worker",
+  "description": "invoke_op routes codex.implement to worker-role agent",
+  "tags": [
+    "routing",
+    "invoke_op"
+  ],
+  "must_pass": true,
+  "setup": {
+    "mock": {
+      "kind": "ok",
+      "stdout": "done"
+    }
+  },
+  "request": {
+    "use_invoke_op": true,
+    "mat2": {
+      "schema_version": "1.2.0",
+      "op": "codex.implement",
+      "repo_root": "/tmp/eval-repo",
+      "instruction": "Auto-route implement"
+    }
+  },
+  "expected": {
+    "ok": true,
+    "agent_name": "coder",
+    "agent_cli": "codex",
+    "op_in_allowlist": true,
+    "attempts": 1
+  }
+}
