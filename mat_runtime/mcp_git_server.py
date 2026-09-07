@@ -114,16 +114,16 @@ def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
         branch = params.get("branch")
         if not branch:
             raise ValueError("git.checkout_new_branch requires params.branch")
-        cmd = ["git", "checkout", "-b", str(branch)]
+        cmd = ["git", "checkout", "-b", _require_safe_name(branch, "branch")]
         if params.get("start_point"):
-            cmd.append(str(params["start_point"]))
+            cmd.append(_require_safe_name(params["start_point"], "start_point"))
         return cmd
 
     if op == "git.checkout_existing":
         branch = params.get("branch")
         if not branch:
             raise ValueError("git.checkout_existing requires params.branch")
-        return ["git", "checkout", str(branch)]
+        return ["git", "checkout", _require_safe_name(branch, "branch")]
 
     if op == "git.branch_list":
         cmd = ["git", "branch", "--list", "--format=%(refname:short)\t%(objectname:short)"]
@@ -136,9 +136,16 @@ def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
         branch = params.get("branch")
         if not path or not branch:
             raise ValueError("git.worktree_add requires params.path and params.branch")
-        cmd = ["git", "worktree", "add", "-b", str(branch), str(path)]
+        cmd = [
+            "git",
+            "worktree",
+            "add",
+            "-b",
+            _require_safe_name(branch, "branch"),
+            _require_safe_name(path, "path"),
+        ]
         if params.get("base_ref"):
-            cmd.append(str(params["base_ref"]))
+            cmd.append(_require_safe_name(params["base_ref"], "base_ref"))
         return cmd
 
     if op == "git.worktree_remove":
@@ -148,7 +155,7 @@ def build_git_argv(op: str, params: dict[str, Any] | None = None) -> list[str]:
         cmd = ["git", "worktree", "remove"]
         if params.get("force"):
             cmd.append("--force")
-        cmd.append(str(path))
+        cmd.append(_require_safe_name(path, "path"))
         return cmd
 
     if op == "git.worktree_list":

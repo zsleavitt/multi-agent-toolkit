@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Multi-Agent Toolkit runtime — CLI-delegated agent orchestration (MAT)."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.optional-dependencies]
 # OpenTelemetry GenAI tracing (MAT-97). Optional so the runtime works without
