@@ -101,6 +101,12 @@
       "pattern": "^(/|~|[A-Za-z]:[/\\\\])",
       "description": "Absolute or home-relative path to repository root. Accepted formats: / (Unix absolute), ~ or ~user (Unix home-relative), or drive letter (Windows, e.g. C:\\). Executors MUST expand ~ paths, validate existence, and reject traversal attempts."
     },
+    "safe_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\s-][^\\s]*$",
+      "description": "A branch, path, or ref value passed as a bare argv token (no `--` separator ahead of it). Must not start with '-' or contain whitespace, so it cannot be parsed as a git option (git-argument-injection guard; mirrors executor-side `_require_safe_name`)."
+    },
     "params_status": {
       "type": "object",
       "additionalProperties": false,
@@ -135,8 +141,8 @@
       "additionalProperties": false,
       "required": ["branch"],
       "properties": {
-        "branch": { "type": "string", "minLength": 1, "pattern": "^[^\\s]+$" },
-        "start_point": { "type": "string" }
+        "branch": { "$ref": "#/$defs/safe_name" },
+        "start_point": { "$ref": "#/$defs/safe_name" }
       }
     },
     "params_checkout_existing": {
@@ -144,7 +150,7 @@
       "additionalProperties": false,
       "required": ["branch"],
       "properties": {
-        "branch": { "type": "string", "minLength": 1 }
+        "branch": { "$ref": "#/$defs/safe_name" }
       }
     },
     "params_branch_list": {
@@ -159,9 +165,9 @@
       "additionalProperties": false,
       "required": ["path", "branch"],
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
-        "branch": { "type": "string", "minLength": 1 },
-        "base_ref": { "type": "string" }
+        "path": { "$ref": "#/$defs/safe_name" },
+        "branch": { "$ref": "#/$defs/safe_name" },
+        "base_ref": { "$ref": "#/$defs/safe_name" }
       }
     },
     "params_worktree_remove": {
@@ -169,7 +175,7 @@
       "additionalProperties": false,
       "required": ["path"],
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
+        "path": { "$ref": "#/$defs/safe_name" },
         "force": { "type": "boolean" }
       }
     },

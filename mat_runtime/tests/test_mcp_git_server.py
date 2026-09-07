@@ -70,6 +70,35 @@ def test_build_git_argv_rejects_dash_remote() -> None:
         build_git_argv("git.push", {"remote": "origin", "refspec": "--evil"})
 
 
+def test_build_git_argv_rejects_dash_branch_and_path() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.checkout_new_branch", {"branch": "--upload-pack=/evil"})
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv(
+            "git.checkout_new_branch",
+            {"branch": "feature", "start_point": "--evil"},
+        )
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.checkout_existing", {"branch": "-evil"})
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv(
+            "git.worktree_add", {"path": "-evil", "branch": "feature"}
+        )
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv(
+            "git.worktree_add", {"path": "wt", "branch": "--evil"}
+        )
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv(
+            "git.worktree_add",
+            {"path": "wt", "branch": "feature", "base_ref": "--evil"},
+        )
+    with pytest.raises(ValueError, match="must not start with '-'"):
+        build_git_argv("git.worktree_remove", {"path": "--evil"})
+
+
 def test_build_git_argv_common_ops() -> None:
     assert build_git_argv("git.status", {}) == [
         "git",
