@@ -211,3 +211,7 @@ pip install --require-hashes -r requirements-dev.txt
 2. **No shell in git bridge** — fixed `git` argv only
 3. **Portable paths** — `repo_root` and bundle paths via config/env
 4. **CLI delegation** — invoke tools, don't embed API clients
+
+## License
+
+[MIT](LICENSE)
